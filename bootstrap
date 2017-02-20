@@ -2,7 +2,7 @@
 
 [ $(id -u) == 0 ] || SUDO=sudo
 $SUDO apt-get update
-$SUDO apt-get install -y git python-virtualenv
+$SUDO apt-get install -y git python-virtualenv gcc python-all-dev libpython3-all-dev
 
 git submodule sync
 git submodule update --force --init --recursive
