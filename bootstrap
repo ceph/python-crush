@@ -1,0 +1,14 @@
+#!/bin/bash
+
+[ $(id -u) == 0 ] || SUDO=sudo
+$SUDO apt-get update
+$SUDO apt-get install -y git python-virtualenv
+
+git submodule sync
+git submodule update --force --init --recursive
+
+rm -fr virtualenv .tox
+virtualenv virtualenv
+source virtualenv/bin/activate
+pip install -e .
+pip install tox

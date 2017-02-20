@@ -1,0 +1,3 @@
+[submodule "libcrush"]
+	path = libcrush
+	url = http://libcrush.org/main/libcrush.git

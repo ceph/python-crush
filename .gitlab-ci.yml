@@ -1,0 +1,2 @@
+integration:
+  script: "bash -x run-tests.sh"
