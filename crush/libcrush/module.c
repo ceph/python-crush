@@ -1,6 +1,4 @@
-#include <Python.h>
-
-#include "module.h"
+#include "libcrush.h"
 
 /* Module definition */
 
@@ -23,14 +21,10 @@ moduledef = {
 
 
 PyObject *
-PyInit_tracer(void)
+PyInit_libcrush(void)
 {
     PyObject * mod = PyModule_Create(&moduledef);
     if (mod == NULL) {
-        return NULL;
-    }
-
-    if (LibCrush_intern_strings() < 0) {
         return NULL;
     }
 
@@ -54,7 +48,7 @@ PyInit_tracer(void)
 #else
 
 void
-inittracer(void)
+initlibcrush(void)
 {
     PyObject * mod;
 
