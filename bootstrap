@@ -2,7 +2,7 @@
 
 [ $(id -u) == 0 ] || SUDO=sudo
 $SUDO apt-get update
-$SUDO apt-get install -y git python-virtualenv gcc python-all-dev libpython3-all-dev
+$SUDO apt-get install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake
 
 git submodule sync
 git submodule update --force --init --recursive
@@ -10,5 +10,5 @@ git submodule update --force --init --recursive
 rm -fr virtualenv .tox
 virtualenv virtualenv
 source virtualenv/bin/activate
-pip install -e .
+pip install -v -e .
 pip install tox
