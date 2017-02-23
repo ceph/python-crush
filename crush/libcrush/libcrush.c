@@ -40,7 +40,7 @@ LibCrush_dealloc(LibCrush *self)
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
-static const char *mm(char *fmt, ...)
+static char *mm(char *fmt, ...)
 {
   int size = 0;
   char *p = NULL;
@@ -288,7 +288,8 @@ static int parse_bucket_or_device(LibCrush *self, PyObject *bucket, int *idout, 
 static int print_trace(PyObject *trace)
 {
   PyObject *f = PySys_GetObject("stdout");
-  for (Py_ssize_t i = 0; i < PyList_Size(trace); i++) {
+  Py_ssize_t i;
+  for (i = 0; i < PyList_Size(trace); i++) {
     const char *msg = MyText_AsString(PyList_GetItem(trace, i));
     if (PyFile_WriteString(msg, f) != 0)
       return 0;
@@ -493,7 +494,8 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
 {
   PyList_Append(trace, PyUnicode_FromFormat("steps"));
   PyObject *steps = PyDict_GetItemString(rule, "steps");
-  for (Py_ssize_t i = 0; i < PyList_Size(steps); i++) {
+  Py_ssize_t i;
+  for (i = 0; i < PyList_Size(steps); i++) {
      PyObject *step = PyList_GetItem(steps, i);
      PyList_Append(trace, PyUnicode_FromFormat("step %d", i));     
      int r = parse_step(self, step, i, crule, trace);
@@ -721,7 +723,8 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
 
   int weights_size = self->highest_device_id + 1;
   __u32 weights[weights_size];
-  for(int i = 0; i < weights_size; i++)
+  int i;
+  for (i = 0; i < weights_size; i++)
     weights[i] = 0x10000;
 
   if (python_weights != NULL) {
@@ -767,7 +770,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   }
 
   PyObject *python_results = PyList_New(result_len);
-  for (int i = 0; i < result_len; i++) {
+  for (i = 0; i < result_len; i++) {
     PyObject *python_result;
     if (result[i] == CRUSH_ITEM_NONE) {
       python_result = Py_None;
