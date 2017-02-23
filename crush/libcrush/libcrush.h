@@ -38,9 +38,19 @@
 
 /* The LibCrush type. */
 
-typedef struct LibCrush {
-    PyObject_HEAD
+#include "crush.h"
 
+typedef struct LibCrush {
+  PyObject_HEAD
+
+  int verbose;
+  int has_bucket_weights;
+  struct crush_map *map;
+  PyObject *types;
+  PyObject *items;
+  PyObject *ritems;
+  int highest_device_id;
+  PyObject *rules;
 } LibCrush;
 
 extern PyTypeObject LibCrushType;
