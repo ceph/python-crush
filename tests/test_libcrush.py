@@ -17,13 +17,162 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import json
+import pytest
+
 from crush.libcrush import LibCrush
 
 
 class TestLibCrush(object):
 
-    def test_all(self):
-        LibCrush()
+    def test_parse_empty(self, capsys):
+        empty = {
+            'buckets': {
+                '~type~': 'root',
+            }
+        }
+        assert LibCrush(verbose=1).parse(empty)
+        out, err = capsys.readouterr()
+        assert 'buckets' in out
+        assert '~type~' in out
+
+        assert LibCrush().parse(empty)
+        out, err = capsys.readouterr()
+        assert 'buckets' not in out
+
+    def test_parse_no_bucket(self):
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse({})
+        assert 'does not have a buckets key' in str(e.value)
+
+    def test_parse_no_argument(self):
+        with pytest.raises(TypeError):
+            LibCrush().parse()
+
+    def test_parse_invalid_algorithm(self):
+        wrong_algorithm = {
+            'buckets': {
+                '~type~': 'root',
+                '~algorithm~': 'FOOBAR',
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong_algorithm)
+        assert 'not FOOBAR' in str(e.value)
+
+    def test_parse_duplicate_bucket_id(self):
+        duplicate_id = {
+            'buckets': {
+                '~type~': 'root',
+                '~id~': -1,
+                'host0': {
+                    '~type~': 'host',
+                    '~id~': -2,
+                },
+                'host1': {
+                    '~type~': 'host',
+                    '~id~': -2,
+                },
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(duplicate_id)
+        assert ' -17 ' in str(e.value)
+
+    def test_parse_various_ok(self):
+        map = """
+        {
+          "buckets": {
+           "~id~": -1,
+           "~type~": "root",
+           "~algorithm~": "list",
+           "rack0": {
+            "~id~": -2,
+            "~type~": "rack",
+            "host0": {
+             "~id~": -3,
+             "~type~": "host",
+             "device0": { "~id~": 0, "~weight~": 1.0 },
+             "device2": { "~id~": 1, "~weight~": 2.0 }
+            },
+            "host1": {
+             "~id~": -4,
+             "~type~": "host",
+             "device3": { "~id~": 2, "~weight~": 2.0 },
+             "device4": { "~id~": 3, "~weight~": 2.0 }
+            }
+           },
+           "rack1": {
+            "~id~": -5,
+            "~type~": "rack",
+            "host2": {
+             "~id~": -6,
+             "~type~": "host",
+             "device5": { "~id~": 4, "~weight~": 1.0 },
+             "device6": { "~id~": 5, "~weight~": 1.0 }
+            },
+            "host3": {
+             "~id~": -7,
+             "~type~": "host",
+             "device7": { "~id~": 6, "~weight~": 1.0 },
+             "device8": { "~id~": 7, "~weight~": 1.0 }
+            }
+           }
+          },
+          "rules": {
+           "data": {
+            "min_size": 2,
+            "max_size": 3,
+            "steps": [
+              [ "take", "buckets" ],
+              [ "chooseleaf", "firstn", 0, "type", "host" ],
+              [ "emit" ]
+            ]
+           }
+          }
+        }
+
+        """
+        assert LibCrush(verbose=1).parse(json.loads(map))
+
+    def test_map_ok(self):
+        map = """
+        {
+          "buckets": {
+           "~type~": "root",
+           "host0": {
+            "~type~": "host",
+            "device0": { "~id~": 0, "~weight~": 1.0 },
+            "device1": { "~id~": 1, "~weight~": 2.0 }
+           },
+           "host1": {
+            "~type~": "host",
+            "device2": { "~id~": 2, "~weight~": 1.0 },
+            "device3": { "~id~": 3, "~weight~": 2.0 }
+           },
+           "host2": {
+            "~type~": "host",
+            "device4": { "~id~": 4, "~weight~": 1.0 },
+            "device5": { "~id~": 5, "~weight~": 2.0 }
+           }
+          },
+          "rules": {
+           "data": {
+            "min_size": 1,
+            "max_size": 3,
+            "steps": [
+              [ "take", "buckets" ],
+              [ "chooseleaf", "firstn", 0, "type", "host" ],
+              [ "emit" ]
+            ]
+           }
+          }
+        }
+
+        """
+        c = LibCrush(verbose=1)
+        assert c.parse(json.loads(map))
+        assert len(c.map(rule="data", value=1234, replication_count=1)) == 1
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 tests/test_libcrush.py"
