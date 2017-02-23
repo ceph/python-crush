@@ -1,5 +1,18 @@
 include AUTHORS.rst
 include ChangeLog
+include libcrush/crush/config-h.in.cmake
+include libcrush/crush/builder.h
+include libcrush/crush/crush_compat.h
+include libcrush/crush/crush_ln_table.h
+include libcrush/crush/crush.h
+include libcrush/crush/hash.h
+include libcrush/crush/int_types.h
+include libcrush/crush/mapper.h
+include libcrush/crush/types.h
+include libcrush/crush/mapper.c
+include libcrush/crush/builder.c
+include libcrush/crush/hash.c
+include libcrush/crush/crush.c
 
 exclude .gitignore
 
