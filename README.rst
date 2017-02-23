@@ -9,7 +9,8 @@ crush is a library to control placement in a hierarchy
 Installation
 ============
 
-* apt-get install -y gcc g++ python-all-dev libpython3-all-dev cmake
+* apt-get install -y gcc python-all-dev libpython3-all-dev cmake
+* dnf / yum / zypper install -y gcc python-devel python3-devel cmake
 * pip install crush
 
 Hacking

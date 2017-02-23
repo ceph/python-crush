@@ -1,8 +1,9 @@
 #!/bin/bash
 
 [ $(id -u) == 0 ] || SUDO=sudo
-$SUDO apt-get update
-$SUDO apt-get install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake
+$SUDO $(which apt-get || which true) update
+$SUDO $(which apt-get || which true) install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake
+$SUDO $(which yum || which dnf || which zypper || which true) install -y git python-virtualenv gcc gcc-c+ python-devel python3-devel cmake
 
 git submodule sync
 git submodule update --force --init --recursive
