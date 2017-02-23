@@ -1,0 +1,13 @@
+CHANGES
+=======
+
+1.0.1
+-----
+
+* version 1.0.1
+* ship all necessary files
+* implement crush map parser and map function
+* import libcrush sources into the module
+* dependencies for building the extension
+* skeleton C module for libcrush
+* initial commit
