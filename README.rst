@@ -9,8 +9,8 @@ crush is a library to control placement in a hierarchy
 Installation
 ============
 
-* apt-get install -y gcc python-all-dev libpython3-all-dev cmake
-* dnf / yum / zypper install -y gcc python-devel python3-devel cmake
+* apt-get install -y gcc g++ python-all-dev libpython3-all-dev cmake
+* dnf / yum / zypper install -y gcc gcc-c++ python-devel python3-devel cmake
 * pip install crush
 
 Hacking
@@ -36,7 +36,10 @@ Hacking
 
    tox -e py27 -- -s -k test_one tests/test_crush.py
 
-* Check the documentation : rst2html < README.rst > /tmp/a.html
+* Check the documentation::
+
+   python setup.py build_sphinx
+   firefox build/html/index.html
 
 Release management
 ==================

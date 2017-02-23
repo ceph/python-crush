@@ -8,6 +8,8 @@ crush
 Installation
 ------------
 
+* apt-get install -y gcc g++ python-all-dev libpython3-all-dev cmake
+* dnf / yum / zypper install -y gcc gcc-c++ python-devel python3-devel cmake
 * pip install crush
 
 Contributor Guide
