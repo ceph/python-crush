@@ -523,34 +523,15 @@ static int parse_steps_size(LibCrush *self, PyObject *rule, int *sizeout, PyObje
   return 1;
 }
 
-static int parse_rule_size(LibCrush *self, PyObject *rule, const char *name, int *sizeout, PyObject *trace)
-{
-  PyList_Append(trace, PyUnicode_FromFormat(name));
-  PyObject *size = PyDict_GetItemString(rule, name);
-  if (size == NULL) {
-    PyErr_Format(PyExc_RuntimeError, "missing %s", name);
-    return 0;
-  } else {
-    *sizeout = MyInt_AsInt(size);
-    if (PyErr_Occurred())
-      return 0;
-  }
-  return 1;
-}
-
 static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *trace)
 {
   PyList_Append(trace, name);
-  int minsize;
-  if (!parse_rule_size(self, rule, "min_size", &minsize, trace))
-    return 0;
-  int maxsize;
-  if (!parse_rule_size(self, rule, "max_size", &maxsize, trace))
-    return 0;
   int steps_size;
   if (!parse_steps_size(self, rule, &steps_size, trace))
     return 0;
 
+  int minsize = 0;
+  int maxsize = 0;
   struct crush_rule *crule = crush_make_rule(steps_size, 0, 0, minsize, maxsize);
   if (crule == NULL) {
     PyErr_SetString(PyExc_RuntimeError, "crush_make_rule() returned NULL");

@@ -119,8 +119,6 @@ class TestLibCrush(object):
           } },
           "rules": {
            "data": {
-            "min_size": 2,
-            "max_size": 3,
             "steps": [
               [ "take", "dc1" ],
               [ "chooseleaf", "firstn", 0, "type", "host" ],
@@ -156,8 +154,6 @@ class TestLibCrush(object):
           } },
           "rules": {
            "data": {
-            "min_size": 1,
-            "max_size": 3,
             "steps": [
               [ "take", "dc1" ],
               [ "chooseleaf", "firstn", 0, "type", "host" ],
