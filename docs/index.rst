@@ -12,6 +12,27 @@ Installation
 * dnf / yum / zypper install -y gcc gcc-c++ python-devel python3-devel cmake
 * pip install crush
 
+Quick start
+-----------
+
+Mapping the object 1234 to two devices in different hosts:
+
+.. literalinclude:: quick.py
+   :language: python
+
+Output::
+
+    [u'device1']
+    [u'device1', u'device5']
+
+API
+---
+
+.. toctree::
+   :maxdepth: 1
+
+   api
+
 Contributor Guide
 -----------------
 
