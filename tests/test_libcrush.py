@@ -118,13 +118,11 @@ class TestLibCrush(object):
            }
           } },
           "rules": {
-           "data": {
-            "steps": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-           }
+           "data": [
+             [ "take", "dc1" ],
+             [ "chooseleaf", "firstn", 0, "type", "host" ],
+             [ "emit" ]
+           ]
           }
         }
 
@@ -153,13 +151,11 @@ class TestLibCrush(object):
            }
           } },
           "rules": {
-           "data": {
-            "steps": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-           }
+           "data": [
+            [ "take", "dc1" ],
+            [ "chooseleaf", "firstn", 0, "type", "host" ],
+            [ "emit" ]
+           ]
           }
         }
 

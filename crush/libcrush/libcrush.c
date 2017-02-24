@@ -496,11 +496,9 @@ static int parse_step(LibCrush *self, PyObject *step, int step_index, struct cru
 
 static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("steps"));
-  PyObject *steps = PyDict_GetItemString(rule, "steps");
   Py_ssize_t i;
-  for (i = 0; i < PyList_Size(steps); i++) {
-     PyObject *step = PyList_GetItem(steps, i);
+  for (i = 0; i < PyList_Size(rule); i++) {
+     PyObject *step = PyList_GetItem(rule, i);
      PyList_Append(trace, PyUnicode_FromFormat("step %d", i));     
      int r = parse_step(self, step, i, crule, trace);
      if (!r)
@@ -509,26 +507,10 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
   return 1;
 }
   
-static int parse_steps_size(LibCrush *self, PyObject *rule, int *sizeout, PyObject *trace)
-{
-  PyList_Append(trace, PyUnicode_FromFormat("steps size"));
-  PyObject *steps = PyDict_GetItemString(rule, "steps");
-  if (steps == NULL) {
-    PyErr_SetString(PyExc_RuntimeError, "missing steps");
-    return 0;
-  }
-
-  *sizeout = PyList_Size(steps);
-
-  return 1;
-}
-
 static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *trace)
 {
   PyList_Append(trace, name);
-  int steps_size;
-  if (!parse_steps_size(self, rule, &steps_size, trace))
-    return 0;
+  int steps_size = PyList_Size(rule);
 
   int minsize = 0;
   int maxsize = 0;
