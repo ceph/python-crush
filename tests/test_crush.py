@@ -27,23 +27,23 @@ class TestCrush(object):
 
     def test_parse_empty(self, capsys):
         empty = {
-            'buckets': {
+            'trees': { "dc1": {
                 '~type~': 'root',
-            }
+            } }
         }
         assert Crush(verbose=True).parse(empty)
         out, err = capsys.readouterr()
-        assert 'buckets' in out
+        assert 'trees' in out
         assert '~type~' in out
 
         assert Crush().parse(empty)
         out, err = capsys.readouterr()
-        assert 'buckets' not in out
+        assert 'trees' not in out
 
     def test_map(self):
         map = """
         {
-          "buckets": {
+          "trees": { "dc1": {
            "~type~": "root",
            "host0": {
             "~type~": "host",
@@ -60,17 +60,13 @@ class TestCrush(object):
             "device4": { "~id~": 4, "~weight~": 1.0 },
             "device5": { "~id~": 5, "~weight~": 2.0 }
            }
-          },
+          } },
           "rules": {
-           "data": {
-            "min_size": 1,
-            "max_size": 3,
-            "steps": [
-              [ "take", "buckets" ],
+           "data": [
+              [ "take", "dc1" ],
               [ "chooseleaf", "firstn", 0, "type", "host" ],
               [ "emit" ]
-            ]
-           }
+           ]
           }
         }
 
