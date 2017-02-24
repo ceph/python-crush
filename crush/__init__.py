@@ -17,7 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from crush.libcrush import LibCrush
+try:  # chicken and egg problem when running pip install -e . from sources
+    from crush.libcrush import LibCrush
+except:
+    pass
 
 
 class Crush(object):
