@@ -212,7 +212,6 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
     if (strlen(k) > 1 && k[0] == '~') {
       if (!(!strcmp("~id~", k) ||
             !strcmp("~weight~", k) ||
-            !strcmp("~weight~", k) ||
             !strcmp("~type~", k) ||
             !strcmp("~algorithm~", k)
             )) {
