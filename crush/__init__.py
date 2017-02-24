@@ -19,6 +19,7 @@
 #
 from crush.libcrush import LibCrush
 
+
 class Crush(object):
     """Control object placement in a hierarchy.
 
@@ -287,8 +288,12 @@ class Crush(object):
         25%).
 
         - **rule**: the rule name (required string)
+
         - **value**: the number to map (required integer)
-        - **replication_count**: the desired number of devices (required positive integer)
+
+        - **replication_count**: the desired number of devices
+            (required positive integer)
+
         - **weights**: map of name to weight float (optional, default to None)
 
         Return a list of device names.

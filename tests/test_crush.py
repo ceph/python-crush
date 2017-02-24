@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import json
-import pytest
+import pytest # noqa needed for capsys
 
 from crush import Crush
 
@@ -27,9 +27,9 @@ class TestCrush(object):
 
     def test_parse_empty(self, capsys):
         empty = {
-            'trees': { "dc1": {
+            'trees': {"dc1": {
                 '~type~': 'root',
-            } }
+            }}
         }
         assert Crush(verbose=True).parse(empty)
         out, err = capsys.readouterr()

@@ -27,9 +27,9 @@ class TestLibCrush(object):
 
     def test_parse_verbose(self, capsys):
         empty = {
-            'trees': { "dc1": {
+            'trees': {"dc1": {
                 '~type~': 'root',
-            } }
+            }}
         }
         assert LibCrush(verbose=1).parse(empty)
         out, err = capsys.readouterr()
@@ -49,10 +49,10 @@ class TestLibCrush(object):
 
     def test_parse_invalid_algorithm(self):
         wrong_algorithm = {
-            'trees': { "dc1": {
+            'trees': {"dc1": {
                 '~type~': 'root',
                 '~algorithm~': 'FOOBAR',
-            } }
+            }}
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong_algorithm)
@@ -60,7 +60,7 @@ class TestLibCrush(object):
 
     def test_parse_duplicate_bucket_id(self):
         duplicate_id = {
-            'trees': { "dc1": {
+            'trees': {"dc1": {
                 '~type~': 'root',
                 '~id~': -1,
                 'host0': {
@@ -71,7 +71,7 @@ class TestLibCrush(object):
                     '~type~': 'host',
                     '~id~': -2,
                 },
-            } }
+            }}
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(duplicate_id)
@@ -168,8 +168,12 @@ class TestLibCrush(object):
         """
         c = LibCrush(verbose=1)
         assert c.parse(json.loads(map))
-        assert c.map(rule="data", value=1234, replication_count=1) == ["device1"]
-        assert c.map(rule="data", value=1234, replication_count=2) == ["device1", "device5"]
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=1) == ["device1"]
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=2) == ["device1", "device5"]
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 tests/test_libcrush.py"
