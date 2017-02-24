@@ -25,25 +25,23 @@ from crush.libcrush import LibCrush
 
 class TestLibCrush(object):
 
-    def test_parse_empty(self, capsys):
+    def test_parse_verbose(self, capsys):
         empty = {
-            'buckets': {
+            'trees': {"dc1": {
                 '~type~': 'root',
-            }
+            }}
         }
         assert LibCrush(verbose=1).parse(empty)
         out, err = capsys.readouterr()
-        assert 'buckets' in out
+        assert 'trees' in out
         assert '~type~' in out
 
         assert LibCrush().parse(empty)
         out, err = capsys.readouterr()
-        assert 'buckets' not in out
+        assert 'trees' not in out
 
-    def test_parse_no_bucket(self):
-        with pytest.raises(RuntimeError) as e:
-            LibCrush().parse({})
-        assert 'does not have a buckets key' in str(e.value)
+    def test_parse_empty(self):
+        LibCrush().parse({})
 
     def test_parse_no_argument(self):
         with pytest.raises(TypeError):
@@ -51,10 +49,10 @@ class TestLibCrush(object):
 
     def test_parse_invalid_algorithm(self):
         wrong_algorithm = {
-            'buckets': {
+            'trees': {"dc1": {
                 '~type~': 'root',
                 '~algorithm~': 'FOOBAR',
-            }
+            }}
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong_algorithm)
@@ -62,7 +60,7 @@ class TestLibCrush(object):
 
     def test_parse_duplicate_bucket_id(self):
         duplicate_id = {
-            'buckets': {
+            'trees': {"dc1": {
                 '~type~': 'root',
                 '~id~': -1,
                 'host0': {
@@ -73,7 +71,7 @@ class TestLibCrush(object):
                     '~type~': 'host',
                     '~id~': -2,
                 },
-            }
+            }}
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(duplicate_id)
@@ -82,7 +80,7 @@ class TestLibCrush(object):
     def test_parse_various_ok(self):
         map = """
         {
-          "buckets": {
+          "trees": { "dc1": {
            "~id~": -1,
            "~type~": "root",
            "~algorithm~": "list",
@@ -118,17 +116,13 @@ class TestLibCrush(object):
              "device8": { "~id~": 7, "~weight~": 1.0 }
             }
            }
-          },
+          } },
           "rules": {
-           "data": {
-            "min_size": 2,
-            "max_size": 3,
-            "steps": [
-              [ "take", "buckets" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-           }
+           "data": [
+             [ "take", "dc1" ],
+             [ "chooseleaf", "firstn", 0, "type", "host" ],
+             [ "emit" ]
+           ]
           }
         }
 
@@ -138,41 +132,48 @@ class TestLibCrush(object):
     def test_map_ok(self):
         map = """
         {
-          "buckets": {
-           "~type~": "root",
-           "host0": {
-            "~type~": "host",
-            "device0": { "~id~": 0, "~weight~": 1.0 },
-            "device1": { "~id~": 1, "~weight~": 2.0 }
-           },
-           "host1": {
-            "~type~": "host",
-            "device2": { "~id~": 2, "~weight~": 1.0 },
-            "device3": { "~id~": 3, "~weight~": 2.0 }
-           },
-           "host2": {
-            "~type~": "host",
-            "device4": { "~id~": 4, "~weight~": 1.0 },
-            "device5": { "~id~": 5, "~weight~": 2.0 }
-           }
+          "trees": {
+            "dc1": {
+              "~type~": "root",
+              "~id~": -1,
+              "host0": {
+                "~type~": "host",
+                "~id~": -2,
+                "device0": { "~id~": 0, "~weight~": 1.0 },
+                "device1": { "~id~": 1, "~weight~": 2.0 }
+              },
+              "host1": {
+                "~type~": "host",
+                "~id~": -3,
+                "device2": { "~id~": 2, "~weight~": 1.0 },
+                "device3": { "~id~": 3, "~weight~": 2.0 }
+              },
+              "host2": {
+                "~type~": "host",
+                "~id~": -4,
+                "device4": { "~id~": 4, "~weight~": 1.0 },
+                "device5": { "~id~": 5, "~weight~": 2.0 }
+              }
+            }
           },
           "rules": {
-           "data": {
-            "min_size": 1,
-            "max_size": 3,
-            "steps": [
-              [ "take", "buckets" ],
+            "data": [
+              [ "take", "dc1" ],
               [ "chooseleaf", "firstn", 0, "type", "host" ],
               [ "emit" ]
             ]
-           }
           }
         }
 
         """
         c = LibCrush(verbose=1)
         assert c.parse(json.loads(map))
-        assert len(c.map(rule="data", value=1234, replication_count=1)) == 1
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=1) == ["device1"]
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=2) == ["device1", "device5"]
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 tests/test_libcrush.py"

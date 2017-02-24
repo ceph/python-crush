@@ -212,7 +212,6 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
     if (strlen(k) > 1 && k[0] == '~') {
       if (!(!strcmp("~id~", k) ||
             !strcmp("~weight~", k) ||
-            !strcmp("~weight~", k) ||
             !strcmp("~type~", k) ||
             !strcmp("~algorithm~", k)
             )) {
@@ -455,7 +454,12 @@ static int parse_step_take(LibCrush *self, PyObject *step, int step_index, struc
     PyErr_SetString(PyExc_RuntimeError, "argument must be a string");
     return 0;
   }
-  int id = MyInt_AsInt(PyDict_GetItem(self->items, arg));
+  PyObject *python_id = PyDict_GetItem(self->items, arg);
+  if (python_id == NULL) {
+    PyErr_Format(PyExc_RuntimeError, "%s is not a known bucket or device", MyText_AsString(arg));
+    return 0;
+  }
+  int id = MyInt_AsInt(python_id);
   if (PyErr_Occurred())
     return 0;
   crush_rule_set_step(crule, step_index, CRUSH_RULE_TAKE, id, 0);
@@ -492,11 +496,9 @@ static int parse_step(LibCrush *self, PyObject *step, int step_index, struct cru
 
 static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("steps"));
-  PyObject *steps = PyDict_GetItemString(rule, "steps");
   Py_ssize_t i;
-  for (i = 0; i < PyList_Size(steps); i++) {
-     PyObject *step = PyList_GetItem(steps, i);
+  for (i = 0; i < PyList_Size(rule); i++) {
+     PyObject *step = PyList_GetItem(rule, i);
      PyList_Append(trace, PyUnicode_FromFormat("step %d", i));     
      int r = parse_step(self, step, i, crule, trace);
      if (!r)
@@ -505,48 +507,13 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
   return 1;
 }
   
-static int parse_steps_size(LibCrush *self, PyObject *rule, int *sizeout, PyObject *trace)
-{
-  PyList_Append(trace, PyUnicode_FromFormat("steps size"));
-  PyObject *steps = PyDict_GetItemString(rule, "steps");
-  if (steps == NULL) {
-    PyErr_SetString(PyExc_RuntimeError, "missing steps");
-    return 0;
-  }
-
-  *sizeout = PyList_Size(steps);
-
-  return 1;
-}
-
-static int parse_rule_size(LibCrush *self, PyObject *rule, const char *name, int *sizeout, PyObject *trace)
-{
-  PyList_Append(trace, PyUnicode_FromFormat(name));
-  PyObject *size = PyDict_GetItemString(rule, name);
-  if (size == NULL) {
-    PyErr_Format(PyExc_RuntimeError, "missing %s", name);
-    return 0;
-  } else {
-    *sizeout = MyInt_AsInt(size);
-    if (PyErr_Occurred())
-      return 0;
-  }
-  return 1;
-}
-
 static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *trace)
 {
   PyList_Append(trace, name);
-  int minsize;
-  if (!parse_rule_size(self, rule, "min_size", &minsize, trace))
-    return 0;
-  int maxsize;
-  if (!parse_rule_size(self, rule, "max_size", &maxsize, trace))
-    return 0;
-  int steps_size;
-  if (!parse_steps_size(self, rule, &steps_size, trace))
-    return 0;
+  int steps_size = PyList_Size(rule);
 
+  int minsize = 0;
+  int maxsize = 0;
   struct crush_rule *crule = crush_make_rule(steps_size, 0, 0, minsize, maxsize);
   if (crule == NULL) {
     PyErr_SetString(PyExc_RuntimeError, "crush_make_rule() returned NULL");
@@ -588,45 +555,61 @@ static int parse_rules(LibCrush *self, PyObject *map, PyObject *trace)
   }
   return 1;
 }
-                       
-static int parse(LibCrush *self, PyObject *map, PyObject *trace)
-{
-  PyObject *buckets = PyDict_GetItemString(map, "buckets");
-  if (buckets == NULL) {
-    PyErr_SetString(PyExc_RuntimeError, "the root of the crush map does not have a buckets key");
-    return 0;
-  }
 
-  PyList_Append(trace, PyUnicode_FromFormat("buckets"));
+static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  PyObject *trees = PyDict_GetItemString(map, "trees");
+  if (trees == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("trees"));
   PyDict_Clear(self->types);
   PyDict_Clear(self->items);
   PyDict_Clear(self->ritems);  
   self->highest_device_id = -1;
                
-  int id;
-  int weight;
-  int r = parse_bucket_or_device(self, buckets, &id, &weight, trace);
-  if (!r)
-    return 0;
+  PyObject *python_name;
+  PyObject *root;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(trees, &pos, &python_name, &root)) {
+    const char *name = MyText_AsString(python_name);
+    if (name == 0)
+      return 0;
+    PyList_Append(trace, PyUnicode_FromFormat("root %s", name));
 
-  PyObject *python_id = MyInt_FromInt(id);
-  r = PyDict_SetItemString(self->items, "buckets", python_id);
-  Py_DECREF(python_id);
-  if (r != 0)
-    return 0;
-  r = PyDict_SetItem(self->ritems, python_id, buckets);
-  if (r != 0)
-    return 0;
-
-  if (!self->has_bucket_weights) {
-    PyList_Append(trace, PyUnicode_FromFormat("reweight"));
-    r = reweight(self, id, trace);
+    int id;
+    int weight;
+    self->has_bucket_weights = 0;
+    int r = parse_bucket_or_device(self, root, &id, &weight, trace);
     if (!r)
       return 0;
-  }
 
-  r = parse_rules(self, map, trace);
+    PyObject *python_id = MyInt_FromInt(id);
+    r = PyDict_SetItem(self->items, python_name, python_id);
+    Py_DECREF(python_id);
+    if (r != 0)
+      return 0;
+    r = PyDict_SetItem(self->ritems, python_id, root);
+    if (r != 0)
+      return 0;
+
+    if (!self->has_bucket_weights) {
+      PyList_Append(trace, PyUnicode_FromFormat("reweight"));
+      r = reweight(self, id, trace);
+      if (!r)
+        return 0;
+    }
+  }
+  return 1;
+}
+
+static int parse(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  int r = parse_trees(self, map, trace);
+  if (!r)
+    return 0;
   
+  r = parse_rules(self, map, trace);
   if (!r)
     return 0;
 
@@ -662,8 +645,6 @@ LibCrush_parse(LibCrush *self, PyObject *args)
     (1 << CRUSH_BUCKET_UNIFORM) |
     (1 << CRUSH_BUCKET_LIST) |
     (1 << CRUSH_BUCKET_STRAW2);
-
-  self->has_bucket_weights = 0;
 
   PyObject *trace = PyList_New(0);
   int r = parse(self, map, trace);
