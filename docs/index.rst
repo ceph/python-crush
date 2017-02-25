@@ -1,9 +1,19 @@
 crush
 =====
 
-`crush
-<http://http://libcrush.org/main/python-crush>`_ is a
-:ref:`GPLv3+ Licensed <gplv3>` library to control placement in a hierarchy.
+`crush <http://http://libcrush.org/main/python-crush>`_ is a `GPLv3+
+Licensed <https://www.wikidata.org/wiki/Q27016754>`_ library to control placement in a hierarchy.
+
+Introduction
+------------
+
+The `crush` module wraps the `libcrush
+<http://http://libcrush.org/main/python-crush>`_ C library
+implementing `CRUSH
+<http://www.crss.ucsc.edu/media/papers/weil-sc06.pdf>`_, a scalable
+pseudo-random data distribution function designed for distributed
+object storage systems that efficiently maps data objects to storage
+devices without relying on a central directory.
 
 Installation
 ------------
@@ -42,4 +52,5 @@ you.
 .. toctree::
    :maxdepth: 1
 
+   dev/hacking
    dev/authors
