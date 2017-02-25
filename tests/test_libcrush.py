@@ -47,18 +47,115 @@ class TestLibCrush(object):
         with pytest.raises(TypeError):
             LibCrush().parse()
 
+    def test_parse_argument_wrong(self):
+        with pytest.raises(TypeError):
+            LibCrush().parse([])
+
+    def test_parse_trees_type_wrong(self):
+        wrong = {
+            'trees': []
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
     def test_parse_invalid_algorithm(self):
-        wrong_algorithm = {
+        wrong = {
             'trees': {"dc1": {
                 '~type~': 'root',
                 '~algorithm~': 'FOOBAR',
             }}
         }
         with pytest.raises(RuntimeError) as e:
-            LibCrush().parse(wrong_algorithm)
+            LibCrush().parse(wrong)
         assert 'not FOOBAR' in str(e.value)
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                '~algorithm~': 0
+            }}
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
 
-    def test_parse_duplicate_bucket_id(self):
+    def test_parse_trees_invalid_key(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                1: 'some',
+            }}
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_bucket_invalid_key(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                '~INVALID': 1,
+            }}
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert '~INVALID is not' in str(e.value)
+
+    def test_parse_device_invalid_key(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                'device0': {
+                    '~id~': 1,
+                    'INVALID': 1,
+                }
+            }}
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "'INVALID' is not" in str(e.value)
+
+    def test_parse_invalid_type(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 1,
+            }}
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_invalid_id(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~id~': "some",
+            }}
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_device_id_invalid(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                'device0': {
+                    '~id~': -1,
+                }
+            }}
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a positive integer" in str(e.value)
+
+    def test_parse_bucket_id_invalid(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                '~id~': 2,
+            }}
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a negative integer" in str(e.value)
+
+    def test_parse_bucket_duplicate_id(self):
         duplicate_id = {
             'trees': {"dc1": {
                 '~type~': 'root',
@@ -76,6 +173,232 @@ class TestLibCrush(object):
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(duplicate_id)
         assert ' -17 ' in str(e.value)
+
+    def test_parse_weight_invalid(self):
+        wrong = {
+            'trees': {"dc1": {
+                '~type~': 'root',
+                '~weight~': "some",
+            }}
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_rules_type_wrong(self):
+        wrong = {
+            'rules': []
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
+    def test_parse_rules_invalid_key(self):
+        wrong = {
+            'rules': {
+                1: 'root',
+            }
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_step_missing_operand(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    []
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'missing operand' in str(e.value)
+
+    def test_parse_step_unknown_operand(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    ['unknown']
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'operand unknown' in str(e.value)
+
+    def test_parse_step_operand_bad_type(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    [1]
+                ]
+            }
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_step_take_bad(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    ["take"]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'exactly two' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["take", 1]
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["take", u"unknown"]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'not a known bucket' in str(e.value)
+
+    def test_parse_step_emit_bad(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    ["emit", 2]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'exactly one' in str(e.value)
+
+    def test_parse_step_set_bad(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    ["set_choose_tries"]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'exactly two' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["set_wrong", 1]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'set operand unknown' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["set_choose_tries", "LK"]
+                ]
+            }
+        }
+        with pytest.raises(Exception) as e:
+            LibCrush().parse(wrong)
+
+    def test_parse_step_choose(self):
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose"]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'exactly five' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", 1, 2, 3, 4]
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "notgood", 2, 3, 4]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'unknown notgood' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "firstn", "notgood", 3, 4]
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "firstn", -1, 3, 4]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be positive' in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "firstn", 0, "notgood", 4]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be 'type'" in str(e.value)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "firstn", 0, "type", 4]
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'rules': {
+                'data': [
+                    ["choose", "firstn", 0, "type", "unknown"]
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "type unknown is unknown" in str(e.value)
 
     def test_parse_various_ok(self):
         map = """
@@ -174,6 +497,128 @@ class TestLibCrush(object):
         assert c.map(rule="data",
                      value=1234,
                      replication_count=2) == ["device1", "device5"]
+
+    def test_map_bad(self):
+        map = """
+        {
+          "trees": {
+            "dc1": {
+              "~type~": "root",
+              "~id~": -1,
+              "host0": {
+                "~type~": "host",
+                "~id~": -2,
+                "device0": { "~id~": 0, "~weight~": 1.0 },
+                "device1": { "~id~": 1, "~weight~": 2.0 }
+              }
+            }
+          },
+          "rules": {
+            "firstn": [
+              [ "take", "dc1" ],
+              [ "chooseleaf", "firstn", 0, "type", "host" ],
+              [ "emit" ]
+            ],
+            "indep": [
+              [ "take", "dc1" ],
+              [ "chooseleaf", "indep", 0, "type", "host" ],
+              [ "emit" ]
+            ]
+          }
+        }
+
+        """
+        c = LibCrush(verbose=1)
+        assert c.parse(json.loads(map))
+        assert c.map(rule="firstn",
+                     value=1234,
+                     replication_count=2) == ["device1"]
+        assert c.map(rule="indep",
+                     value=1234,
+                     replication_count=2) == ["device1", None]
+
+    def test_map_missing_map(self):
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().map(rule="data", value=1234, replication_count=2)
+        assert 'call parse()' in str(e.value)
+
+    def test_map_no_rule(self):
+        c = LibCrush(verbose=1)
+        assert c.parse({})
+        with pytest.raises(RuntimeError) as e:
+            c.map(rule="norule",
+                  value=1234,
+                  replication_count=1)
+        assert 'norule is not found' in str(e.value)
+
+    def test_map_bad_replication_count(self):
+        c = LibCrush(verbose=1)
+        assert c.parse({
+            "rules": {"data": []}
+        })
+        with pytest.raises(RuntimeError) as e:
+            c.map(rule="data",
+                  value=1234,
+                  replication_count=0)
+        assert 'must be >= 1' in str(e.value)
+
+    def test_map_wrong_weights(self):
+        c = LibCrush(verbose=1)
+        assert c.parse({
+            "rules": {"data": []}
+        })
+        with pytest.raises(RuntimeError) as e:
+            c.map(rule="data",
+                  value=1234,
+                  replication_count=1,
+                  weights={"unknowndevice": 1.0})
+        assert 'unknowndevice is not a known device' in str(e.value)
+
+        assert c.parse({
+            "trees": {"dc1": {
+                "~type~": "root",
+                "device0": {
+                    "~id~": 0
+                }
+            }},
+            "rules": {"data": []}
+        })
+        with pytest.raises(TypeError) as e:
+            c.map(rule="data",
+                  value=1234,
+                  replication_count=1,
+                  weights={"device0": "abc"})
+
+    def test_map_fail(self):
+        map = """
+        {
+          "trees": {
+            "dc1": {
+              "~type~": "root",
+              "~id~": -1,
+              "host0": {
+                "~type~": "host",
+                "~id~": -2
+              }
+            }
+          },
+          "rules": {
+            "data": [
+              [ "take", "dc1" ],
+              [ "chooseleaf", "firstn", 0, "type", "host" ],
+              [ "emit" ]
+            ]
+          }
+        }
+
+        """
+        c = LibCrush(verbose=1)
+        assert c.parse(json.loads(map))
+        with pytest.raises(RuntimeError) as e:
+            c.map(rule="data",
+                  value=1234,
+                  replication_count=1)
+        assert 'unable to map' in str(e.value)
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 tests/test_libcrush.py"
