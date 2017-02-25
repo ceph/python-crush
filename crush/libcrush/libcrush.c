@@ -73,11 +73,11 @@ static char *mm(char *fmt, ...)
 
 static int parse_type(LibCrush *self, PyObject *bucket, int *typeout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("~type~"));
   PyObject *type_name = PyDict_GetItemString(bucket, "~type~");
   if (type_name == NULL) {
     *typeout = -1;
   } else {
+    PyList_Append(trace, PyUnicode_FromFormat("~type~ %S", type_name));
     if (!PyDict_Contains(self->types, type_name)) {
       PyObject *value = MyInt_FromInt(PyDict_Size(self->types));
       PyDict_SetItem(self->types, type_name, value);
@@ -101,11 +101,12 @@ static int parse_bucket_type(LibCrush *self, PyObject *bucket, int *typeout, PyO
 
 static int parse_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("~id~"));
   PyObject *id = PyDict_GetItemString(bucket, "~id~");
   if (id == NULL) {
     *idout = crush_get_next_bucket_id(self->map);
+    PyList_Append(trace, PyUnicode_FromFormat("~id~ %d (default)", *idout));
   } else {
+    PyList_Append(trace, PyUnicode_FromFormat("~id~ %S", id));
     *idout = MyInt_AsInt(id);
     if (PyErr_Occurred())
       return 0;
@@ -115,12 +116,12 @@ static int parse_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
 
 static int parse_device_id(LibCrush *self, PyObject *bucket, int *idout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("~id~"));
   PyObject *id = PyDict_GetItemString(bucket, "~id~");
   if (id == NULL) {
     PyErr_SetString(PyExc_RuntimeError, "missing ~id~");
     return 0;
   } else {
+    PyList_Append(trace, PyUnicode_FromFormat("~id~ %S", id));
     *idout = MyInt_AsInt(id);
     if (PyErr_Occurred())
       return 0;
@@ -132,12 +133,14 @@ static int parse_device_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
 
 static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorithmout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("~algorithm~"));
   PyObject *algorithm = PyDict_GetItemString(bucket, "~algorithm~");
   if (algorithm == NULL) {
     *algorithmout = CRUSH_BUCKET_STRAW2;
   } else {
+    PyList_Append(trace, PyUnicode_FromFormat("~algorithm~ %S", algorithm));
     const char *a = MyText_AsString(algorithm);
+    if (a == NULL)
+      return 0;
     if (!strcmp(a, "uniform"))
       *algorithmout = CRUSH_BUCKET_UNIFORM;
     else if (!strcmp(a, "list"))
@@ -154,11 +157,11 @@ static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorit
 
 static int parse_weight(LibCrush *self, PyObject *item, int *weightout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("~weight~"));
   PyObject *weight = PyDict_GetItemString(item, "~weight~");
   if (weight == NULL) {
     *weightout = 0x10000;
   } else {
+    PyList_Append(trace, PyUnicode_FromFormat("~weight~ %S", weight));
     double w = PyFloat_AsDouble(weight);
     if (PyErr_Occurred())
       return 0;
@@ -171,6 +174,7 @@ static int parse_bucket_or_device(LibCrush *self, PyObject *bucket, int *idout, 
 
 static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
 {
+  PyList_Append(trace, PyUnicode_FromFormat("bucket content %S", bucket));
   int id;
   if (!parse_bucket_id(self, bucket, &id, trace))
     return 0;
@@ -218,9 +222,17 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
         PyErr_Format(PyExc_RuntimeError, "%s is not among ~id~, ~weight~, ~type~, ~algorithm~", k);
         return 0;
       }
-      continue;
     }
-    PyList_Append(trace, key);
+  }
+  pos = 0;
+  while (PyDict_Next(bucket, &pos, &key, &value)) {
+    const char *k = MyText_AsString(key);
+    if (k == 0)
+      return 0;
+    if (strlen(k) > 1 && k[0] == '~')
+      continue;
+
+    PyList_Append(trace, PyUnicode_FromFormat("bucket or device %S", key));
     int child;
     int child_weight;
     int r = parse_bucket_or_device(self, value, &child, &child_weight, trace);
@@ -251,17 +263,18 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
   return 1;
 }
 
-static int parse_device(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
+static int parse_device(LibCrush *self, PyObject *device, int *idout, int *weightout, PyObject *trace)
 {
-  if (!parse_device_id(self, bucket, idout, trace))
+  PyList_Append(trace, PyUnicode_FromFormat("device content %S", device));
+  if (!parse_device_id(self, device, idout, trace))
     return 0;
-  if (!parse_weight(self, bucket, weightout, trace))
+  if (!parse_weight(self, device, weightout, trace))
     return 0;
 
   PyObject *key;
   PyObject *value;
   Py_ssize_t pos = 0;
-  while (PyDict_Next(bucket, &pos, &key, &value)) {
+  while (PyDict_Next(device, &pos, &key, &value)) {
     const char *k = MyText_AsString(key);
     if (k == 0)
       return 0;
@@ -331,7 +344,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
 {
   Py_ssize_t len = PyList_Size(step);
 
-  PyList_Append(trace, PyUnicode_FromFormat("step choose*"));
+  PyList_Append(trace, PyUnicode_FromFormat("step choose* %S", step));
   PyObject *python_op = PyList_GetItem(step, 0);
   const char *k = MyText_AsString(python_op);
   if (k == NULL)
@@ -353,7 +366,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     else if (!strcmp("indep", k2))
       op = CRUSH_RULE_CHOOSE_INDEP;
     else {
-      PyErr_Format(PyExc_RuntimeError, "choose operand qualifier unknown %s, must be one of first indep", k2);      
+      PyErr_Format(PyExc_RuntimeError, "choose operand qualifier unknown %s, must be one of first indep", k2);
       return 0;
     }
   } else if (!strcmp("chooseleaf", k)) {
@@ -362,7 +375,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     else if (!strcmp("indep", k2))
       op = CRUSH_RULE_CHOOSELEAF_INDEP;
     else {
-      PyErr_Format(PyExc_RuntimeError, "chooseleaf operand qualifier unknown %s, must be one of first indep", k2);      
+      PyErr_Format(PyExc_RuntimeError, "chooseleaf operand qualifier unknown %s, must be one of first indep", k2);
       return 0;
     }
   } else {
@@ -393,13 +406,13 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     return 0;
 
   crush_rule_set_step(crule, step_index, op, replication_count, type);
-  
+
   return 1;
 }
 
 static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("step set_*"));
+  PyList_Append(trace, PyUnicode_FromFormat("step set_* %S", step));
   PyObject *python_op = PyList_GetItem(step, 0);
   const char *k = MyText_AsString(python_op);
   if (k == NULL)
@@ -430,7 +443,7 @@ static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct
   int value = MyInt_AsInt(PyList_GetItem(self->items, 1));
 
   crush_rule_set_step(crule, step_index, op, value, 0);
-  
+
   return 1;
 }
 
@@ -443,7 +456,7 @@ static int parse_step_emit(LibCrush *self, PyObject *step, int step_index, struc
 
 static int parse_step_take(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("step take"));
+  PyList_Append(trace, PyUnicode_FromFormat("step take %S", step));
   Py_ssize_t len = PyList_Size(step);
   if (len < 2) {
     PyErr_SetString(PyExc_RuntimeError, "missing argument");
@@ -481,16 +494,16 @@ static int parse_step(LibCrush *self, PyObject *step, int step_index, struct cru
   if (!strcmp("take", k))
     r = parse_step_take(self, step, step_index, crule, trace);
   else if (!strcmp("emit", k))
-    r = parse_step_emit(self, step, step_index, crule, trace);    
+    r = parse_step_emit(self, step, step_index, crule, trace);
   else if (!strncmp("set_", k, 4))
-    r = parse_step_set(self, step, step_index, crule, trace);    
+    r = parse_step_set(self, step, step_index, crule, trace);
   else if (!strncmp("choose", k, 6))
     r = parse_step_choose(self, step, step_index, crule, trace);
   else {
     PyErr_Format(PyExc_RuntimeError, "operand unknown %s, must be one of %s", k, OPERANDS_ALL);
     return 0;
   }
-  
+
   return r;
 }
 
@@ -499,17 +512,17 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
   Py_ssize_t i;
   for (i = 0; i < PyList_Size(rule); i++) {
      PyObject *step = PyList_GetItem(rule, i);
-     PyList_Append(trace, PyUnicode_FromFormat("step %d", i));     
+     PyList_Append(trace, PyUnicode_FromFormat("step %d %S", i, step));
      int r = parse_step(self, step, i, crule, trace);
      if (!r)
        return 0;
   }
   return 1;
 }
-  
+
 static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *trace)
 {
-  PyList_Append(trace, name);
+  PyList_Append(trace, PyUnicode_FromFormat("rule content %S", rule));
   int steps_size = PyList_Size(rule);
 
   int minsize = 0;
@@ -534,21 +547,22 @@ static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *
   r = parse_steps(self, rule, crule, trace);
   if (!r)
     return r;
-  
+
   return 1;
 }
 
 static int parse_rules(LibCrush *self, PyObject *map, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("rules"));
   PyObject *rules = PyDict_GetItemString(map, "rules");
   if (rules == NULL)
     return 1;
 
+  PyList_Append(trace, PyUnicode_FromFormat("rules %S", rules));
   PyObject *key;
   PyObject *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(rules, &pos, &key, &value)) {
+    PyList_Append(trace, PyUnicode_FromFormat("rule name %S", key));
     int r = parse_rule(self, key, value, trace);
     if (!r)
       return 0;
@@ -565,9 +579,9 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
   PyList_Append(trace, PyUnicode_FromFormat("trees"));
   PyDict_Clear(self->types);
   PyDict_Clear(self->items);
-  PyDict_Clear(self->ritems);  
+  PyDict_Clear(self->ritems);
   self->highest_device_id = -1;
-               
+
   PyObject *python_name;
   PyObject *root;
   Py_ssize_t pos = 0;
@@ -608,13 +622,13 @@ static int parse(LibCrush *self, PyObject *map, PyObject *trace)
   int r = parse_trees(self, map, trace);
   if (!r)
     return 0;
-  
+
   r = parse_rules(self, map, trace);
   if (!r)
     return 0;
 
   crush_finalize(self->map);
-  
+
   return 1;
 }
 
@@ -654,7 +668,7 @@ LibCrush_parse(LibCrush *self, PyObject *args)
 
   if (!r)
     return 0;
-  
+
   Py_RETURN_TRUE;
 }
 
@@ -696,7 +710,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   if (PyErr_Occurred())
     return 0;
 
-  print_debug(self, mm("map(rule=%s=%d, value=%d, replication_count=%d)", 
+  print_debug(self, mm("map(rule=%s=%d, value=%d, replication_count=%d)",
                        MyText_AsString(rule),
                        ruleno,
                        value,
@@ -732,7 +746,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
       weights[id] = weight;
     }
   }
-  
+
   int result[replication_count];
   memset(result, '\0', sizeof(int) * replication_count);
   int cwin_size = crush_work_size(self->map, replication_count);
@@ -742,7 +756,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   int result_len = crush_do_rule(self->map,
                                  ruleno,
                                  value,
-                                 result, replication_count, 
+                                 result, replication_count,
                                  weights, weights_size,
                                  cwin);
   if (result_len == 0) {
