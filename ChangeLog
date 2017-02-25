@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.0.4
+-----
+
+* version 1.0.4
+* improve test coverage and error detection
+* increase parsing verbosity and improve readability
+* get rid of useless trackers
+* bump 1.0.4
+
 1.0.3
 -----
 
