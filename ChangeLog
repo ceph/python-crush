@@ -1,6 +1,24 @@
 CHANGES
 =======
 
+1.0.3
+-----
+
+* version 1.0.3
+* protect crush/__init__.py from import failure
+* make flake8 happy
+* make tests for mapping non random
+* fix Crush tests (trees)
+* API documentation
+* a rule is just a list of steps
+* the rule {min,max}_size is not required
+* allow multiple roots
+* remove duplicate ~weight~ comparison
+* implement crush.Crush API
+* update documentation instructions
+* typo in rpm dependencies
+* bump 1.0.3
+
 1.0.2
 -----
 
