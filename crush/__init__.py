@@ -220,14 +220,21 @@ class Crush(object):
         ::
 
             step = [
-              "choose_firstn" or "choose_indep",
+              "choose"
+              "firstn" or "indep",
               <replication count positive int>,
+              "type"
               <bucket type str>
             ]
 
         Recursively explore each bucket currently selected, looking for
         **replication count** buckets of the required **bucket type**
         and select them.
+
+        **firstn** is best suited when the order of the result does not matter,
+        for instance to place object replicas. **indep** is best suited when
+        the order of the result makes a difference, for instance to place parts
+        of an erasure coded object.
 
         If **replication count** is zero, the number of buckets
         to select will be determined by the `replication_count` argument of
@@ -236,14 +243,21 @@ class Crush(object):
         ::
 
             step = [
-              "chooseleaf_firstn" or "chooseleaf_indep",
+              "chooseleaf"
+              "firstn" or "indep",
               <replication count positive int>,
+              "type"
               <bucket type str>
             ]
 
         Recursively explore each bucket currently selected, looking for
         **replication count** devices within all buckets of
         the required **bucket type** and select them.
+
+        **firstn** is best suited when the order of the result does not matter,
+        for instance to place object replicas. **indep** is best suited when
+        the order of the result makes a difference, for instance to place parts
+        of an erasure coded object.
 
         If **replication count** is zero, the number of devices
         to select will be determined by the `replication_count` argument of
