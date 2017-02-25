@@ -3,8 +3,9 @@ crush
 
 crush is a library to control placement in a hierarchy
 
+- Home page : http://http://libcrush.org/main/python-crush
 - Documentation : http://crush.readthedocs.org/
-- Home page : https://pypi.python.org/pypi/crush
+- PyPi : https://pypi.python.org/pypi/crush
 
 Installation
 ============
