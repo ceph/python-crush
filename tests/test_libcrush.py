@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import json
 import pytest
 
 from crush.libcrush import LibCrush
@@ -27,14 +26,11 @@ class TestLibCrush(object):
 
     def test_parse_verbose(self, capsys):
         empty = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-            }}
+            'trees': [],
         }
         assert LibCrush(verbose=1).parse(empty)
         out, err = capsys.readouterr()
         assert 'trees' in out
-        assert '~type~' in out
 
         assert LibCrush().parse(empty)
         out, err = capsys.readouterr()
@@ -53,92 +49,134 @@ class TestLibCrush(object):
 
     def test_parse_trees_type_wrong(self):
         wrong = {
-            'trees': []
+            'trees': {}
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
-        assert 'must be a dict' in str(e.value)
+        assert 'must be a list' in str(e.value)
 
     def test_parse_invalid_algorithm(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~algorithm~': 'FOOBAR',
-            }}
+            'trees': [{
+                'type': 'root',
+                'algorithm': 'FOOBAR',
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
         assert 'not FOOBAR' in str(e.value)
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~algorithm~': 0
-            }}
+            'trees': [{
+                'type': 'root',
+                'algorithm': 0
+            }]
         }
         with pytest.raises(TypeError) as e:
             LibCrush().parse(wrong)
 
     def test_parse_trees_invalid_key(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
                 1: 'some',
-            }}
+            }]
         }
         with pytest.raises(TypeError):
             LibCrush().parse(wrong)
 
-    def test_parse_bucket_invalid_key(self):
+    def test_parse_invalid_children(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~INVALID': 1,
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'children': 1,
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
-        assert '~INVALID is not' in str(e.value)
+        assert 'must be a list' in str(e.value)
+
+    def test_parse_invalid_children_element(self):
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'children': [1],
+            }]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
+    def test_parse_bucket_invalid_key(self):
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'INVALID': 1,
+            }]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'INVALID is not' in str(e.value)
 
     def test_parse_device_invalid_key(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                'device0': {
-                    '~id~': 1,
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'children': [{
+                    'id': 1,
+                    'name': 'device0',
                     'INVALID': 1,
-                }
-            }}
+                }]
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
         assert "'INVALID' is not" in str(e.value)
 
+    def test_parse_invalid_name(self):
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 1,
+            }]
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
     def test_parse_invalid_type(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 1,
-            }}
+            'trees': [{
+                'type': 1,
+            }]
         }
         with pytest.raises(TypeError):
             LibCrush().parse(wrong)
 
     def test_parse_invalid_id(self):
         wrong = {
-            'trees': {"dc1": {
-                '~id~': "some",
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': "some",
+            }]
         }
         with pytest.raises(TypeError):
             LibCrush().parse(wrong)
 
     def test_parse_device_id_invalid(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                'device0': {
-                    '~id~': -1,
-                }
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'children': [{
+                    'name': 'device0',
+                    'id': -1,
+                }],
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
@@ -146,10 +184,11 @@ class TestLibCrush(object):
 
     def test_parse_bucket_id_invalid(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~id~': 2,
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': 2,
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
@@ -157,18 +196,23 @@ class TestLibCrush(object):
 
     def test_parse_bucket_duplicate_id(self):
         duplicate_id = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~id~': -1,
-                'host0': {
-                    '~type~': 'host',
-                    '~id~': -2,
-                },
-                'host1': {
-                    '~type~': 'host',
-                    '~id~': -2,
-                },
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [
+                    {
+                        'type': 'host',
+                        'name': 'host0',
+                        'id': -2,
+                    },
+                    {
+                        'type': 'host',
+                        'name': 'host1',
+                        'id': -2,
+                    }
+                ],
+            }]
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(duplicate_id)
@@ -176,10 +220,11 @@ class TestLibCrush(object):
 
     def test_parse_weight_invalid(self):
         wrong = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-                '~weight~': "some",
-            }}
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'weight': "some",
+            }]
         }
         with pytest.raises(TypeError):
             LibCrush().parse(wrong)
@@ -400,136 +445,79 @@ class TestLibCrush(object):
             LibCrush().parse(wrong)
         assert "type unknown is unknown" in str(e.value)
 
-    def test_parse_various_ok(self):
-        map = """
-        {
-          "trees": { "dc1": {
-           "~id~": -1,
-           "~type~": "root",
-           "~algorithm~": "list",
-           "rack0": {
-            "~id~": -2,
-            "~type~": "rack",
-            "host0": {
-             "~id~": -3,
-             "~type~": "host",
-             "device0": { "~id~": 0, "~weight~": 1.0 },
-             "device2": { "~id~": 1, "~weight~": 2.0 }
-            },
-            "host1": {
-             "~id~": -4,
-             "~type~": "host",
-             "device3": { "~id~": 2, "~weight~": 2.0 },
-             "device4": { "~id~": 3, "~weight~": 2.0 }
-            }
-           },
-           "rack1": {
-            "~id~": -5,
-            "~type~": "rack",
-            "host2": {
-             "~id~": -6,
-             "~type~": "host",
-             "device5": { "~id~": 4, "~weight~": 1.0 },
-             "device6": { "~id~": 5, "~weight~": 1.0 }
-            },
-            "host3": {
-             "~id~": -7,
-             "~type~": "host",
-             "device7": { "~id~": 6, "~weight~": 1.0 },
-             "device8": { "~id~": 7, "~weight~": 1.0 }
-            }
-           }
-          } },
-          "rules": {
-           "data": [
-             [ "take", "dc1" ],
-             [ "chooseleaf", "firstn", 0, "type", "host" ],
-             [ "emit" ]
-           ]
-          }
-        }
-
-        """
-        assert LibCrush(verbose=1).parse(json.loads(map))
-
     def test_map_ok(self):
-        map = """
-        {
-          "trees": {
-            "dc1": {
-              "~type~": "root",
-              "~id~": -1,
-              "host0": {
-                "~type~": "host",
-                "~id~": -2,
-                "device0": { "~id~": 0, "~weight~": 1.0 },
-                "device1": { "~id~": 1, "~weight~": 2.0 }
-              },
-              "host1": {
-                "~type~": "host",
-                "~id~": -3,
-                "device2": { "~id~": 2, "~weight~": 1.0 },
-                "device3": { "~id~": 3, "~weight~": 2.0 }
-              },
-              "host2": {
-                "~type~": "host",
-                "~id~": -4,
-                "device4": { "~id~": 4, "~weight~": 1.0 },
-                "device5": { "~id~": 5, "~weight~": 2.0 }
-              }
+        crushmap = {
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "children": [],
+                }
+            ],
+            "rules": {
+                "data": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
             }
-          },
-          "rules": {
-            "data": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-          }
         }
-
-        """
+        crushmap['trees'][0]['children'].extend([
+            {
+                "type": "host",
+                "id": -(i + 2),
+                "name": "host%d" % i,
+                "children": [
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                ],
+            } for i in range(0, 10)
+        ])
         c = LibCrush(verbose=1)
-        assert c.parse(json.loads(map))
+        assert c.parse(crushmap)
         assert c.map(rule="data",
                      value=1234,
-                     replication_count=1) == ["device1"]
+                     replication_count=1) == ["device19"]
         assert c.map(rule="data",
                      value=1234,
-                     replication_count=2) == ["device1", "device5"]
+                     replication_count=2) == ["device19", "device13"]
 
     def test_map_bad(self):
-        map = """
-        {
-          "trees": {
-            "dc1": {
-              "~type~": "root",
-              "~id~": -1,
-              "host0": {
-                "~type~": "host",
-                "~id~": -2,
-                "device0": { "~id~": 0, "~weight~": 1.0 },
-                "device1": { "~id~": 1, "~weight~": 2.0 }
-              }
-            }
-          },
-          "rules": {
-            "firstn": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
+        crushmap = {
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "children": [
+                        {
+                            "id": -2,
+                            "name": "host0",
+                            "type": "host",
+                            "children": [
+                                {"id": 0, "name": "device0", "weight": 1.0},
+                                {"id": 1, "name": "device1", "weight": 2.0},
+                            ]
+                        }
+                    ],
+                }
             ],
-            "indep": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "indep", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-          }
+            "rules": {
+                "firstn": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+                "indep": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "indep", 0, "type", "host"],
+                    ["emit"]
+                ]
+            }
         }
-
-        """
         c = LibCrush(verbose=1)
-        assert c.parse(json.loads(map))
+        assert c.parse(crushmap)
         assert c.map(rule="firstn",
                      value=1234,
                      replication_count=2) == ["device1"]
@@ -575,12 +563,14 @@ class TestLibCrush(object):
         assert 'unknowndevice is not a known device' in str(e.value)
 
         assert c.parse({
-            "trees": {"dc1": {
-                "~type~": "root",
-                "device0": {
-                    "~id~": 0
-                }
-            }},
+            "trees": [{
+                "type": "root",
+                "name": "dc1",
+                "children": [{
+                    "name": "device0",
+                    "id": 0
+                }]
+            }],
             "rules": {"data": []}
         })
         with pytest.raises(TypeError) as e:
@@ -590,30 +580,27 @@ class TestLibCrush(object):
                   weights={"device0": "abc"})
 
     def test_map_fail(self):
-        map = """
-        {
-          "trees": {
-            "dc1": {
-              "~type~": "root",
-              "~id~": -1,
-              "host0": {
-                "~type~": "host",
-                "~id~": -2
-              }
+        crushmap = {
+            "trees": [{
+                "type": "root",
+                "name": "dc1",
+                "id": -1,
+                "children": [{
+                    "type": "host",
+                    "name": "host0",
+                    "id": -2
+                }]
+            }],
+            "rules": {
+                "data": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ]
             }
-          },
-          "rules": {
-            "data": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-            ]
-          }
         }
-
-        """
         c = LibCrush(verbose=1)
-        assert c.parse(json.loads(map))
+        assert c.parse(crushmap)
         with pytest.raises(RuntimeError) as e:
             c.map(rule="data",
                   value=1234,
@@ -621,5 +608,5 @@ class TestLibCrush(object):
         assert 'unable to map' in str(e.value)
 
 # Local Variables:
-# compile-command: "cd .. ; tox -e py27 tests/test_libcrush.py"
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_libcrush.py"
 # End:
