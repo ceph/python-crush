@@ -692,7 +692,7 @@ static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
 
   self->tunables->choose_local_tries = 0;
   self->tunables->choose_local_fallback_tries = 0;
-  self->tunables->chooseleaf_descend_once = 0;
+  self->tunables->chooseleaf_descend_once = 1;
   self->tunables->chooseleaf_vary_r = 1;
   self->tunables->chooseleaf_stable = 1;
   self->tunables->straw_calc_version = 1;
@@ -715,6 +715,7 @@ static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
     PARSE_BACKWARD(choose_local_fallback_tries)
     PARSE_BACKWARD(chooseleaf_vary_r)
     PARSE_BACKWARD(chooseleaf_stable)
+    PARSE_BACKWARD(chooseleaf_descend_once)
     PARSE_BACKWARD(straw_calc_version)
     else {
       PyErr_Format(PyExc_RuntimeError, "unknown tunable %s", key);

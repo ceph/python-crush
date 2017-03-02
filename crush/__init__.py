@@ -86,6 +86,7 @@ class Crush(object):
               "choose_local_fallback_tries": 0,
               "chooseleaf_vary_r": 1,
               "chooseleaf_stable": 1,
+              "chooseleaf_descend_once": 1,
               "straw_calc_version": 1,
             }
 
