@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.5
+-----
+
+* version 1.0.5
+* bucket children must be ordered
+* fix step choose* documentation
+* bump 1.0.5
+* add links to code and documentation
+* documentation updates
+* sync with the latest libcrush
+
 1.0.4
 -----
 
