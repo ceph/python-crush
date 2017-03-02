@@ -13,13 +13,21 @@ static int
 LibCrush_init(LibCrush *self, PyObject *args, PyObject *kwds)
 {
   self->verbose = 0;
+  self->backward_compatibility = 0;
 
-  static char *kwlist[] = {"verbose", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|i", kwlist,
-                                   &self->verbose))
+  static char *kwlist[] = {"verbose", "backward_compatibility", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ii", kwlist,
+                                   &self->verbose,
+                                   &self->backward_compatibility))
     return RET_ERROR;
 
   self->map = NULL;
+  self->tunables = crush_create();
+
+  if (self->tunables == NULL) {
+    PyErr_SetString(PyExc_RuntimeError, "crush_create() for tunables returned NULL");
+    return 0;
+  }
   self->types = PyDict_New();
   self->items = PyDict_New();
   self->ritems = PyDict_New();
@@ -33,6 +41,8 @@ LibCrush_dealloc(LibCrush *self)
 {
   if (self->map != NULL)
     crush_destroy(self->map);
+  if (self->tunables != NULL)
+    crush_destroy(self->tunables);
   Py_DECREF(self->types);
   Py_DECREF(self->items);
   Py_DECREF(self->ritems);
@@ -168,7 +178,7 @@ static int parse_children(LibCrush *self, PyObject *item, PyObject **childrenout
   if (!PyList_Check(*childrenout)) {
     PyErr_SetString(PyExc_RuntimeError, "children must be a list");
     return 0;
-  }    
+  }
   return 1;
 }
 
@@ -248,7 +258,7 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
       return 0;
     }
   }
-  
+
   if (children != NULL) {
     for (pos = 0; pos < PyList_Size(children); pos++) {
       PyObject *item = PyList_GetItem(children, pos);
@@ -269,7 +279,7 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
       }
     }
   }
-  
+
   if (PyDict_GetItemString(bucket, "weight") == 0) {
     *weightout = b->weight;
   } else {
@@ -293,7 +303,7 @@ static int parse_device(LibCrush *self, PyObject *device, int *idout, int *weigh
 
   if (!set_item_name(self, name, *idout))
     return 0;
-  
+
   PyObject *key;
   PyObject *value;
   Py_ssize_t pos = 0;
@@ -438,6 +448,16 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
   return 1;
 }
 
+#define STEP_BACKWARD(keyword, upper_keyword)        \
+    else if (!strcmp(k, #keyword)) { \
+      if (self->backward_compatibility) { \
+        op = upper_keyword; \
+      } else { \
+        PyErr_SetString(PyExc_RuntimeError, "not allowed unless backward_compatibility is set to 1"); \
+        return 0; \
+      } \
+    }
+
 static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
   PyList_Append(trace, PyUnicode_FromFormat("step set_* %S", step));
@@ -453,22 +473,18 @@ static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct
   int op;
   if (!strcmp("set_choose_tries", k))
     op = CRUSH_RULE_SET_CHOOSE_TRIES;
-  else if (!strcmp("set_choose_local_tries", k))
-    op = CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES;
-  else if (!strcmp("set_choose_local_fallback_tries", k))
-    op = CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES;
   else if (!strcmp("set_chooseleaf_tries", k))
     op = CRUSH_RULE_SET_CHOOSELEAF_TRIES;
-  else if (!strcmp("set_chooseleaf_vary_r", k))
-    op = CRUSH_RULE_SET_CHOOSELEAF_VARY_R;
-  else if (!strcmp("set_chooseleaf_stable", k))
-    op = CRUSH_RULE_SET_CHOOSELEAF_STABLE;
+  STEP_BACKWARD(set_choose_local_tries, CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES)
+  STEP_BACKWARD(set_choose_local_fallback_tries, CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES)
+  STEP_BACKWARD(set_chooseleaf_vary_r, CRUSH_RULE_SET_CHOOSELEAF_VARY_R)
+  STEP_BACKWARD(set_chooseleaf_stable, CRUSH_RULE_SET_CHOOSELEAF_STABLE)
   else {
     PyErr_Format(PyExc_RuntimeError, "set operand unknown %s, must be one of %s", k, OPERANDS_SET);
     return 0;
   }
 
-  int value = MyInt_AsInt(PyList_GetItem(self->items, 1));
+  int value = MyInt_AsInt(PyList_GetItem(step, 1));
   if (PyErr_Occurred())
     return 0;
 
@@ -651,6 +667,64 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
   return 1;
 }
 
+#define PARSE_BACKWARD(keyword) \
+    else if (!strcmp(key, #keyword)) { \
+      if (self->backward_compatibility) { \
+        self->tunables->keyword = value; \
+      } else { \
+        PyErr_SetString(PyExc_RuntimeError, "not allowed unless backward_compatibility is set to 1"); \
+        return 0; \
+      } \
+    }
+
+static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  PyObject *tunables = PyDict_GetItemString(map, "tunables");
+  if (tunables == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("tunables %S", tunables));
+
+  if (!PyDict_Check(tunables)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a dict");
+    return 0;
+  }
+
+  self->tunables->choose_local_tries = 0;
+  self->tunables->choose_local_fallback_tries = 0;
+  self->tunables->chooseleaf_descend_once = 0;
+  self->tunables->chooseleaf_vary_r = 1;
+  self->tunables->chooseleaf_stable = 1;
+  self->tunables->straw_calc_version = 1;
+  self->tunables->choose_total_tries = 50;
+
+  PyObject *python_key;
+  PyObject *python_value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(tunables, &pos, &python_key, &python_value)) {
+    PyList_Append(trace, PyUnicode_FromFormat("tunable %S = %S", python_key, python_value));
+    const char *key = MyText_AsString(python_key);
+    if (key == NULL)
+      return 0;
+    int value = MyInt_AsInt(python_value);
+    if (PyErr_Occurred())
+      return 0;
+    if (!strcmp(key, "choose_total_tries"))
+      self->tunables->choose_total_tries = value;
+    PARSE_BACKWARD(choose_local_tries)
+    PARSE_BACKWARD(choose_local_fallback_tries)
+    PARSE_BACKWARD(chooseleaf_vary_r)
+    PARSE_BACKWARD(chooseleaf_stable)
+    PARSE_BACKWARD(straw_calc_version)
+    else {
+      PyErr_Format(PyExc_RuntimeError, "unknown tunable %s", key);
+      return 0;                                                         \
+    }
+  }
+
+  return 1;
+}
+
 static int parse(LibCrush *self, PyObject *map, PyObject *trace)
 {
   int r = parse_trees(self, map, trace);
@@ -658,6 +732,10 @@ static int parse(LibCrush *self, PyObject *map, PyObject *trace)
     return 0;
 
   r = parse_rules(self, map, trace);
+  if (!r)
+    return 0;
+
+  r = parse_tunables(self, map, trace);
   if (!r)
     return 0;
 
@@ -683,12 +761,14 @@ LibCrush_parse(LibCrush *self, PyObject *args)
     return 0;
   }
 
-  self->map->choose_local_tries = 0;
-  self->map->choose_local_fallback_tries = 0;
-  self->map->choose_total_tries = 50;
-  self->map->chooseleaf_descend_once = 1;
-  self->map->chooseleaf_vary_r = 1;
-  self->map->chooseleaf_stable = 1;
+  self->map->choose_local_tries = self->tunables->choose_local_tries;
+  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
+  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
+  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
+  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
+  self->map->straw_calc_version = self->tunables->straw_calc_version;
+  self->map->choose_total_tries = self->tunables->choose_total_tries;
+
   self->map->allowed_bucket_algs =
     (1 << CRUSH_BUCKET_UNIFORM) |
     (1 << CRUSH_BUCKET_LIST) |
