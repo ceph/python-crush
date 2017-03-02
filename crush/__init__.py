@@ -91,8 +91,8 @@ class Crush(object):
 
     In a rule step::
 
-            [ "set_choose_local_tries", 0 or 1 ]
-            [ "set_choose_local_fallback_tries", 0 or 1 ]
+            [ "set_choose_local_tries", <positive integer> ]
+            [ "set_choose_local_fallback_tries", <positive integer> ]
             [ "set_chooseleaf_vary_r", 0 or 1 ]
             [ "set_chooseleaf_stable", 0 or 1 ]
 
