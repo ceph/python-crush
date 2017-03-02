@@ -21,8 +21,63 @@ import pytest
 
 from crush.libcrush import LibCrush
 
+STEP_BACKWARDS = [
+    "choose_local_tries",
+    "choose_local_fallback_tries",
+    "chooseleaf_vary_r",
+    "chooseleaf_stable",
+]
+PARSE_BACKWARDS = STEP_BACKWARDS + ["straw_calc_version"]
+
 
 class TestLibCrush(object):
+
+    def test_parse_tunables(self, capsys):
+        total_tries = 1234
+        crushmap = {
+            'tunables': {
+                'choose_total_tries': total_tries,
+            }
+        }
+        assert LibCrush(verbose=1).parse(crushmap)
+        out, err = capsys.readouterr()
+        assert 'choose_total_tries = ' + str(total_tries) in out
+
+    def test_parse_tunables_invalid(self):
+        wrong = {
+            'tunables': 1
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
+        wrong = {
+            'tunables': {
+                1: 0
+            }
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'tunables': {
+                'choose_total_tries': 'wrong'
+            }
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+    def test_parse_tunables_backward_compatibity(self, capsys):
+        for backward in PARSE_BACKWARDS:
+            crushmap = {
+                'tunables': {
+                    backward: 1234,
+                }
+            }
+            with pytest.raises(RuntimeError) as e:
+                LibCrush(verbose=1).parse(crushmap)
+            assert 'not allowed unless backward_compatibility' in str(e.value)
+            LibCrush(verbose=1, backward_compatibility=1).parse(crushmap)
 
     def test_parse_verbose(self, capsys):
         empty = {
@@ -325,6 +380,20 @@ class TestLibCrush(object):
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
         assert 'exactly one' in str(e.value)
+
+    def test_parse_step_set_backward(self):
+        for backward in STEP_BACKWARDS:
+            crushmap = {
+                'rules': {
+                    'data': [
+                        ["set_" + backward, 1234]
+                    ]
+                }
+            }
+            with pytest.raises(RuntimeError) as e:
+                LibCrush(verbose=1).parse(crushmap)
+            assert 'not allowed unless backward_compatibility' in str(e.value)
+            LibCrush(verbose=1, backward_compatibility=1).parse(crushmap)
 
     def test_parse_step_set_bad(self):
         wrong = {

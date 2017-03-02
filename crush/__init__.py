@@ -33,16 +33,85 @@ class Crush(object):
     - the number of objects that move is proportional to the magnitude
       of the weight of the devices removed or added
 
+    **Choose and chooseleaf retries**
+
+    The "choose firstn" and "choose indep" rule step look for buckets
+    of a given type, randomly selecting them. If they are unlucky and
+    find the same bucket twice, they will try N+1 times (N being the
+    value of the choose_total_tries tunable). If there is a previous
+    "set_choose_tries" step in the same rule, it will try O times
+    instead (O being the value of the argument of the
+    "set_choose_tries" step).
+
+    Note: the choose_total_tries tunable is the number of retry, not
+    the number of tries. The number of tries is the number of retry +
+    1. The "set_choose_tries" rule step sets the number of tries and
+    does not need the + 1. This confusing difference is inherited from
+    an off-by-one bug from years ago.
+
+    The "chooseleaf firstn" and "chooseleaf indep" rule step do the same
+    as "choose firstn" and "choose indep" but also recursively explore
+    each bucket found, looking for a single device. The same device
+    may be found in two different buckets because the crush map is not
+    a strict hierarchy, it is a DAG. When such a collision happens,
+    they will try again. The number of times they try to find a non
+    colliding device is:
+
+    - If "firstn" and there is no previous "set_chooseleaf_tries" rule step: try
+      N + 1 times (N being the value of the choose_total_tries tunable)
+
+    - If "firstn" and there is a previous "set_chooseleaf_tries" rule
+      step: try P times (P being the value of the argument of the
+      "set_chooseleaf_tries" rule step)
+
+    - If "indep" and there is no previous "set_chooseleaf_tries" rule step: try
+      1 time.
+
+    - If "indep" and there is a previous "set_chooseleaf_tries" rule step:
+      try P times (P being the value of the argument of the
+      "set_chooseleaf_tries" rule step)
+
+    **Backward compatibility**
+
+    Some tunables and rule steps only exist for backward
+    compatibility. Trying to use them will raise an exception, unless
+    Crush is created with backward_compatibility=True. They are listed
+    here for reference but they are documented in the libcrush api
+    at http://doc.libcrush.org/master/group___a_p_i.html.
+
+    In the crushmap::
+
+            tunables = {
+              "choose_local_tries": 0,
+              "choose_local_fallback_tries": 0,
+              "chooseleaf_vary_r": 1,
+              "chooseleaf_stable": 1,
+              "straw_calc_version": 1,
+            }
+
+    In a rule step::
+
+            [ "set_choose_local_tries", 0 or 1 ]
+            [ "set_choose_local_fallback_tries", 0 or 1 ]
+            [ "set_chooseleaf_vary_r", 0 or 1 ]
+            [ "set_chooseleaf_stable", 0 or 1 ]
+
     """
 
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, backward_compatibility=False):
         """Create a Crush.
 
         If the optional argument `verbose` is set to True, all methods
         will print debug information on stdout. It defaults to False.
 
+        If the optional argument `backward_compatibility` is set to
+        True, the tunables designed for backward_compatibility are
+        allowed, otherwise trying to use them raises an exception. See
+        **Backward compatibility** in the class documentation.
+
         """
-        self.c = LibCrush(verbose and 1 or 0)
+        self.c = LibCrush(verbose and 1 or 0,
+                          backward_compatibility and 1 or 0)
 
     def parse(self, crushmap):
         """Validate and parse the `crushmap` object.
@@ -59,6 +128,9 @@ class Crush(object):
 
               # optional (default: none)
               "rules": rules,
+
+              # optional (default: none)
+              "tunables": tunables,
             }
 
         The "trees" are the roots of device hierarchies, the "rules" describe
@@ -242,6 +314,18 @@ class Crush(object):
         ::
 
             step = [
+              "set_choose_tries" or "set_chooseleaf_tries",
+              <positive integer>
+            ]
+
+        Overrides the default number of tries (set by the
+        choose_total_tries tunables and defaulting to 50) when looking
+        for a bucket (set_choose_tries) or a device
+        (set_chooseleaf_tries). See **Choose and chooseleaf retries**
+        in the class documentation for more information.
+        ::
+
+            step = [
               "choose"
               "firstn" or "indep",
               <replication count positive int>,
@@ -289,7 +373,21 @@ class Crush(object):
 
             step = [ "emit" ]
 
-        Append the selection to the results and clear the selection.
+        Append the selection to the results and clear the selection
+        ::
+
+            tunables = {
+              "choose_total_tries": 50
+            }
+
+        A tunable changes the behavior of the **map()** method and it
+        will not return the same list of devices if it is changed.
+
+        - **choose_total_tries** (optional positive integer, default:
+          50) is the default number of retries on a collision.
+          See **Choose and chooseleaf retries** in the class
+          documentation for more information.
+
         """
         self.c.parse(crushmap)
         return True

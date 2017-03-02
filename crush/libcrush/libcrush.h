@@ -44,6 +44,9 @@ typedef struct LibCrush {
   PyObject_HEAD
 
   int verbose;
+  int backward_compatibility;
+  struct crush_map *tunables;
+
   int has_bucket_weights;
   struct crush_map *map;
   PyObject *types;
