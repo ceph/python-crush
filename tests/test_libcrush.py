@@ -27,7 +27,10 @@ STEP_BACKWARDS = [
     "chooseleaf_vary_r",
     "chooseleaf_stable",
 ]
-PARSE_BACKWARDS = STEP_BACKWARDS + ["straw_calc_version"]
+PARSE_BACKWARDS = STEP_BACKWARDS + [
+    "chooseleaf_descend_once",
+    "straw_calc_version",
+]
 
 
 class TestLibCrush(object):
