@@ -65,50 +65,55 @@ class Crush(object):
         various object placement strategies for this device hierarchy.
         ::
 
-            trees = {
+            trees = [
               # optional (default: none)
-              <root name str>: bucket or device,
-              <root name str>: bucket or device,
+              bucket or device,
+              bucket or device,
               ...
-            }
+            ]
 
-        The **root name** is the name of a top level bucket or device.
+        Each element can either be a device (i.e. no children and id >= 0)
+        or a bucket (i.e. id < 0).
         ::
 
             bucket = {
               # mandatory
-              "~type~": <str>,
+              "type": <str>,
+
+              # mandatory
+              "name": <str>,
 
               # optional (default: first available id)
-              "~id~": <negative int>,
+              "id": <negative int>,
 
               # optional (default: "straw2")
-              "~algorithm~": "uniform" or "list" or "straw2",
+              "algorithm": "uniform" or "list" or "straw2",
 
               # optional (default: cumulated children weights or none)
-              "~weight~": <postive float>,
+              "weight": <postive float>,
 
               # optional (default: none)
-              <child name str>: bucket or device,
-              <child name str>: bucket or device,
-              ...
+              "children": children
             }
 
-        The **~type~** is a user defined string that can be used by
+        The **type** is a user defined string that can be used by
         **rules** to select all buckets of the same type.
 
-        The **~id~** must either be set for all buckets or not at
-        all. If the **~id~** is provided, it must be a unique negative
+        The **name** is a user defined string that uniquely identify
+        the bucket.
+
+        The **id** must either be set for all buckets or not at
+        all. If the **id** is provided, it must be a unique negative
         number. If it is not provided, the first available id is
         used.
 
-        The **~weight~** must either be set for all buckets or not at
-        all. If not set, **~weight~** defaults to the cumulated weight
+        The **weight** must either be set for all buckets or not at
+        all. If not set, **weight** defaults to the cumulated weight
         of the immediate children bucket or devices, recursively,
         bottom to top.
 
         Children within a bucket are chosen with one of three
-        **~algorithms~** representing a tradeoff between performance
+        **algorithms** representing a tradeoff between performance
         and reorganization efficiency. If you are unsure, we recommend
         using **"straw2"**. The table summarizes how the speed of each
         option measures up against mapping stability when items are
@@ -177,22 +182,39 @@ class Crush(object):
           buckets most suitable for circumstances in which they never
           (or very rarely) shrink.
 
-        There can be many children or none.
+        There children may be ommited.
+        ::
+
+            children = [
+              # optional (default: none)
+              bucket or device,
+              bucket or device,
+              ...
+            ]
+
+        Each element can either be a device (i.e. no children and id >= 0)
+        or a bucket (i.e. id < 0).
         ::
 
             device = {
               # mandatory
-              "~id~": <positive int>,
+              "id": <positive int>,
+
+              # mandatory
+              "name": <str>,
 
               # optional (default: 1.0)
-              "~weight~": <postive float>,
+              "weight": <postive float>,
             }
 
-        The **~id~** must be a unique positive number.
+        The **id** must be a unique positive number.
 
-        If the **~weight~** of a device A is lower than the
-        **~weight~** of a device B, it will be less likely to be used.
-        A common pattern is to set the **~weight~** to 2.0 for 2TB
+        The **name** is a user defined string that uniquely identify
+        the bucket.
+
+        If the **weight** of a device A is lower than the
+        **weight** of a device B, it will be less likely to be used.
+        A common pattern is to set the **weight** to 2.0 for 2TB
         devices, 1.0 for 1TB devices, 0.5 for 500GB devices, etc.
         ::
 

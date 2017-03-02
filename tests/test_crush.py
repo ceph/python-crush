@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import json
 import pytest # noqa needed for capsys
 
 from crush import Crush
@@ -25,56 +24,39 @@ from crush import Crush
 
 class TestCrush(object):
 
-    def test_parse_empty(self, capsys):
-        empty = {
-            'trees': {"dc1": {
-                '~type~': 'root',
-            }}
-        }
-        assert Crush(verbose=True).parse(empty)
-        out, err = capsys.readouterr()
-        assert 'trees' in out
-        assert '~type~' in out
-
-        assert Crush().parse(empty)
-        out, err = capsys.readouterr()
-        assert 'trees' not in out
-
     def test_map(self):
-        map = """
-        {
-          "trees": { "dc1": {
-           "~type~": "root",
-           "host0": {
-            "~type~": "host",
-            "device0": { "~id~": 0, "~weight~": 1.0 },
-            "device1": { "~id~": 1, "~weight~": 2.0 }
-           },
-           "host1": {
-            "~type~": "host",
-            "device2": { "~id~": 2, "~weight~": 1.0 },
-            "device3": { "~id~": 3, "~weight~": 2.0 }
-           },
-           "host2": {
-            "~type~": "host",
-            "device4": { "~id~": 4, "~weight~": 1.0 },
-            "device5": { "~id~": 5, "~weight~": 2.0 }
-           }
-          } },
-          "rules": {
-           "data": [
-              [ "take", "dc1" ],
-              [ "chooseleaf", "firstn", 0, "type", "host" ],
-              [ "emit" ]
-           ]
-          }
+        crushmap = {
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "children": [],
+                }
+            ],
+            "rules": {
+                "data": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+            }
         }
-
-        """
+        crushmap['trees'][0]['children'].extend([
+            {
+                "type": "host",
+                "id": -(i + 2),
+                "name": "host%d" % i,
+                "children": [
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                ],
+            } for i in range(0, 10)
+        ])
         c = Crush(verbose=1)
-        assert c.parse(json.loads(map))
+        assert c.parse(crushmap)
         assert len(c.map(rule="data", value=1234, replication_count=1)) == 1
 
 # Local Variables:
-# compile-command: "cd .. ; tox -e py27 tests/test_crush.py"
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_crush.py"
 # End:

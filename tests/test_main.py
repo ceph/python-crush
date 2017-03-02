@@ -36,5 +36,5 @@ class TestCrush(object):
                 logging.DEBUG)
 
 # Local Variables:
-# compile-command: "cd .. ; tox -e py27 tests/test_main.py"
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_main.py"
 # End:
