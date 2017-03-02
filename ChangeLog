@@ -1,10 +1,13 @@
 CHANGES
 =======
 
-1.0.5
+1.0.6
 -----
 
+* version 1.0.6
+* bump 1.0.6
 * version 1.0.5
+* update the quick start example
 * bucket children must be ordered
 * fix step choose* documentation
 * bump 1.0.5
