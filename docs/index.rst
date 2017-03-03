@@ -1,7 +1,7 @@
 crush
 =====
 
-`crush <http://http://libcrush.org/main/python-crush>`_ is a `GPLv3+
+`crush <http://libcrush.org/main/python-crush>`_ is a `GPLv3+
 Licensed <https://www.wikidata.org/wiki/Q27016754>`_ library to control placement in a hierarchy.
 
 Introduction
