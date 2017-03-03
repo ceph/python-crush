@@ -140,8 +140,8 @@ class Crush(object):
 
             trees = [
               # optional (default: none)
-              bucket or device,
-              bucket or device,
+              bucket or device or reference,
+              bucket or device or reference,
               ...
             ]
 
@@ -182,8 +182,8 @@ class Crush(object):
 
         The **weight** must either be set for all buckets or not at
         all. If not set, **weight** defaults to the cumulated weight
-        of the immediate children bucket or devices, recursively,
-        bottom to top.
+        of the immediate children bucket or devices or reference,
+        recursively, bottom to top.
 
         Children within a bucket are chosen with one of three
         **algorithms** representing a tradeoff between performance
@@ -260,8 +260,8 @@ class Crush(object):
 
             children = [
               # optional (default: none)
-              bucket or device,
-              bucket or device,
+              bucket or device or reference,
+              bucket or device or reference,
               ...
             ]
 
@@ -289,6 +289,22 @@ class Crush(object):
         **weight** of a device B, it will be less likely to be used.
         A common pattern is to set the **weight** to 2.0 for 2TB
         devices, 1.0 for 1TB devices, 0.5 for 500GB devices, etc.
+        ::
+
+            reference = {
+              # mandatory
+              "reference_id": <int>,
+
+              # optional (default: 1.0)
+              "weight": <postive float>,
+            }
+
+        The **reference_id** must be equal to the **id** of a bucket or
+        device defined in the hierarchy.
+
+        If the **weight** is omitted, it default to 1.0. The
+        **weight** must either be set for all references or not at
+        all.
         ::
 
             rules = {

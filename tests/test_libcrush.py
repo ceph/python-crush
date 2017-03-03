@@ -276,6 +276,62 @@ class TestLibCrush(object):
             LibCrush().parse(duplicate_id)
         assert ' -17 ' in str(e.value)
 
+    def test_parse_bucket_reference_id(self):
+        crushmap = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [
+                    {
+                        'weight': 1.0,
+                        'reference_id': -2,
+                    },
+                    {
+                        'type': 'host',
+                        'name': 'host1',
+                        'id': -2,
+                    }
+                ],
+            }]
+        }
+        LibCrush(verbose=1).parse(crushmap)
+
+    def test_parse_bucket_reference_id_bad(self):
+        crushmap = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [
+                    {
+                        'weight': 1.0,
+                        'reference_id': 'bad',
+                    }
+                ],
+            }]
+        }
+        with pytest.raises(TypeError):
+            LibCrush(verbose=1).parse(crushmap)
+
+        crushmap = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [
+                    {
+                        'weight': 1.0,
+                        'reference_id': 1,
+                        'INVALID': 'foo',
+                    }
+                ],
+            }]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(crushmap)
+        assert 'INVALID is not among' in str(e.value)
+
     def test_parse_weight_invalid(self):
         wrong = {
             'trees': [{

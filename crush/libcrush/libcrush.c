@@ -87,6 +87,9 @@ static int parse_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
   if (id == NULL) {
     *idout = crush_get_next_bucket_id(self->map);
     PyList_Append(trace, PyUnicode_FromFormat("id %d (default)", *idout));
+    PyObject *python_id = MyInt_FromInt(*idout);
+    int r = PyDict_SetItemString(bucket, "id", python_id);
+    Py_DECREF(python_id);
   } else {
     PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
     *idout = MyInt_AsInt(id);
@@ -290,6 +293,52 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
   return 1;
 }
 
+static int has_reference_id(LibCrush *self, PyObject *bucket, PyObject *trace)
+{
+  return PyDict_GetItemString(bucket, "reference_id") != NULL;
+}
+
+static int parse_reference_id(LibCrush *self, PyObject *bucket, int *idout, PyObject *trace)
+{
+  PyObject *id = PyDict_GetItemString(bucket, "reference_id");
+  if (id == NULL) {
+    PyErr_SetString(PyExc_RuntimeError, "missing reference_id");
+    return 0;
+  } else {
+    PyList_Append(trace, PyUnicode_FromFormat("reference_id %S", id));
+    *idout = MyInt_AsInt(id);
+    if (PyErr_Occurred())
+      return 0;
+  }
+  return 1;
+}
+
+static int parse_reference(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
+{
+  PyList_Append(trace, PyUnicode_FromFormat("reference content %S", bucket));
+
+  if (!parse_reference_id(self, bucket, idout, trace))
+    return 0;
+  int weight;
+  if (!parse_weight(self, bucket, weightout, trace))
+    return 0;
+
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(bucket, &pos, &key, &value)) {
+    const char *k = MyText_AsString(key);
+    if (k == 0)
+      return 0;
+    if (!(!strcmp("reference_id", k) ||
+          !strcmp("weight", k))) {
+      PyErr_Format(PyExc_RuntimeError, "%s is not among reference_id, weight", k);
+      return 0;
+    }
+  }
+  return 1;
+}
+
 static int parse_device(LibCrush *self, PyObject *device, int *idout, int *weightout, PyObject *trace)
 {
   PyList_Append(trace, PyUnicode_FromFormat("device content %S", device));
@@ -321,6 +370,8 @@ static int parse_device(LibCrush *self, PyObject *device, int *idout, int *weigh
 
 static int parse_bucket_or_device(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
 {
+  if (has_reference_id(self, bucket, trace))
+    return parse_reference(self, bucket, idout, weightout, trace);
   int type;
   if (!parse_type(self, bucket, &type, trace))
     return 0;
