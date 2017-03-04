@@ -347,7 +347,7 @@ class Crush(object):
               "firstn" or "indep",
               <replication count positive int>,
               "type"
-              <bucket type str>
+              bucket type or device type
             ]
 
         Recursively explore each bucket currently selected, looking for
@@ -363,6 +363,17 @@ class Crush(object):
         to select will be determined by the `replication_count` argument of
         the `map` method, i.e. **replication count** is set to
         match the desired number of replicas.
+        ::
+
+            bucket type = <str>
+
+        The type field of a bucket definition is used in rule steps to
+        designate all buckets with the same type.
+        ::
+
+            device type = 0
+
+        The devices all have the same fixed type: 0.
         ::
 
             step = [

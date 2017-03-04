@@ -500,18 +500,22 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     return 0;
   }
 
-  PyObject *python_type_name = PyList_GetItem(step, 4);
-  const char *type_name = MyText_AsString(python_type_name);
-  if (type_name == NULL)
-    return 0;
-  if (!PyDict_Contains(self->types, python_type_name)) {
-    PyErr_Format(PyExc_RuntimeError, "type %s is unknown", type_name);
-    return 0;
+  PyObject *python_type_reference = PyList_GetItem(step, 4);
+  int type;
+  if (PyUnicode_Check(python_type_reference)) {
+    if (!PyDict_Contains(self->types, python_type_reference)) {
+      PyErr_Format(PyExc_RuntimeError, "type is unknown");
+      return 0;
+    }
+    PyObject *python_type = PyDict_GetItem(self->types, python_type_reference);
+    type = MyInt_AsInt(python_type);
+    if (PyErr_Occurred())
+      return 0;
+  } else {
+    type = MyInt_AsInt(python_type_reference);
+    if (PyErr_Occurred())
+      return 0;
   }
-  PyObject *python_type = PyDict_GetItem(self->types, python_type_name);
-  int type = MyInt_AsInt(python_type);
-  if (PyErr_Occurred())
-    return 0;
 
   crush_rule_set_step(crule, step_index, op, replication_count, type);
 
