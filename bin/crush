@@ -20,6 +20,6 @@
 #
 import sys
 import sys
-from crush.main import Crush
+from crush.main import Main
 
-sys.exit(Crush().run(sys.argv[1:]))
+sys.exit(Main().run(sys.argv[1:]))

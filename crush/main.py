@@ -24,16 +24,13 @@ import textwrap
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
 
-class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter,
-                      argparse.RawDescriptionHelpFormatter):
-    pass
 
 
-class Crush(object):
+class Main(object):
 
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            formatter_class=CustomFormatter,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
             description=textwrap.dedent("""\
             A library to control placement in a hierarchy
             """))
