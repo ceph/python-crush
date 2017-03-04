@@ -21,6 +21,8 @@ import argparse
 import logging
 import textwrap
 
+from crush import ceph
+
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
 
@@ -39,7 +41,15 @@ class Main(object):
             help='be more verbose',
         )
 
-    def run(self, argv):
+        subparsers = self.parser.add_subparsers(
+            title='subcommands',
+            description='valid subcommands',
+            help='sub-command -h',
+        )
+
+        ceph.Ceph.set_parser(subparsers)
+
+    def constructor(self, argv):
         self.args = self.parser.parse_args(argv)
 
         if self.args.verbose:
@@ -48,4 +58,7 @@ class Main(object):
             level = logging.INFO
         logging.getLogger('crush').setLevel(level)
 
-        return self.args.func(self.args).run()
+        return self.args.func(self.args)
+
+    def run(self, argv):
+        return self.constructor(argv).run()
