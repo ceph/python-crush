@@ -892,7 +892,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
     return 0;
 
   if (self->verbose)
-    print_debug(PyUnicode_FromFormat("map(rule=%S=%d, value=%d, replication_count=%d)",
+    print_debug(PyUnicode_FromFormat("map(rule=%S=%d, value=%d, replication_count=%d)\n",
                                      rule,
                                      ruleno,
                                      value,
