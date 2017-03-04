@@ -24,7 +24,7 @@ from crush import Crush
 
 class TestCrush(object):
 
-    def test_map(self):
+    def build_crushmap(self):
         crushmap = {
             "trees": [
                 {
@@ -53,10 +53,41 @@ class TestCrush(object):
                 ],
             } for i in range(0, 10)
         ])
+        return crushmap
+
+    def test_map(self):
+        crushmap = self.build_crushmap()
         c = Crush(verbose=1)
         assert c.parse(crushmap)
         assert len(c.map(rule="data", value=1234, replication_count=1)) == 1
 
+    def test_get_item_by_(self):
+        crushmap = self.build_crushmap()
+        c = Crush(verbose=1)
+        assert c.parse(crushmap)
+        assert c.get_item_by_id(-2)['name'] == 'host0'
+        assert c.get_item_by_name('host0')['id'] == -2
+
+    def test_dereference(self):
+        crushmap = self.build_crushmap()
+        weight = 1234
+        crushmap['trees'].append({
+            "type": "root",
+            "id": -20,
+            "name": "dc2",
+            "children": [
+                {
+                    "reference_id": -2,
+                    "weight": weight,
+                },
+            ],
+        })
+        c = Crush(verbose=1)
+        assert c.parse(crushmap)
+        trees = c.get_crushmap()['trees']
+        assert trees[1]['children'][0]['weight'] == weight
+        assert trees[1]['children'][0]['name'] == 'host0'
+
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_crush.py"
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_crush.py"
 # End:
