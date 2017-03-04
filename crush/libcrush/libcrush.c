@@ -832,19 +832,6 @@ LibCrush_parse(LibCrush *self, PyObject *args)
     return 0;
   }
 
-  self->map->choose_local_tries = self->tunables->choose_local_tries;
-  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
-  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
-  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
-  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
-  self->map->straw_calc_version = self->tunables->straw_calc_version;
-  self->map->choose_total_tries = self->tunables->choose_total_tries;
-
-  self->map->allowed_bucket_algs =
-    (1 << CRUSH_BUCKET_UNIFORM) |
-    (1 << CRUSH_BUCKET_LIST) |
-    (1 << CRUSH_BUCKET_STRAW2);
-
   PyObject *trace = PyList_New(0);
   int r = parse(self, map, trace);
   if (!r || self->verbose)
@@ -906,6 +893,19 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
                                      ruleno,
                                      value,
                                      replication_count));
+
+  self->map->choose_local_tries = self->tunables->choose_local_tries;
+  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
+  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
+  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
+  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
+  self->map->straw_calc_version = self->tunables->straw_calc_version;
+  self->map->choose_total_tries = self->tunables->choose_total_tries;
+
+  self->map->allowed_bucket_algs =
+    (1 << CRUSH_BUCKET_UNIFORM) |
+    (1 << CRUSH_BUCKET_LIST) |
+    (1 << CRUSH_BUCKET_STRAW2);
 
   int weights_size = self->highest_device_id + 1;
   __u32 weights[weights_size];
