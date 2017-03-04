@@ -111,8 +111,8 @@ class Crush(object):
         **Backward compatibility** in the class documentation.
 
         """
-        self.c = LibCrush(verbose and 1 or 0,
-                          backward_compatibility and 1 or 0)
+        self.c = LibCrush(verbose=verbose and 1 or 0,
+                          backward_compatibility=backward_compatibility and 1 or 0)
 
     def parse(self, crushmap):
         """Validate and parse the `crushmap` object.
