@@ -27,6 +27,7 @@
 
 #if PY_MAJOR_VERSION >= 3
 
+#define MyText_Check			PyUnicode_Check
 #define MyText_Type                     PyUnicode_Type
 #define MyText_AS_BYTES(o)              PyUnicode_AsASCIIString(o)
 #define MyBytes_GET_SIZE(o)             PyBytes_GET_SIZE(o)
@@ -41,6 +42,7 @@
 
 #else
 
+#define MyText_Check(a)			PyString_Check(a) || PyUnicode_Check(a)
 #define MyText_Type                     PyString_Type
 #define MyText_AS_BYTES(o)              (Py_INCREF(o), o)
 #define MyBytes_GET_SIZE(o)             PyString_GET_SIZE(o)

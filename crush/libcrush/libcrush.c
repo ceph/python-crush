@@ -502,7 +502,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
 
   PyObject *python_type_reference = PyList_GetItem(step, 4);
   int type;
-  if (PyUnicode_Check(python_type_reference)) {
+  if (MyText_Check(python_type_reference)) {
     if (!PyDict_Contains(self->types, python_type_reference)) {
       PyErr_Format(PyExc_RuntimeError, "type is unknown");
       return 0;
