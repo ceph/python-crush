@@ -24,8 +24,6 @@ import textwrap
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
 
-
-
 class Main(object):
 
     def __init__(self):
