@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.7
+-----
+
+* version 1.0.7
+* a child may reference an existing bucket or device
+* typo in URL
+* chooseleaf_descend_once is also a tunable
+* set_choose_local*_tries argument is positive
+* support and document default tunables & step set_* tunables
+* bump 1.0.7
+
 1.0.6
 -----
 
