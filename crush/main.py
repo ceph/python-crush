@@ -21,6 +21,7 @@ import argparse
 import logging
 import textwrap
 
+from crush import analyze
 from crush import ceph
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
@@ -47,6 +48,7 @@ class Main(object):
             help='sub-command -h',
         )
 
+        analyze.Analyze.set_parser(subparsers)
         ceph.Ceph.set_parser(subparsers)
 
     def constructor(self, argv):

@@ -8,3 +8,4 @@ coverage
 pytest
 flake8
 pytest-capturelog
+pandas
