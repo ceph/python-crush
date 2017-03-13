@@ -42,7 +42,7 @@ class Analyze(object):
             add_help=False,
             conflict_handler='resolve',
         )
-        replication_count = 2
+        replication_count = 3
         parser.add_argument(
             '--replication-count',
             help=('number of devices to map (default %d)' % replication_count),
