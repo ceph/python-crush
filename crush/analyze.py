@@ -64,9 +64,10 @@ class Analyze(object):
             type=int,
             default=values_count)
         parser.add_argument(
-            '--backward-compatibility',
-            action='store_true', default=False,
-            help='true if backward compatibility tunables are allowed (default false)')
+            '--no-backward-compatibility',
+            dest='backward_compatibility',
+            action='store_false', default=True,
+            help='do not allow backward compatibility tunables (default allowed)')
         return parser
 
     @staticmethod
