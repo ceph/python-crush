@@ -1,3 +1,22 @@
+//
+// Copyright (C) 2017 <contact@redhat.com>
+//
+// Author: Loic Dachary <loic@dachary.org>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+//
 #ifndef _LIBCRUSH_H
 #define _LIBCRUSH_H
 
@@ -8,6 +27,7 @@
 
 #if PY_MAJOR_VERSION >= 3
 
+#define MyText_Check			PyUnicode_Check
 #define MyText_Type                     PyUnicode_Type
 #define MyText_AS_BYTES(o)              PyUnicode_AsASCIIString(o)
 #define MyBytes_GET_SIZE(o)             PyBytes_GET_SIZE(o)
@@ -22,6 +42,7 @@
 
 #else
 
+#define MyText_Check(a)			PyString_Check(a) || PyUnicode_Check(a)
 #define MyText_Type                     PyString_Type
 #define MyText_AS_BYTES(o)              (Py_INCREF(o), o)
 #define MyBytes_GET_SIZE(o)             PyString_GET_SIZE(o)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- mode: python; coding: utf-8 -*-
 #
 # Copyright (C) 2017 <contact@redhat.com>
@@ -18,8 +17,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
-import sys
+import logging
+import pytest # noqa needed for capsys
+
 from crush.main import Main
 
-sys.exit(Main().run(sys.argv[1:]))
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
+                    level=logging.DEBUG)
+
+
+class TestCeph(object):
+
+    def test_main(self, capsys):
+        Main().run([
+            'ceph',
+            '--convert', 'tests/ceph.json',
+        ])
+        out, err = capsys.readouterr()
+        assert '"reference_id": -2' in out
+
+# Local Variables:
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
+# End:

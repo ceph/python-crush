@@ -1,3 +1,22 @@
+//
+// Copyright (C) 2017 <contact@redhat.com>
+//
+// Author: Loic Dachary <loic@dachary.org>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+//
 #include "libcrush.h"
 
 #include <bytesobject.h>
@@ -481,18 +500,22 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     return 0;
   }
 
-  PyObject *python_type_name = PyList_GetItem(step, 4);
-  const char *type_name = MyText_AsString(python_type_name);
-  if (type_name == NULL)
-    return 0;
-  if (!PyDict_Contains(self->types, python_type_name)) {
-    PyErr_Format(PyExc_RuntimeError, "type %s is unknown", type_name);
-    return 0;
+  PyObject *python_type_reference = PyList_GetItem(step, 4);
+  int type;
+  if (MyText_Check(python_type_reference)) {
+    if (!PyDict_Contains(self->types, python_type_reference)) {
+      PyErr_Format(PyExc_RuntimeError, "type is unknown");
+      return 0;
+    }
+    PyObject *python_type = PyDict_GetItem(self->types, python_type_reference);
+    type = MyInt_AsInt(python_type);
+    if (PyErr_Occurred())
+      return 0;
+  } else {
+    type = MyInt_AsInt(python_type_reference);
+    if (PyErr_Occurred())
+      return 0;
   }
-  PyObject *python_type = PyDict_GetItem(self->types, python_type_name);
-  int type = MyInt_AsInt(python_type);
-  if (PyErr_Occurred())
-    return 0;
 
   crush_rule_set_step(crule, step_index, op, replication_count, type);
 
@@ -813,19 +836,6 @@ LibCrush_parse(LibCrush *self, PyObject *args)
     return 0;
   }
 
-  self->map->choose_local_tries = self->tunables->choose_local_tries;
-  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
-  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
-  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
-  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
-  self->map->straw_calc_version = self->tunables->straw_calc_version;
-  self->map->choose_total_tries = self->tunables->choose_total_tries;
-
-  self->map->allowed_bucket_algs =
-    (1 << CRUSH_BUCKET_UNIFORM) |
-    (1 << CRUSH_BUCKET_LIST) |
-    (1 << CRUSH_BUCKET_STRAW2);
-
   PyObject *trace = PyList_New(0);
   int r = parse(self, map, trace);
   if (!r || self->verbose)
@@ -882,11 +892,24 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
     return 0;
 
   if (self->verbose)
-    print_debug(PyUnicode_FromFormat("map(rule=%S=%d, value=%d, replication_count=%d)",
+    print_debug(PyUnicode_FromFormat("map(rule=%S=%d, value=%d, replication_count=%d)\n",
                                      rule,
                                      ruleno,
                                      value,
                                      replication_count));
+
+  self->map->choose_local_tries = self->tunables->choose_local_tries;
+  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
+  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
+  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
+  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
+  self->map->straw_calc_version = self->tunables->straw_calc_version;
+  self->map->choose_total_tries = self->tunables->choose_total_tries;
+
+  self->map->allowed_bucket_algs =
+    (1 << CRUSH_BUCKET_UNIFORM) |
+    (1 << CRUSH_BUCKET_LIST) |
+    (1 << CRUSH_BUCKET_STRAW2);
 
   int weights_size = self->highest_device_id + 1;
   __u32 weights[weights_size];

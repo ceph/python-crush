@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import copy
 try:  # chicken and egg problem when running pip install -e . from sources
     from crush.libcrush import LibCrush
 except:
@@ -111,8 +112,8 @@ class Crush(object):
         **Backward compatibility** in the class documentation.
 
         """
-        self.c = LibCrush(verbose and 1 or 0,
-                          backward_compatibility and 1 or 0)
+        self.c = LibCrush(verbose=verbose and 1 or 0,
+                          backward_compatibility=backward_compatibility and 1 or 0)
 
     def parse(self, crushmap):
         """Validate and parse the `crushmap` object.
@@ -347,7 +348,7 @@ class Crush(object):
               "firstn" or "indep",
               <replication count positive int>,
               "type"
-              <bucket type str>
+              bucket type or device type
             ]
 
         Recursively explore each bucket currently selected, looking for
@@ -363,6 +364,17 @@ class Crush(object):
         to select will be determined by the `replication_count` argument of
         the `map` method, i.e. **replication count** is set to
         match the desired number of replicas.
+        ::
+
+            bucket type = <str>
+
+        The type field of a bucket definition is used in rule steps to
+        designate all buckets with the same type.
+        ::
+
+            device type = 0
+
+        The devices all have the same fixed type: 0.
         ::
 
             step = [
@@ -406,7 +418,9 @@ class Crush(object):
           documentation for more information.
 
         """
-        self.c.parse(crushmap)
+        self.crushmap = copy.deepcopy(crushmap)
+        self.c.parse(self.crushmap)
+        self._update_info()
         return True
 
     def map(self, rule, value, replication_count, weights=None):
@@ -461,3 +475,35 @@ class Crush(object):
         if weights:
             kwargs["weight"] = weights
         return self.c.map(**kwargs)
+
+    def _collect_items(self, children):
+        for child in children:
+            if 'id' in child:
+                self._name2item[child['name']] = child
+                self._id2item[child['id']] = child
+            self._collect_items(child.get('children', []))
+
+    def _dereference(self, children):
+        for i in range(len(children)):
+            child = children[i]
+            if 'reference_id' in child:
+                new_child = copy.copy(self._id2item[child['reference_id']])
+                new_child['weight'] = child['weight']
+                children[i] = new_child
+            self._dereference(child.get('children', []))
+
+    def _update_info(self):
+        self._name2item = {}
+        self._id2item = {}
+        trees = self.crushmap.get('trees', [])
+        self._collect_items(trees)
+        self._dereference(trees)
+
+    def get_item_by_id(self, id):
+        return self._id2item[id]
+
+    def get_item_by_name(self, name):
+        return self._name2item[name]
+
+    def get_crushmap(self):
+        return self.crushmap

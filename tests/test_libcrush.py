@@ -555,23 +555,13 @@ class TestLibCrush(object):
         wrong = {
             'rules': {
                 'data': [
-                    ["choose", "firstn", 0, "type", 4]
-                ]
-            }
-        }
-        with pytest.raises(TypeError) as e:
-            LibCrush().parse(wrong)
-
-        wrong = {
-            'rules': {
-                'data': [
                     ["choose", "firstn", 0, "type", "unknown"]
                 ]
             }
         }
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
-        assert "type unknown is unknown" in str(e.value)
+        assert "type is unknown" in str(e.value)
 
     def test_map_ok(self):
         crushmap = {
@@ -587,6 +577,11 @@ class TestLibCrush(object):
                 "data": [
                     ["take", "dc1"],
                     ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+                "for_validation": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", 0],
                     ["emit"]
                 ],
             }
