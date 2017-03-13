@@ -52,8 +52,8 @@ class Analyze(object):
             '--rule',
             help='the name of rule')
         parser.add_argument(
-            '--failure-domain',
-            help='override the failure domain of the rule')
+            '--type',
+            help='override the type of bucket shown in the report')
         parser.add_argument(
             '--crushmap',
             help='path to the crushmap json file')
@@ -202,8 +202,10 @@ class Analyze(object):
         crushmap = c.get_crushmap()
         trees = crushmap.get('trees', [])
         (take, failure_domain) = self.analyze_rule(crushmap['rules'][self.args.rule])
-        if self.args.failure_domain:
-            failure_domain = self.args.failure_domain
+        if self.args.type:
+            type = self.args.type
+        else:
+            type = failure_domain
         root = self.find_take(trees, take)
         log.debug("root = " + str(root))
         d = self.collect_dataframe(c, root)
@@ -227,7 +229,7 @@ class Analyze(object):
         total_objects = replication_count * self.args.values_count
         d = self.collect_occupation(d, total_objects)
 
-        s = (d['~type~'] == failure_domain) & (d['~weight~'] > 0)
+        s = (d['~type~'] == type) & (d['~weight~'] > 0)
         a = d.loc[s, ['~id~', '~weight~', '~occupation~']]
         return a.sort_values(by='~occupation~', ascending=False)
 
