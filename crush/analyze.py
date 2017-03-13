@@ -67,10 +67,6 @@ class Analyze(object):
             '--backward-compatibility',
             action='store_true', default=False,
             help='true if backward compatibility tunables are allowed (default false)')
-        parser.add_argument(
-            '--order-matters',
-            action='store_true', default=False,
-            help='true if the order of mapped devices matter (default false)')
         return parser
 
     @staticmethod
