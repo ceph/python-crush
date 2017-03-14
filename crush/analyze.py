@@ -42,7 +42,7 @@ class Analyze(object):
             add_help=False,
             conflict_handler='resolve',
         )
-        replication_count = 2
+        replication_count = 3
         parser.add_argument(
             '--replication-count',
             help=('number of devices to map (default %d)' % replication_count),
@@ -52,11 +52,11 @@ class Analyze(object):
             '--rule',
             help='the name of rule')
         parser.add_argument(
-            '--failure-domain',
-            help='override the failure domain of the rule')
+            '--type',
+            help='override the type of bucket shown in the report')
         parser.add_argument(
             '--crushmap',
-            help='path to the crushmap json file')
+            help='path to the crushmap JSON file')
         values_count = 100000
         parser.add_argument(
             '--values-count',
@@ -64,13 +64,10 @@ class Analyze(object):
             type=int,
             default=values_count)
         parser.add_argument(
-            '--backward-compatibility',
-            action='store_true', default=False,
-            help='true if backward compatibility tunables are allowed (default false)')
-        parser.add_argument(
-            '--order-matters',
-            action='store_true', default=False,
-            help='true if the order of mapped devices matter (default false)')
+            '--no-backward-compatibility',
+            dest='backward_compatibility',
+            action='store_false', default=True,
+            help='do not allow backward compatibility tunables (default allowed)')
         return parser
 
     @staticmethod
@@ -79,15 +76,89 @@ class Analyze(object):
             'analyze',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description=textwrap.dedent("""\
-            Analyze crushmaps
+            Analyze a crushmap
+
+            Map a number of objects (--values-count) to devices (three
+            by default or --replication-count if specified) using a
+            crush rule (--rule) from a given crushmap (--crushmap) and
+            display a report comparing the expected and the actual
+            object distribution.
+
+            The --type argument changes the item type displayed in the
+            report. For instance --type device shows the individual
+            OSDs and --type host shows the machines that contain
+            them. If --type is not specified, it defaults to the
+            "type" argument of the first "choose*" step of the rule
+            selected by --rule.
+
+            The first item in the report will be the first to become
+            full. For instance if the report starts with:
+
+                    ~id~  ~weight~   ~over/under used~
+            ~name~
+            g9       -22  2.299988           10.400604
+
+            it means that the bucket g9 with id -22 and weight 2.29
+            will be the first bucket of its type to become full. The
+            actual usage of the host will be 10.4% over the expected
+            usage, i.e. if the g9 host is expected to be 70%
+            full, it will actually be 80.4% full.
+
+            The ~over/under used~ is the variation between the
+            expected item usage and the actual item usage. If it is
+            positive the item is overused, if it is negative the item
+            is underused. For more information about why this happens
+            see http://tracker.ceph.com/issues/15653#detailed-explanation
 
             """),
             epilog=textwrap.dedent("""
             Examples:
 
+            Display the first host that will become full.
+
+            $ crush analyze --rule replicated --crushmap crushmap.json
+                    ~id~  ~weight~  ~over/under used~
+            ~name~
+            g9       -22  2.299988     10.400604
+            g3        -4  1.500000     10.126750
+            g12      -28  4.000000      4.573330
+            g10      -24  4.980988      1.955702
+            g2        -3  5.199982      1.903230
+            n7        -9  5.484985      1.259041
+            g1        -2  5.880997      0.502741
+            g11      -25  6.225967     -0.957755
+            g8       -20  6.679993     -1.730727
+            g5       -15  8.799988     -7.884220
+
+            Display the first device that will become full.
+
+            $ crush analyze --type device --rule replicated \\
+                            --crushmap crushmap.json
+                    ~id~  ~weight~  ~over/under used~
+            ~name~
+            osd.35    35  2.299988     10.400604
+            osd.2      2  1.500000     10.126750
+            osd.47    47  2.500000      5.543335
+            osd.46    46  1.500000      2.956655
+            osd.29    29  1.784988      2.506855
+            osd.1      1  3.899994      2.315382
+            osd.37    37  2.681000      2.029613
+            osd.38    38  2.299988      1.869548
+            osd.27    27  1.699997      1.275095
+            osd.21    21  1.299988      0.666766
+            osd.0      0  3.199997      0.515785
+            osd.20    20  2.681000      0.487172
+            osd.8      8  2.000000      0.131729
+            osd.44    44  1.812988     -0.155715
+            osd.11    11  2.599991     -1.238497
+            osd.3      3  1.812988     -1.357188
+            osd.9      9  4.000000     -1.616832
+            osd.13    13  2.679993     -1.900721
+            osd.26    26  3.000000     -7.577257
+            osd.25    25  2.799988     -7.733660
+            osd.24    24  3.000000     -8.331705
             """),
             help='Analyze crushmaps',
-            add_help=False,
             parents=[Analyze.get_parser()],
         ).set_defaults(
             func=Analyze,
@@ -163,12 +234,12 @@ class Analyze(object):
         return d
 
     @staticmethod
-    def collect_occupation(d, total_objects):
+    def collect_usage(d, total_objects):
         capacity = d['~nweight~'] * float(total_objects)
-        d['~occupation~'] = 0.0
+        d['~over/under used~'] = 0.0
         for type in d['~type~'].unique():
-            occupation = d['~objects~'] / capacity - 1.0
-            d.loc[d['~type~'] == type, ['~occupation~']] = occupation * 100
+            usage = d['~objects~'] / capacity - 1.0
+            d.loc[d['~type~'] == type, ['~over/under used~']] = usage * 100
         return d
 
     @staticmethod
@@ -202,8 +273,10 @@ class Analyze(object):
         crushmap = c.get_crushmap()
         trees = crushmap.get('trees', [])
         (take, failure_domain) = self.analyze_rule(crushmap['rules'][self.args.rule])
-        if self.args.failure_domain:
-            failure_domain = self.args.failure_domain
+        if self.args.type:
+            type = self.args.type
+        else:
+            type = failure_domain
         root = self.find_take(trees, take)
         log.debug("root = " + str(root))
         d = self.collect_dataframe(c, root)
@@ -225,11 +298,11 @@ class Analyze(object):
                 d.at[item, '~objects~'] += count
 
         total_objects = replication_count * self.args.values_count
-        d = self.collect_occupation(d, total_objects)
+        d = self.collect_usage(d, total_objects)
 
-        s = (d['~type~'] == failure_domain) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~occupation~']]
-        return a.sort_values(by='~occupation~', ascending=False)
+        s = (d['~type~'] == type) & (d['~weight~'] > 0)
+        a = d.loc[s, ['~id~', '~weight~', '~over/under used~']]
+        return a.sort_values(by='~over/under used~', ascending=False)
 
     def run(self):
         if self.args.crushmap:

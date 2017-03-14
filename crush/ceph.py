@@ -40,8 +40,11 @@ class Ceph(object):
         )
         parser.add_argument(
             '--convert',
-            help=('convert CrushWrapper::dump into crush.Crush json'
-                  'for the file given in argument'),
+            help=('convert PATH (which is expected to be a file '
+                  'in Ceph JSON format as produced by CrushWrapper::dump) '
+                  'into the python-crush JSON format and display '
+                  'the result on the standard output'),
+            metavar='PATH',
         )
         return parser
 
@@ -53,13 +56,30 @@ class Ceph(object):
             description=textwrap.dedent("""\
             Ceph support
 
+            The Ceph crushmap can be displayed in JSON using the following commands:
+
+            - ceph osd crush dump
+            - crushtool --dump
+            - ceph report
+
+            The JSON used is different from the python-crush format documented at
+            http://crush.readthedocs.io/en/latest/api.html#crush.Crush.parse
+            and can be converted using the --convert option.
+
             """),
             epilog=textwrap.dedent("""
             Examples:
 
+            Convert a Ceph JSON crushmap into a python-crush crushmap:
+
+            - ceph osd crush dump > crushmap-ceph.json
+            - crush ceph --convert crushmap-ceph.json > crushmap.json
+
+            - ceph osd getcrushmap > crushmap
+            - crushtool -d crushmap -o /dev/null --dump > crushmap-ceph.json
+            - crush ceph --convert crushmap-ceph.json > crushmap.json
             """),
             help='Ceph support',
-            add_help=False,
             parents=[Ceph.get_parser()],
         ).set_defaults(
             func=Ceph,
