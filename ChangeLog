@@ -1,6 +1,30 @@
 CHANGES
 =======
 
+1.0.8
+-----
+
+* version 1.0.8
+* doc: add CLI information and --help instructions
+* ceph: add documentation
+* analyze: add documentation
+* analyze: make --backward-compatibility the default
+* analyze: strip --order-matters
+* analyze: --type is better than --failure-domain
+* analyze: default replication count is 3
+* add the analyze subcommand
+* add the ceph subcommand
+* move logging after imports
+* keys may be string or unicode
+* Crush keeps the original crushmap
+* rename main.Crush in main.Main
+* missing newline in debug message
+* the choose type may be zero for devices
+* explicit keyword arguments for Crush constructor
+* tunable must be set before map() not before parse()
+* add the license where it matters
+* bump 1.0.8
+
 1.0.7
 -----
 
