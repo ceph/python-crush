@@ -45,7 +45,7 @@ class Analyze(object):
         replication_count = 3
         parser.add_argument(
             '--replication-count',
-            help=('number of devices to map (default %d)' % replication_count),
+            help=('number of devices to map (default: %d)' % replication_count),
             type=int,
             default=replication_count)
         parser.add_argument(
@@ -60,14 +60,14 @@ class Analyze(object):
         values_count = 100000
         parser.add_argument(
             '--values-count',
-            help='repeat mapping (default %d)' % values_count,
+            help='repeat mapping (default: %d)' % values_count,
             type=int,
             default=values_count)
         parser.add_argument(
             '--no-backward-compatibility',
             dest='backward_compatibility',
             action='store_false', default=True,
-            help='do not allow backward compatibility tunables (default allowed)')
+            help='do not allow backward compatibility tunables (default: allowed)')
         return parser
 
     @staticmethod
