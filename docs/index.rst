@@ -46,6 +46,37 @@ API
 CLI quick start
 ---------------
 
+How many objects will move after adding two new devices in the
+crushmap ?
+::
+
+    $ crush compare --rule firstn \
+                    --replication-count 1 \
+                    --origin before.json --destination after.json
+    There are 1000 objects.
+
+    Replacing the crushmap specified with --origin with the crushmap
+    specified with --destination will move 229 objects (22.9% of the total)
+    from one item to another.
+
+    The rows below show the number of objects moved from the given
+    item to each item named in the columns. The objects% at the
+    end of the rows shows shows the percentage of the total number
+    of objects that is moved away from this particular item. The
+    last row shows the percentage of the total number of objects
+    that is moved to the item named in the column.
+
+             osd.8    osd.9    objects%
+    osd.0        3        4       0.70%
+    osd.1        1        3       0.40%
+    osd.2       16       16       3.20%
+    osd.3       19       21       4.00%
+    osd.4       17       18       3.50%
+    osd.5       18       23       4.10%
+    osd.6       14       23       3.70%
+    osd.7       14       19       3.30%
+    objects%   10.20%   12.70%   22.90%
+
 Given a Ceph crushmap, show which hosts will be overused or underused::
 
     $ ceph osd crush dump > crushmap-ceph.json
