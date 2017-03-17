@@ -94,17 +94,17 @@ class Analyze(object):
             The first item in the report will be the first to become
             full. For instance if the report starts with:
 
-                    ~id~  ~weight~   ~over/under used~
+                    ~id~  ~weight~   ~over/under used %~
             ~name~
-            g9       -22  2.299988           10.400604
+            g9       -22  2.29           10.40
 
             it means that the bucket g9 with id -22 and weight 2.29
             will be the first bucket of its type to become full. The
             actual usage of the host will be 10.4% over the expected
             usage, i.e. if the g9 host is expected to be 70%
-            full, it will actually be 80.4% full.
+            full, it will actually be 80.40% full.
 
-            The ~over/under used~ is the variation between the
+            The ~over/under used %~ is the variation between the
             expected item usage and the actual item usage. If it is
             positive the item is overused, if it is negative the item
             is underused. For more information about why this happens
@@ -117,46 +117,46 @@ class Analyze(object):
             Display the first host that will become full.
 
             $ crush analyze --rule replicated --crushmap crushmap.json
-                    ~id~  ~weight~  ~over/under used~
+                    ~id~  ~weight~  ~over/under used %~
             ~name~
-            g9       -22  2.299988     10.400604
-            g3        -4  1.500000     10.126750
-            g12      -28  4.000000      4.573330
-            g10      -24  4.980988      1.955702
-            g2        -3  5.199982      1.903230
-            n7        -9  5.484985      1.259041
-            g1        -2  5.880997      0.502741
-            g11      -25  6.225967     -0.957755
-            g8       -20  6.679993     -1.730727
-            g5       -15  8.799988     -7.884220
+            g9       -22  2.29     10.40
+            g3        -4  1.50     10.12
+            g12      -28  4.00      4.57
+            g10      -24  4.98      1.95
+            g2        -3  5.19      1.90
+            n7        -9  5.48      1.25
+            g1        -2  5.88      0.50
+            g11      -25  6.22     -0.95
+            g8       -20  6.67     -1.73
+            g5       -15  8.79     -7.88
 
             Display the first device that will become full.
 
             $ crush analyze --type device --rule replicated \\
                             --crushmap crushmap.json
-                    ~id~  ~weight~  ~over/under used~
+                    ~id~  ~weight~  ~over/under used %~
             ~name~
-            osd.35    35  2.299988     10.400604
-            osd.2      2  1.500000     10.126750
-            osd.47    47  2.500000      5.543335
-            osd.46    46  1.500000      2.956655
-            osd.29    29  1.784988      2.506855
-            osd.1      1  3.899994      2.315382
-            osd.37    37  2.681000      2.029613
-            osd.38    38  2.299988      1.869548
-            osd.27    27  1.699997      1.275095
-            osd.21    21  1.299988      0.666766
-            osd.0      0  3.199997      0.515785
-            osd.20    20  2.681000      0.487172
-            osd.8      8  2.000000      0.131729
-            osd.44    44  1.812988     -0.155715
-            osd.11    11  2.599991     -1.238497
-            osd.3      3  1.812988     -1.357188
-            osd.9      9  4.000000     -1.616832
-            osd.13    13  2.679993     -1.900721
-            osd.26    26  3.000000     -7.577257
-            osd.25    25  2.799988     -7.733660
-            osd.24    24  3.000000     -8.331705
+            osd.35    35  2.29     10.40
+            osd.2      2  1.50     10.12
+            osd.47    47  2.50      5.54
+            osd.46    46  1.50      2.95
+            osd.29    29  1.78      2.50
+            osd.1      1  3.89      2.31
+            osd.37    37  2.68      2.02
+            osd.38    38  2.29      1.86
+            osd.27    27  1.69      1.27
+            osd.21    21  1.29      0.66
+            osd.0      0  3.19      0.51
+            osd.20    20  2.68      0.48
+            osd.8      8  2.00      0.13
+            osd.44    44  1.81     -0.15
+            osd.11    11  2.59     -1.23
+            osd.3      3  1.81     -1.35
+            osd.9      9  4.00     -1.61
+            osd.13    13  2.67     -1.90
+            osd.26    26  3.00     -7.57
+            osd.25    25  2.79     -7.73
+            osd.24    24  3.00     -8.33
             """),
             help='Analyze crushmaps',
             parents=[Analyze.get_parser()],
@@ -236,10 +236,10 @@ class Analyze(object):
     @staticmethod
     def collect_usage(d, total_objects):
         capacity = d['~nweight~'] * float(total_objects)
-        d['~over/under used~'] = 0.0
+        d['~over/under used %~'] = 0.0
         for type in d['~type~'].unique():
             usage = d['~objects~'] / capacity - 1.0
-            d.loc[d['~type~'] == type, ['~over/under used~']] = usage * 100
+            d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
         return d
 
     @staticmethod
@@ -301,8 +301,9 @@ class Analyze(object):
         d = self.collect_usage(d, total_objects)
 
         s = (d['~type~'] == type) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~over/under used~']]
-        return a.sort_values(by='~over/under used~', ascending=False)
+        a = d.loc[s, ['~id~', '~weight~', '~over/under used %~']]
+        pd.set_option('precision', 2)
+        return a.sort_values(by='~over/under used %~', ascending=False)
 
     def run(self):
         if self.args.crushmap:
