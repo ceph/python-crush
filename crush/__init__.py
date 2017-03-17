@@ -473,7 +473,7 @@ class Crush(object):
             "replication_count": replication_count,
         }
         if weights:
-            kwargs["weight"] = weights
+            kwargs["weights"] = weights
         return self.c.map(**kwargs)
 
     def _collect_items(self, children):
