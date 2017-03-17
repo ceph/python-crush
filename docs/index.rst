@@ -116,8 +116,10 @@ crushmaps. Each subcommand is fully documented with `crush subcommand -h`::
     subcommands:
       valid subcommands
 
-      {analyze,ceph}  sub-command -h
+    {analyze,compare,ceph} sub-command -h
+
         analyze       Analyze crushmaps
+        compare       Compare crushmaps
         ceph          Ceph support
 
 Contributor Guide
