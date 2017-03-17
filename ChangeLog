@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.9
+-----
+
+* version 1.0.9
+* doc: add compare example to the quick start section
+* add compare subcommand
+* crush: fix typo in weights arguments
+* analyze: add colon after defaut in usage
+* analyze: display over/under used as %
+* bump 1.0.9
+
 1.0.8
 -----
 
