@@ -145,12 +145,13 @@ class Compare(object):
             specified with --destination will move 229 objects (22.9% of the total)
             from one item to another.
 
-            The rows below show the number of objects moved from the given
-            item to each item named in the columns. The objects% at the
-            end of the rows shows the percentage of the total number
-            of objects that is moved away from this particular item. The
-            last row shows the percentage of the total number of objects
-            that is moved to the item named in the column.
+            The rows below show the number of objects moved from the
+            given item to each item named in the columns. The objects%
+            at the end of the rows shows the percentage of the total
+            number of objects that is moved away from this particular
+            item. The last row shows the percentage of the total
+            number of objects that is moved to the item named in the
+            column.
 
                      osd.8    osd.9    objects%
             osd.0        3        4       0.70%
