@@ -81,11 +81,6 @@ class Compare(object):
             '--order-matters',
             action='store_true', default=False,
             help='true if the order of mapped devices matter (default: false)')
-        parser.add_argument(
-            '--compare',
-            action='store_true', default=None,
-            help='compare --origin and --destination',
-        )
         return parser
 
     @staticmethod
@@ -98,8 +93,7 @@ class Compare(object):
 
             After a crushmap is changed (e.g. addition/removal of
             items, modification of weights or tunables), objects may
-            move from an item to another. The --compare option shows
-            the details of a crushmap modification.
+            move from an item to another.
 
             The crushmap before the modification is specified with the
             --origin option and the crushmap after the modification is
@@ -241,9 +235,8 @@ class Compare(object):
         return out
 
     def run(self):
-        if self.args.compare:
-            self.run_compare()
-            print(self.display())
+        self.run_compare()
+        print(self.display())
 
     def run_compare(self):
         o = Crush(verbose=self.args.verbose,
