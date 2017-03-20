@@ -1,6 +1,16 @@
 CHANGES
 =======
 
+1.0.10
+------
+
+* version 1.0.10
+* compare: remove --compare
+* doc: cosmetic alignment
+* doc: fix double shows
+* doc: add compare to the index
+* bump 1.0.10
+
 1.0.9
 -----
 
