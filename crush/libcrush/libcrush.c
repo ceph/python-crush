@@ -153,12 +153,16 @@ static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorit
     const char *a = MyText_AsString(algorithm);
     if (a == NULL)
       return 0;
+    if (!strcmp(a, "straw") && !self->backward_compatibility) {
+      PyErr_Format(PyExc_RuntimeError, "algorithm straw requires backward_compatibility to be set");
+      return 0;
+    }
+
     if (!strcmp(a, "uniform"))
       *algorithmout = CRUSH_BUCKET_UNIFORM;
     else if (!strcmp(a, "list"))
       *algorithmout = CRUSH_BUCKET_LIST;
-    else if (!strcmp(a, "straw") && self->backward_compatibility)
-      // TODO: Print useful information if backward_compatibility is off
+    else if (!strcmp(a, "straw"))
       *algorithmout = CRUSH_BUCKET_STRAW;
     else if (!strcmp(a, "straw2") )
       *algorithmout = CRUSH_BUCKET_STRAW2;
