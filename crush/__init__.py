@@ -256,6 +256,12 @@ class Crush(object):
           buckets most suitable for circumstances in which they never
           (or very rarely) shrink.
 
+        There also exists an older version of "straw2", known as **"straw"**.
+        Given the choice, it is *always* better to use "straw2"; "straw" is
+        therefore not allowed by default. If the crushmap being read is old
+        and still uses "straw", setting `backward_compatibility=True` when
+        creating the `Crush` object will allow it to be used.
+
         There children may be ommited.
         ::
 
