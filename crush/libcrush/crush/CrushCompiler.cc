@@ -1,5 +1,17 @@
-
+#include "include/assert.h"
+#ifdef __STANDALONE_CRUSH__
+namespace ceph {}
+using namespace ceph;
+#endif // __STANDALONE_CRUSH__
 #include "CrushCompiler.h"
+
+#ifdef __STANDALONE_CRUSH__
+// borrowed from rados.h
+#define CEPH_PG_TYPE_REPLICATED 1
+#define CEPH_PG_TYPE_ERASURE 3
+// borrowed from assert.h
+#define ceph_abort abort
+#endif // __STANDALONE_CRUSH__
 
 #if defined(_AIX)
 #define EBADE ECORRUPT
