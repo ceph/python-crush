@@ -996,6 +996,22 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   return python_results;
 }
 
+#include "convert.h"
+
+static PyObject *
+LibCrush_convert(LibCrush *self, PyObject *args)
+{
+  const char *in;
+  const char *out;
+  if (!PyArg_ParseTuple(args, "ss", &in, &out))
+    return 0;
+
+  if (convert_txt(in, out))
+    Py_RETURN_TRUE;
+  else
+    Py_RETURN_FALSE;
+}
+
 static PyMemberDef
 LibCrush_members[] = {
     { NULL }
@@ -1003,10 +1019,12 @@ LibCrush_members[] = {
 
 static PyMethodDef
 LibCrush_methods[] = {
-    { "parse",      (PyCFunction) LibCrush_parse,        METH_VARARGS,
+    { "parse",      (PyCFunction) LibCrush_parse,    METH_VARARGS,
             PyDoc_STR("parse the crush map") },
     { "map",      (PyCFunction) LibCrush_map,        METH_VARARGS|METH_KEYWORDS,
             PyDoc_STR("map a value to items") },
+    { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
+            PyDoc_STR("convert from Ceph txt crushmap ") },
     { NULL }
 };
 

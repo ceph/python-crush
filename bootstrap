@@ -2,8 +2,8 @@
 
 [ $(id -u) == 0 ] || SUDO=sudo
 $SUDO $(which apt-get || which true) update
-$SUDO $(which apt-get || which true) install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake
-$SUDO $(which yum || which dnf || which zypper || which true) install -y git python-virtualenv gcc gcc-c++ python-devel python3-devel python-pip cmake
+$SUDO $(which apt-get || which true) install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake libboost-all-dev libatomic-ops-dev
+$SUDO $(which yum || which dnf || which zypper || which true) install -y git python-virtualenv gcc gcc-c++ python-devel python3-devel python-pip cmake libboost-all-dev libatomic-ops-dev
 
 git submodule sync
 git submodule update --force --init --recursive
