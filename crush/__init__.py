@@ -261,8 +261,6 @@ class Crush(object):
         therefore not allowed by default. If the crushmap being read is old
         and still uses "straw", setting `backward_compatibility=True` when
         creating the `Crush` object will allow it to be used.
-
-        There children may be ommited.
         ::
 
             children = [

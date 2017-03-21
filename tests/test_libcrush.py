@@ -146,7 +146,7 @@ class TestLibCrush(object):
         # Backward compatibility off: fails
         with pytest.raises(RuntimeError) as e:
             LibCrush().parse(straw_map)
-        assert 'not straw' in str(e.value)
+        assert 'straw requires backward_compatibility' in str(e.value)
 
         # Backward compatibility on: it works
         LibCrush(backward_compatibility=True).parse(straw_map)
