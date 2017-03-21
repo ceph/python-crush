@@ -18,12 +18,15 @@
 #include "int_types.h"
 #include "byteorder.h"
 
+#ifndef __STANDALONE_CRUSH__
 #include "uuid.h"
+#endif // __STANDALONE_CRUSH__
 
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <string.h>
 
+#ifndef __STANDALONE_CRUSH__
 // <macro hackery>
 // temporarily remap __le* to ceph_le* for benefit of shared kernel/userland headers
 #define __le16 ceph_le16
@@ -36,6 +39,7 @@
 #undef __le32
 #undef __le64
 // </macro hackery>
+#endif // __STANDALONE_CRUSH__
 
 
 #ifdef __cplusplus
@@ -48,7 +52,9 @@ extern "C" {
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef __STANDALONE_CRUSH__
 #include "statlite.h"
+#endif // __STANDALONE_CRUSH__
 }
 
 #include <string>
@@ -56,14 +62,18 @@ extern "C" {
 #include <set>
 #include <map>
 #include <vector>
+#include <deque>
 #include <iostream>
 #include <iomanip>
+#include <boost/tuple/tuple.hpp>
 
 using namespace std;
 
+#ifndef __STANDALONE_CRUSH__
 #include "include/unordered_map.h"
 
 #include "object.h"
+#endif // __STANDALONE_CRUSH__
 #include "intarith.h"
 
 #include "acconfig.h"
@@ -105,6 +115,7 @@ inline ostream& operator<<(ostream& out, const vector<A,Alloc>& v) {
   out << "]";
   return out;
 }
+
 template<class A, class Alloc>
 inline ostream& operator<<(ostream& out, const deque<A,Alloc>& v) {
   out << "<";
@@ -213,6 +224,7 @@ namespace ceph {
   class Formatter;
 }
 
+#ifndef __STANDALONE_CRUSH__
 #include "encoding.h"
 
 WRITE_RAW_ENCODER(ceph_fsid)
@@ -245,6 +257,7 @@ WRITE_RAW_ENCODER(ceph_mon_subscribe_item)
 
 WRITE_RAW_ENCODER(ceph_mon_statfs)
 WRITE_RAW_ENCODER(ceph_mon_statfs_reply)
+#endif // __STANDALONE_CRUSH__
 
 // ----------------------
 // some basic types
@@ -254,6 +267,7 @@ typedef uint64_t ceph_tid_t; // transaction id
 typedef uint64_t version_t;
 typedef __u32 epoch_t;       // map epoch  (32bits -> 13 epochs/second for 10 years)
 
+#ifndef __STANDALONE_CRUSH__
 // --------------------------------------
 // identify individual mount clients by 64bit value
 
@@ -285,6 +299,7 @@ static inline bool operator<(const client_t& l, int64_t o) { return l.v < o; }
 inline ostream& operator<<(ostream& out, const client_t& c) {
   return out << c.v;
 }
+#endif // __STANDALONE_CRUSH__
 
 
 
@@ -382,11 +397,13 @@ inline ostream& operator<<(ostream& out, const kb_t& kb)
   return out << kb.v << " kB";
 }
 
+#ifndef __STANDALONE_CRUSH__
 inline ostream& operator<<(ostream& out, const ceph_mon_subscribe_item& i)
 {
   return out << i.start
 	     << ((i.flags & CEPH_SUBSCRIBE_ONETIME) ? "" : "+");
 }
+#endif // __STANDALONE_CRUSH__
 
 enum health_status_t {
   HEALTH_ERR = 0,
@@ -429,6 +446,7 @@ inline ostream& operator<<(ostream& out, const weightf_t& w)
   }
 }
 
+#ifndef __STANDALONE_CRUSH__
 struct shard_id_t {
   int8_t id;
 
@@ -480,6 +498,6 @@ struct errorcode32_t {
 WRITE_CLASS_ENCODER(errorcode32_t)
 WRITE_EQ_OPERATORS_1(errorcode32_t, code)
 WRITE_CMP_OPERATORS_1(errorcode32_t, code)
-
+#endif // __STANDALONE_CRUSH__
 
 #endif
