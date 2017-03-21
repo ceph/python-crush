@@ -163,7 +163,7 @@ static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorit
     else if (!strcmp(a, "straw2") )
       *algorithmout = CRUSH_BUCKET_STRAW2;
     else {
-      PyErr_Format(PyExc_RuntimeError, "algorithm must be one of uniform, list, straw not %s", a);
+      PyErr_Format(PyExc_RuntimeError, "algorithm must be one of uniform, list, straw2 not %s", a);
       return 0;
     }
   }
