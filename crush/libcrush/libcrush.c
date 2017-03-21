@@ -157,6 +157,9 @@ static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorit
       *algorithmout = CRUSH_BUCKET_UNIFORM;
     else if (!strcmp(a, "list"))
       *algorithmout = CRUSH_BUCKET_LIST;
+    else if (!strcmp(a, "straw") && self->backward_compatibility)
+      // TODO: Print useful information if backward_compatibility is off
+      *algorithmout = CRUSH_BUCKET_STRAW;
     else if (!strcmp(a, "straw2") )
       *algorithmout = CRUSH_BUCKET_STRAW2;
     else {
@@ -910,6 +913,12 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
     (1 << CRUSH_BUCKET_UNIFORM) |
     (1 << CRUSH_BUCKET_LIST) |
     (1 << CRUSH_BUCKET_STRAW2);
+
+  if (self->backward_compatibility) {
+    self->map->allowed_bucket_algs =
+      self->map->allowed_bucket_algs |
+      (1 << CRUSH_BUCKET_STRAW);
+  }
 
   int weights_size = self->highest_device_id + 1;
   __u32 weights[weights_size];
