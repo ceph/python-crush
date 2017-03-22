@@ -239,7 +239,25 @@ class Crush(object):
         self.c = LibCrush(verbose=verbose and 1 or 0,
                           backward_compatibility=backward_compatibility and 1 or 0)
 
-    def parse(self, crushmap):
+    def parse(self, something):
+        """Validate and parse `something` which can be one of the
+        following:
+
+        - a crushmap dict as documented in the parse_crushmap() method
+
+        - a path to a file containing a JSON representation of a
+          crushmap as documented in the Crush.parse_crushmap() method
+
+        - a path to a file containing a Ceph binary, text or JSON
+          crushmap compatible with Luminuous and below
+
+        The details of the validation and parsing are documented
+        in the parse_crushmap() method.
+
+        """
+        return self.parse_crushmap(self._convert_to_crushmap(something))
+
+    def parse_crushmap(self, crushmap):
         """Validate and parse the `crushmap` object.
 
         The `crushmap` is a hierarchical description of devices in
