@@ -18,10 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import copy
-try:  # chicken and egg problem when running pip install -e . from sources
-    from crush.libcrush import LibCrush
-except:
-    pass
+import json
+import logging
+from crush.libcrush import LibCrush
+
+log = logging.getLogger(__name__)
 
 
 class CephConverter(object):
@@ -602,6 +603,36 @@ class Crush(object):
         if weights:
             kwargs["weights"] = weights
         return self.c.map(**kwargs)
+
+    @staticmethod
+    def _convert_from_file(something):
+        with open(something) as f_json:
+            try:
+                crushmap = json.load(f_json)
+                log.debug("_detect_file_format: valid json file")
+                if 'devices' in crushmap:  # Ceph json format
+                    return (crushmap, 'ceph-json')
+                return (crushmap, 'python-crush-json')
+            except ValueError:
+                log.debug("_detect_file_format: not json")
+        crushmap = LibCrush().convert(something)
+        return (json.loads(crushmap), 'ceph-json')
+
+    @staticmethod
+    def _convert_to_dict(something):
+        if type(something) is dict:
+            if 'devices' in something:  # Ceph json format
+                return (something, 'ceph-json')
+            return (something, 'python-crush-json')
+        else:
+            return Crush._convert_from_file(something)
+
+    @staticmethod
+    def _convert_to_crushmap(something):
+        (crushmap, format) = Crush._convert_to_dict(something)
+        if format == 'ceph-json':
+            crushmap = CephConverter().parse_ceph(crushmap)
+        return crushmap
 
     def _collect_items(self, children):
         for child in children:

@@ -17,9 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import pytest # noqa needed for capsys
+import logging
+import pytest # noqa needed for caplog
 
 from crush import Crush
+
+logging.getLogger('crush').setLevel(logging.DEBUG)
 
 
 class TestCrush(object):
@@ -87,6 +90,18 @@ class TestCrush(object):
         trees = c.get_crushmap()['trees']
         assert trees[1]['children'][0]['weight'] == weight
         assert trees[1]['children'][0]['name'] == 'host0'
+
+    def test_convert_to_crushmap(self, caplog):
+        crushmap = {}
+        assert crushmap == Crush._convert_to_crushmap(crushmap)
+        crushmap = Crush._convert_to_crushmap("tests/sample-crushmap.json")
+        assert 'trees' in crushmap
+        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.txt")
+        assert 'trees' in crushmap
+        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.crush")
+        assert 'trees' in crushmap
+        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.json")
+        assert 'trees' in crushmap
 
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_crush.py"
