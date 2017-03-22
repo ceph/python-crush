@@ -9,12 +9,14 @@ http://github.com/ceph/ceph and should be updated to get the latest
 changes with::
 
     git clone http://github.com/ceph/ceph /tmp/ceph
-    git revert f71c1f7 # change for standalone crush
+    git revert b26e307 # change for standalone crush
     cd crush/libcrush
     for file in {common,crush,include}/*.[ch] {common,crush}/*.cc ; do
        cp /tmp/ceph/src/$file $file
     done
-    git cherry-pick f71c1f7
+    git cherry-pick b26e307
+    git commit --amend
+    update the hash above with the new hash
 
 The commit message should then be updated with the hash of the
 ceph repository from which the files were copied.
