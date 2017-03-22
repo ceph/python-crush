@@ -22,7 +22,7 @@ import json
 import logging
 import textwrap
 
-from crush import Crush
+from crush import Crush, LibCrush
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +45,19 @@ class Ceph(object):
                   'into the python-crush JSON format and display '
                   'the result on the standard output'),
             metavar='PATH',
+        )
+        parser.add_argument(
+            '--convert-text',
+            help=('convert PATH, a text-formatted CRUSH map file, '
+                  'into a Ceph JSON format file. Use of --output is'
+                  'mandotory in this case'),
+            metavar='PATH'
+        )
+        parser.add_argument(
+            '--output',
+            help=('output file path for --convert-text, where the Ceph'
+                  'JSON will be written'),
+            metavar='PATH'
         )
         return parser
 
@@ -71,12 +84,14 @@ class Ceph(object):
             Examples:
 
             Convert a Ceph JSON crushmap into a python-crush crushmap:
-
-            - ceph osd crush dump > crushmap-ceph.json
             - crush ceph --convert crushmap-ceph.json > crushmap.json
 
-            - ceph osd getcrushmap > crushmap
-            - crushtool -d crushmap -o /dev/null --dump > crushmap-ceph.json
+            Convert a Ceph text crushmap into a python-crush crushmap:
+            - crush ceph --convert-text crushmap.txt --output crushmap-ceph.json
+            - crush ceph --convert crushmap-ceph.json > crushmap.json
+
+            Convert a binary crushmap to python-crush crushmap (requires *crushtool*):
+            - crushtool -d crushmap.bin -o /dev/null --dump > crushmap-ceph.json
             - crush ceph --convert crushmap-ceph.json > crushmap.json
             """),
             help='Ceph support',
@@ -90,14 +105,47 @@ class Ceph(object):
         return Ceph(Ceph.get_parser().parse_args(argv))
 
     def run(self):
+
+        if bool(self.args.convert_text) != bool(self.args.output):
+            # Enforce that both are always used together
+            self.get_parser().error(
+                "--convert-text and --output must be used together")
+
+        if self.args.convert and self.args.convert_text:
+            # Prevent convert and convert-text from running together
+            self.get_parser().error(
+                "--convert-text and --convert cannot be used together")
+
+        # Now, actually do stuff
         if self.args.convert:
             self.convert(self.args.convert)
+        elif self.args.convert_text:
+            self.convert_text(self.args.convert_text, self.args.output)
 
     def convert(self, input):
         converted = self.parse_ceph(json.load(open(self.args.convert)))
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
         c.parse(converted)
         print(json.dumps(converted, indent=4, sort_keys=True))
+
+    @staticmethod
+    def convert_text(txt_in_filename, json_out_filename):
+        """Convert a CRUSH "text" file to a CRUSH JSON dump
+
+        :param txt_in_filename: Name of the input CRUSH text file to read.
+        :type txt_in_filename: str
+
+        :param json_out_filename: Name of the file where the Ceph JSON
+            will be written
+        :type json_out_filename: str
+
+        Allows the use of the vastly popular and documented CRUSH "decompiled"
+        text format with *python-crush*. This converts it to the CRUSH JSON
+        dump format, which can then be converted into an usable JSON format
+        with ``crush ceph --convert``.
+        """
+        r_bool = LibCrush().convert(txt_in_filename, json_out_filename)
+        assert r_bool, "Failed to convert {} to JSON".format(txt_in_filename)
 
     @staticmethod
     def weight_as_float(i):
