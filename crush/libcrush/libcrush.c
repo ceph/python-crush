@@ -1002,14 +1002,21 @@ static PyObject *
 LibCrush_convert(LibCrush *self, PyObject *args)
 {
   const char *in;
-  const char *out;
-  if (!PyArg_ParseTuple(args, "ss", &in, &out))
+  if (!PyArg_ParseTuple(args, "s", &in))
     return 0;
 
-  if (convert_txt(in, out))
-    Py_RETURN_TRUE;
-  else
-    Py_RETURN_FALSE;
+  char *out = NULL;
+  int r;
+  r = convert_binary_to_json(in, &out);
+  if (r < 0)
+    r = convert_txt_to_json(in, &out);
+  if (r < 0) {
+    PyErr_Format(PyExc_RuntimeError, "%s is neither a text or binary Ceph crushmap", in);
+    return 0;
+  }
+  PyObject *result = Py_BuildValue("s", out);
+  free(out);
+  return result;
 }
 
 static PyMemberDef

@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 import pytest
 
 from crush.libcrush import LibCrush
@@ -752,9 +751,10 @@ class TestLibCrush(object):
 
     def test_convert(self):
         c = LibCrush(verbose=1)
-        assert c.convert("tests/map.txt", "tests/map.json")
-        assert '"rule_name": "data-ssd"' in open("tests/map.json").read()
-        os.unlink("tests/map.json")
+        crushmap = c.convert("tests/sample-ceph-crushmap.txt")
+        assert 'devices' in crushmap
+        crushmap = c.convert("tests/sample-ceph-crushmap.crush")
+        assert 'devices' in crushmap
 
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_libcrush.py"
