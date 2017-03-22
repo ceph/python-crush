@@ -20,7 +20,6 @@
 import argparse
 import collections
 import pandas as pd
-import json
 import logging
 import textwrap
 
@@ -72,11 +71,11 @@ class Compare(object):
         parser.add_argument(
             '--origin',
             metavar='PATH',
-            help='PATH to the origin crushmap JSON file')
+            help='PATH to the origin crushmap file')
         parser.add_argument(
             '--destination',
             metavar='PATH',
-            help='PATH to the destination crushmap JSON file')
+            help='PATH to the destination crushmap file')
         parser.add_argument(
             '--order-matters',
             action='store_true', default=False,
@@ -98,6 +97,15 @@ class Compare(object):
             The crushmap before the modification is specified with the
             --origin option and the crushmap after the modification is
             specified with the --destination option.
+
+            The format of the crushmap file specified with --origin or
+            --destination can either be:
+
+            - a JSON representation of a crushmap as documented in the
+              Crush.parse_crushmap() method
+
+            - a Ceph binary, text or JSON crushmap compatible with
+              Luminuous and below
 
             Each crushmap is given the same set of objects (in the
             range [0,--value-count[) to map using a given rule
@@ -241,10 +249,10 @@ class Compare(object):
     def run_compare(self):
         o = Crush(verbose=self.args.verbose,
                   backward_compatibility=self.args.backward_compatibility)
-        o.parse(json.load(open(self.args.origin)))
+        o.parse(self.args.origin)
         self.set_origin(o)
         d = Crush(verbose=self.args.verbose,
                   backward_compatibility=self.args.backward_compatibility)
-        d.parse(json.load(open(self.args.destination)))
+        d.parse(self.args.destination)
         self.set_destination(d)
         self.compare()

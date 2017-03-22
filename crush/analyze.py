@@ -20,7 +20,6 @@
 import argparse
 import copy
 import collections
-import json
 import logging
 import textwrap
 import pandas as pd
@@ -56,7 +55,7 @@ class Analyze(object):
             help='override the type of bucket shown in the report')
         parser.add_argument(
             '--crushmap',
-            help='path to the crushmap JSON file')
+            help='path to the crushmap file')
         values_count = 100000
         parser.add_argument(
             '--values-count',
@@ -83,6 +82,15 @@ class Analyze(object):
             crush rule (--rule) from a given crushmap (--crushmap) and
             display a report comparing the expected and the actual
             object distribution.
+
+            The format of the crushmap file specified with --crushmap
+            can either be:
+
+            - a JSON representation of a crushmap as documented in the
+              Crush.parse_crushmap() method
+
+            - a Ceph binary, text or JSON crushmap compatible with
+              Luminuous and below
 
             The --type argument changes the item type displayed in the
             report. For instance --type device shows the individual
@@ -307,5 +315,5 @@ class Analyze(object):
 
     def run(self):
         if self.args.crushmap:
-            self.crushmap = json.load(open(self.args.crushmap))
+            self.crushmap = Crush._convert_to_crushmap(self.args.crushmap)
             return self.analyze()
