@@ -24,6 +24,129 @@ except:
     pass
 
 
+class CephConverter(object):
+
+    @staticmethod
+    def weight_as_float(i):
+        return float(i) / float(0x10000)
+
+    def convert_item(self, item, ceph):
+        if item['id'] >= 0:
+            return {
+                "weight": self.weight_as_float(item['weight']),
+                "id": item['id'],
+                "name": ceph['id2name'][item['id']],
+            }
+        else:
+            return {
+                "weight": self.weight_as_float(item['weight']),
+                "reference_id": item['id'],
+            }
+
+    def convert_bucket(self, bucket, ceph):
+        b = {
+            "weight": self.weight_as_float(bucket['weight']),
+            "id": bucket['id'],
+            "name": bucket['name'],
+            "algorithm": bucket['alg'],
+            "type": bucket['type_name'],
+        }
+        items = bucket.get('items', [])
+        if items:
+            children = []
+            last_pos = -1
+            for item in items:
+                # the actual pos value does not change the mapping
+                # when there is an empty item (we do not store pos)
+                # but the order of the items is important and we
+                # need to assert that the list is ordered
+                assert last_pos < item['pos']
+                last_pos = item['pos']
+                children.append(self.convert_item(item, ceph))
+            b['children'] = children
+        return b
+
+    def convert_rule(self, ceph_rule, ceph):
+        name = ceph_rule['rule_name']
+        rule = []
+        for ceph_step in ceph_rule['steps']:
+            if 'opcode' in ceph_step:
+                if ceph_step['opcode'] in (10, 11, 12, 13):
+                    id2name = {
+                        10: 'set_choose_local_tries',
+                        11: 'set_choose_local_fallback_tries',
+                        12: 'set_chooseleaf_vary_r',
+                        13: 'set_chooseleaf_stable',
+                    }
+                    step = [id2name[ceph_step['opcode']], ceph_step['arg1']]
+                else:
+                    assert 0, "unexpected rule opcode " + str(ceph_step['opcode'])
+            elif 'op' in ceph_step:
+                if ceph_step['op'] == 'take':
+                    step = [ceph_step['op'], ceph_step['item_name']]
+                elif ceph_step['op'] in ('chooseleaf_firstn',
+                                         'choose_firstn',
+                                         'chooseleaf_indep',
+                                         'choose_indep'):
+                    (choose, how) = ceph_step['op'].split('_')
+                    if ceph['type2id'][ceph_step['type']] == 0:
+                        type = 0
+                    else:
+                        type = ceph_step['type']
+                    step = [choose, how, ceph_step['num'], 'type', type]
+                elif ceph_step['op'] in ('set_choose_local_tries',
+                                         'set_choose_local_fallback_tries',
+                                         'set_chooseleaf_vary_r',
+                                         'set_chooseleaf_stable',
+                                         'set_choose_tries',
+                                         'set_chooseleaf_tries'):
+                    step = [ceph_step['op'], ceph_step['num']]
+                elif ceph_step['op'] == 'emit':
+                    step = ['emit']
+                elif ceph_step['op'] == 'noop':
+                    pass
+                else:
+                    assert 0, "unexpected rule op " + str(ceph_step['op'])
+            else:
+                assert 0, "no op or opcode found"
+            rule.append(step)
+        return (name, rule)
+
+    def convert_tunables(self, tunables):
+        known = set([
+            'choose_local_tries',
+            'choose_local_fallback_tries',
+            'chooseleaf_vary_r',
+            'chooseleaf_stable',
+            'chooseleaf_descend_once',
+            'straw_calc_version',
+
+            'choose_total_tries',
+        ])
+        out = {}
+        for (k, v) in tunables.items():
+            if k in known:
+                out[k] = v
+        return out
+
+    def parse_ceph(self, ceph):
+        ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
+        ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
+
+        j = {}
+
+        j['trees'] = [self.convert_bucket(b, ceph) for b in ceph['buckets']]
+
+        j['rules'] = {}
+        for ceph_rule in ceph['rules']:
+            (name, rule) = self.convert_rule(ceph_rule, ceph)
+            j['rules'][name] = rule
+
+        j['tunables'] = self.convert_tunables(ceph['tunables'])
+
+        return j
+
+
 class Crush(object):
     """Control object placement in a hierarchy.
 
