@@ -18,9 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import json
 import logging
-import os
 import pytest # noqa needed for capsys
 
 from crush.main import Main
@@ -32,40 +30,14 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 class TestCeph(object):
 
     def test_convert(self, capsys):
-        Main().run([
-            'ceph',
-            '--convert', 'tests/ceph.json',
-        ])
-        out, err = capsys.readouterr()
-        assert '"reference_id": -2' in out
+        for ext in ('json', 'txt', 'crush'):
+            Main().run([
+                'ceph',
+                '--convert', 'tests/sample-ceph-crushmap.json',
+            ])
+            out, err = capsys.readouterr()
+            assert '"reference_id": -2' in out
 
-    def test_convert_text(self, capsys):
-        Main().run(['ceph',
-                    '--convert-text', 'tests/map.txt',
-                    '--output', 'tests/map.json'])
-        out, err = capsys.readouterr()
-        assert not out
-        assert not err
-
-        with open('tests/map.json') as f_json:
-            json_map = json.load(f_json)
-            assert 'devices' in json_map
-            assert 'types' in json_map
-            assert 'buckets' in json_map
-        os.unlink('tests/map.json')
-
-    def test_invalid_args(self):
-        with pytest.raises(SystemExit):
-            Main().run(['ceph', '--convert-text', 'tests/map.txt'])
-
-        with pytest.raises(SystemExit):
-            Main().run(['ceph', '--output', 'tests/map.json'])
-
-        with pytest.raises(SystemExit):
-            Main().run(['ceph',
-                        '--convert-text', 'tests/map.txt',
-                        '--output', 'tests/map.json',
-                        '--convert', 'tests/ceph.json'])
 
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
