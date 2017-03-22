@@ -1,9 +1,7 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
-#ifndef __STANDALONE_CRUSH__
 #include "osd/osd_types.h"
-#endif // __STANDALONE_CRUSH__
 #include "common/debug.h"
 #include "common/Formatter.h"
 #include "common/errno.h"
@@ -1339,7 +1337,6 @@ int CrushWrapper::rebuild_roots_with_classes()
   return trim_roots_with_class(true);
 }
 
-#ifndef __STANDALONE_CRUSH__
 void CrushWrapper::encode(bufferlist& bl, uint64_t features) const
 {
   assert(crush);
@@ -1648,10 +1645,9 @@ void CrushWrapper::decode_crush_bucket(crush_bucket** bptr, bufferlist::iterator
     break;
   }
 }
-#endif // __STANDALONE_CRUSH__
 
   
-void CrushWrapper::dump(ceph::Formatter *f) const
+void CrushWrapper::dump(Formatter *f) const
 {
   f->open_array_section("devices");
   for (int i=0; i<get_max_devices(); i++) {
@@ -1738,7 +1734,7 @@ namespace {
     explicit TreeDumper(const CrushWrapper *crush)
       : crush(crush) {}
 
-    void dump(ceph::Formatter *f) {
+    void dump(Formatter *f) {
       set<int> roots;
       crush->find_roots(roots);
       for (set<int>::iterator root = roots.begin(); root != roots.end(); ++root) {
@@ -1747,7 +1743,7 @@ namespace {
     }
 
   private:
-    void dump_item(const Item& qi, ceph::Formatter* f) {
+    void dump_item(const Item& qi, Formatter* f) {
       if (qi.is_bucket()) {
 	f->open_object_section("bucket");
 	CrushTreeDumper::dump_item_fields(crush, qi, f);
@@ -1760,7 +1756,7 @@ namespace {
       }
     }
 
-    void dump_bucket_children(const Item& parent, ceph::Formatter* f) {
+    void dump_bucket_children(const Item& parent, Formatter* f) {
       f->open_array_section("items");
       const int max_pos = crush->get_bucket_size(parent.id);
       for (int pos = 0; pos < max_pos; pos++) {
@@ -1773,13 +1769,13 @@ namespace {
   };
 }
 
-void CrushWrapper::dump_tree(ceph::Formatter *f) const
+void CrushWrapper::dump_tree(Formatter *f) const
 {
   assert(f);
   TreeDumper(this).dump(f);
 }
 
-void CrushWrapper::dump_tunables(ceph::Formatter *f) const
+void CrushWrapper::dump_tunables(Formatter *f) const
 {
   f->dump_int("choose_local_tries", get_choose_local_tries());
   f->dump_int("choose_local_fallback_tries", get_choose_local_fallback_tries());
@@ -1819,7 +1815,7 @@ void CrushWrapper::dump_tunables(ceph::Formatter *f) const
   f->dump_int("has_v5_rules", (int)has_v5_rules());
 }
 
-void CrushWrapper::dump_rules(ceph::Formatter *f) const
+void CrushWrapper::dump_rules(Formatter *f) const
 {
   for (int i=0; i<get_max_rules(); i++) {
     if (!rule_exists(i))
@@ -1828,7 +1824,7 @@ void CrushWrapper::dump_rules(ceph::Formatter *f) const
   }
 }
 
-void CrushWrapper::dump_rule(int ruleset, ceph::Formatter *f) const
+void CrushWrapper::dump_rule(int ruleset, Formatter *f) const
 {
   f->open_object_section("rule");
   f->dump_int("rule_id", ruleset);
@@ -1897,7 +1893,7 @@ void CrushWrapper::dump_rule(int ruleset, ceph::Formatter *f) const
   f->close_section();
 }
 
-void CrushWrapper::list_rules(ceph::Formatter *f) const
+void CrushWrapper::list_rules(Formatter *f) const
 {
   for (int rule = 0; rule < get_max_rules(); rule++) {
     if (!rule_exists(rule))
@@ -1947,7 +1943,7 @@ public:
   explicit CrushTreeFormattingDumper(const CrushWrapper *crush)
     : Parent(crush) {}
 
-  void dump(ceph::Formatter *f) {
+  void dump(Formatter *f) {
     f->open_array_section("nodes");
     Parent::dump(f);
     f->close_section();
@@ -1957,7 +1953,7 @@ public:
 };
 
 
-void CrushWrapper::dump_tree(ostream *out, ceph::Formatter *f) const
+void CrushWrapper::dump_tree(ostream *out, Formatter *f) const
 {
   if (out)
     CrushTreePlainDumper(this).dump(out);
@@ -1971,7 +1967,6 @@ void CrushWrapper::generate_test_instances(list<CrushWrapper*>& o)
   // fixme
 }
 
-#ifndef __STANDALONE_CRUSH__
 int CrushWrapper::_get_osd_pool_default_crush_replicated_ruleset(CephContext *cct,
                                                                  bool quiet)
 {
@@ -2010,7 +2005,6 @@ int CrushWrapper::get_osd_pool_default_crush_replicated_ruleset(CephContext *cct
 
   return crush_ruleset;
 }
-#endif // __STANDALONE_CRUSH__
 
 bool CrushWrapper::is_valid_crush_name(const string& s)
 {
