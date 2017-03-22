@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import division
+
 import copy
 import json
 import logging
@@ -29,7 +31,7 @@ class CephConverter(object):
 
     @staticmethod
     def weight_as_float(i):
-        return float(i) / float(0x10000)
+        return i / 0x10000
 
     def convert_item(self, item, ceph):
         if item['id'] >= 0:

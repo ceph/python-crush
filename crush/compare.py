@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import division
+
 import argparse
 import collections
 import pandas as pd
@@ -216,7 +218,7 @@ class Compare(object):
         out += "There are {} objects.\n".format(objects_count)
         m = pd.DataFrame.from_dict(self.from_to, dtype=int).fillna(0).T.astype(int)
         objects_moved = m.sum().sum()
-        objects_moved_percent = objects_moved / float(objects_count) * 100
+        objects_moved_percent = objects_moved / objects_count * 100
         out += textwrap.dedent("""
         Replacing the crushmap specified with --origin with the crushmap
         specified with --destination will move {} objects ({}% of the total)
