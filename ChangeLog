@@ -1,6 +1,36 @@
 CHANGES
 =======
 
+1.0.11
+------
+
+* version 1.0.11
+* doc: dependencies instructions updates
+* add from __future__ import division
+* move setup_hooks outside of crush
+* ceph: move the actual conversion to Crush
+* tests: remove unused files
+* compare,analyze: files can contain Ceph json,txt,binary
+* crush: transparent format conversion for parse()
+* libcrush: add support for binary crushmaps to convert()
+* crush: implement _convert_to_crushmap
+* crush: define CephConverter
+* doc: update libcrush hacking instructions
+* libcrush: extract from Ceph
+* Revert "libcrush: extract from Ceph"
+* libcrush: add files required for encode/decode
+* doc: add Xavier Villaneau <xvillaneau@gmail.com>
+* ceph: CLI for converting from CRUSH text format
+* libcrush: extract from Ceph
+* libcrush: rework to import directly from Ceph
+* improve error message if straw & !backward compatibility
+* straw is not recommended, straw2 is
+* doc: remove useless and incorrect line
+* doc: Documented straw support in Crush.parse
+* libcrush: support for the straw algorithm
+* tests: Added tests for straw algorithm support
+* bump 1.0.11
+
 1.0.10
 ------
 
