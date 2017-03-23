@@ -17,11 +17,137 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import division
+
 import copy
-try:  # chicken and egg problem when running pip install -e . from sources
-    from crush.libcrush import LibCrush
-except:
-    pass
+import json
+import logging
+from crush.libcrush import LibCrush
+
+log = logging.getLogger(__name__)
+
+
+class CephConverter(object):
+
+    @staticmethod
+    def weight_as_float(i):
+        return i / 0x10000
+
+    def convert_item(self, item, ceph):
+        if item['id'] >= 0:
+            return {
+                "weight": self.weight_as_float(item['weight']),
+                "id": item['id'],
+                "name": ceph['id2name'][item['id']],
+            }
+        else:
+            return {
+                "weight": self.weight_as_float(item['weight']),
+                "reference_id": item['id'],
+            }
+
+    def convert_bucket(self, bucket, ceph):
+        b = {
+            "weight": self.weight_as_float(bucket['weight']),
+            "id": bucket['id'],
+            "name": bucket['name'],
+            "algorithm": bucket['alg'],
+            "type": bucket['type_name'],
+        }
+        items = bucket.get('items', [])
+        if items:
+            children = []
+            last_pos = -1
+            for item in items:
+                # the actual pos value does not change the mapping
+                # when there is an empty item (we do not store pos)
+                # but the order of the items is important and we
+                # need to assert that the list is ordered
+                assert last_pos < item['pos']
+                last_pos = item['pos']
+                children.append(self.convert_item(item, ceph))
+            b['children'] = children
+        return b
+
+    def convert_rule(self, ceph_rule, ceph):
+        name = ceph_rule['rule_name']
+        rule = []
+        for ceph_step in ceph_rule['steps']:
+            if 'opcode' in ceph_step:
+                if ceph_step['opcode'] in (10, 11, 12, 13):
+                    id2name = {
+                        10: 'set_choose_local_tries',
+                        11: 'set_choose_local_fallback_tries',
+                        12: 'set_chooseleaf_vary_r',
+                        13: 'set_chooseleaf_stable',
+                    }
+                    step = [id2name[ceph_step['opcode']], ceph_step['arg1']]
+                else:
+                    assert 0, "unexpected rule opcode " + str(ceph_step['opcode'])
+            elif 'op' in ceph_step:
+                if ceph_step['op'] == 'take':
+                    step = [ceph_step['op'], ceph_step['item_name']]
+                elif ceph_step['op'] in ('chooseleaf_firstn',
+                                         'choose_firstn',
+                                         'chooseleaf_indep',
+                                         'choose_indep'):
+                    (choose, how) = ceph_step['op'].split('_')
+                    if ceph['type2id'][ceph_step['type']] == 0:
+                        type = 0
+                    else:
+                        type = ceph_step['type']
+                    step = [choose, how, ceph_step['num'], 'type', type]
+                elif ceph_step['op'] in ('set_choose_local_tries',
+                                         'set_choose_local_fallback_tries',
+                                         'set_chooseleaf_vary_r',
+                                         'set_chooseleaf_stable',
+                                         'set_choose_tries',
+                                         'set_chooseleaf_tries'):
+                    step = [ceph_step['op'], ceph_step['num']]
+                elif ceph_step['op'] == 'emit':
+                    step = ['emit']
+                elif ceph_step['op'] == 'noop':
+                    pass
+                else:
+                    assert 0, "unexpected rule op " + str(ceph_step['op'])
+            else:
+                assert 0, "no op or opcode found"
+            rule.append(step)
+        return (name, rule)
+
+    def convert_tunables(self, tunables):
+        known = set([
+            'choose_local_tries',
+            'choose_local_fallback_tries',
+            'chooseleaf_vary_r',
+            'chooseleaf_stable',
+            'chooseleaf_descend_once',
+            'straw_calc_version',
+
+            'choose_total_tries',
+        ])
+        out = {}
+        for (k, v) in tunables.items():
+            if k in known:
+                out[k] = v
+        return out
+
+    def parse_ceph(self, ceph):
+        ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
+        ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
+
+        j = {}
+
+        j['trees'] = [self.convert_bucket(b, ceph) for b in ceph['buckets']]
+
+        j['rules'] = {}
+        for ceph_rule in ceph['rules']:
+            (name, rule) = self.convert_rule(ceph_rule, ceph)
+            j['rules'][name] = rule
+
+        j['tunables'] = self.convert_tunables(ceph['tunables'])
+
+        return j
 
 
 class Crush(object):
@@ -115,7 +241,25 @@ class Crush(object):
         self.c = LibCrush(verbose=verbose and 1 or 0,
                           backward_compatibility=backward_compatibility and 1 or 0)
 
-    def parse(self, crushmap):
+    def parse(self, something):
+        """Validate and parse `something` which can be one of the
+        following:
+
+        - a crushmap dict as documented in the parse_crushmap() method
+
+        - a path to a file containing a JSON representation of a
+          crushmap as documented in the Crush.parse_crushmap() method
+
+        - a path to a file containing a Ceph binary, text or JSON
+          crushmap compatible with Luminuous and below
+
+        The details of the validation and parsing are documented
+        in the parse_crushmap() method.
+
+        """
+        return self.parse_crushmap(self._convert_to_crushmap(something))
+
+    def parse_crushmap(self, crushmap):
         """Validate and parse the `crushmap` object.
 
         The `crushmap` is a hierarchical description of devices in
@@ -479,6 +623,36 @@ class Crush(object):
         if weights:
             kwargs["weights"] = weights
         return self.c.map(**kwargs)
+
+    @staticmethod
+    def _convert_from_file(something):
+        with open(something) as f_json:
+            try:
+                crushmap = json.load(f_json)
+                log.debug("_detect_file_format: valid json file")
+                if 'devices' in crushmap:  # Ceph json format
+                    return (crushmap, 'ceph-json')
+                return (crushmap, 'python-crush-json')
+            except ValueError:
+                log.debug("_detect_file_format: not json")
+        crushmap = LibCrush().convert(something)
+        return (json.loads(crushmap), 'ceph-json')
+
+    @staticmethod
+    def _convert_to_dict(something):
+        if type(something) is dict:
+            if 'devices' in something:  # Ceph json format
+                return (something, 'ceph-json')
+            return (something, 'python-crush-json')
+        else:
+            return Crush._convert_from_file(something)
+
+    @staticmethod
+    def _convert_to_crushmap(something):
+        (crushmap, format) = Crush._convert_to_dict(something)
+        if format == 'ceph-json':
+            crushmap = CephConverter().parse_ceph(crushmap)
+        return crushmap
 
     def _collect_items(self, children):
         for child in children:

@@ -1,4 +1,4 @@
-
+#include "include/assert.h"
 #include "CrushCompiler.h"
 
 #ifdef __STANDALONE_CRUSH__

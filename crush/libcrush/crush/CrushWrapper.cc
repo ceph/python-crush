@@ -1,6 +1,7 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
+#include "include/assert.h"
 #ifndef __STANDALONE_CRUSH__
 #include "osd/osd_types.h"
 #endif // __STANDALONE_CRUSH__
@@ -11,6 +12,8 @@
 #include "CrushWrapper.h"
 #include "CrushTreeDumper.h"
 
+#include "include/ceph_features.h"
+#define ceph_abort abort
 #define dout_subsys ceph_subsys_crush
 
 bool CrushWrapper::has_v2_rules() const
@@ -1339,7 +1342,6 @@ int CrushWrapper::rebuild_roots_with_classes()
   return trim_roots_with_class(true);
 }
 
-#ifndef __STANDALONE_CRUSH__
 void CrushWrapper::encode(bufferlist& bl, uint64_t features) const
 {
   assert(crush);
@@ -1648,7 +1650,6 @@ void CrushWrapper::decode_crush_bucket(crush_bucket** bptr, bufferlist::iterator
     break;
   }
 }
-#endif // __STANDALONE_CRUSH__
 
   
 void CrushWrapper::dump(ceph::Formatter *f) const

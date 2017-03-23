@@ -80,8 +80,7 @@ crushmap ?
 Given a Ceph crushmap, show which hosts will be overused or underused::
 
     $ ceph osd crush dump > crushmap-ceph.json
-    $ crush ceph --convert crushmap-ceph.json > crushmap.json
-    $ crush analyze --rule replicated --crushmap crushmap.json
+    $ crush analyze --rule replicated --crushmap crushmap-ceph.json
 
 Output::
 

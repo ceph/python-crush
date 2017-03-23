@@ -21,8 +21,8 @@ extern "C" {
 }
 
 #include "include/err.h"
-#ifndef __STANDALONE_CRUSH__
 #include "include/encoding.h"
+#ifndef __STANDALONE_CRUSH__
 
 
 #include "common/Mutex.h"
@@ -38,7 +38,6 @@ namespace ceph {
   class Formatter;
 }
 
-#ifndef __STANDALONE_CRUSH__
 WRITE_RAW_ENCODER(crush_rule_mask)   // it's all u8's
 
 inline static void encode(const crush_rule_step &s, bufferlist &bl)
@@ -53,7 +52,6 @@ inline static void decode(crush_rule_step &s, bufferlist::iterator &p)
   ::decode(s.arg1, p);
   ::decode(s.arg2, p);
 }
-#endif // __STANDALONE_CRUSH__
 
 using namespace std;
 class CrushWrapper {
@@ -1205,11 +1203,9 @@ public:
     return false;
   }
 
-#ifndef __STANDALONE_CRUSH__
   void encode(ceph::buffer::list &bl, uint64_t features) const;
   void decode(ceph::buffer::list::iterator &blp);
   void decode_crush_bucket(crush_bucket** bptr, ceph::buffer::list::iterator &blp);
-#endif // __STANDALONE_CRUSH__
   void dump(ceph::Formatter *f) const;
   void dump_rules(ceph::Formatter *f) const;
   void dump_rule(int ruleset, ceph::Formatter *f) const;
