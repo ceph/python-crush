@@ -60,3 +60,19 @@ The `cursh/libcrush` module files must be recompiled to display a
 verbose output when they show lines like::
 
     #define dprintk(args...) /* printf(args) */
+
+Testing installation on RPM OS
+------------------------------
+
+The instructions are duplicated in:
+
+- docs/index.rst
+- README.rst
+- boostrap
+
+Start by updating the `bootstrap` instructions and try it manually with::
+
+    cd ~/software/libcrush/libcrush
+    sudo docker run -ti -v $(pwd):$(pwd) -w $(pwd) opensuse:42.2 bash
+    zypper install -y which
+    source bootstrap
