@@ -12,3 +12,4 @@ dist
 virtualenv/
 AUTHORS
 build/
+.idea/
