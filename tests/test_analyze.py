@@ -110,6 +110,14 @@ host0     -3      10.0                -0.92\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
+    def test_analyze_weights(self):
+        a = Main().constructor(
+            ["analyze", "--rule", "replicated_ruleset",
+             "--replication-count", "2", "--type", "device",
+             "--crushmap", "tests/ceph/dump.json",
+             "--weights", "tests/ceph/weights.json"])
+        res = a.run()
+        assert "-100.00" in str(res)  # One of the OSDs has a weight of 0.0
 
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_analyze.py"
