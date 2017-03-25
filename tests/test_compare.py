@@ -229,6 +229,7 @@ class TestCompare(object):
             "--origin", "tests/ceph/dump.json",
             "--destination", "tests/ceph/dump.json",
             "--origin-weights", "tests/ceph/weights.json"])
+        a.args.backward_compatibility = True
         a.run_compare()
 
     def test_destination_weights(self):
@@ -238,6 +239,7 @@ class TestCompare(object):
             "--origin", "tests/ceph/dump.json",
             "--destination", "tests/ceph/dump.json",
             "--destination-weights", "tests/ceph/weights.json"])
+        a.args.backward_compatibility = True
         a.run_compare()
 
 # Local Variables:
