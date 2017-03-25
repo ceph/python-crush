@@ -58,6 +58,9 @@ class Analyze(object):
         parser.add_argument(
             '--crushmap',
             help='path to the crushmap file')
+        parser.add_argument(
+            '-w', '--weights',
+            help='path to the weights file')
         values_count = 100000
         parser.add_argument(
             '--values-count',
@@ -280,6 +283,12 @@ class Analyze(object):
                   backward_compatibility=self.args.backward_compatibility)
         c.parse(self.crushmap)
 
+        if self.args.weights:
+            with open(self.args.weights) as f_weights:
+                weights = c.parse_weights_file(f_weights)
+        else:
+            weights = None
+
         crushmap = c.get_crushmap()
         trees = crushmap.get('trees', [])
         (take, failure_domain) = self.analyze_rule(crushmap['rules'][self.args.rule])
@@ -296,7 +305,7 @@ class Analyze(object):
         rule = self.args.rule
         device2count = collections.defaultdict(lambda: 0)
         for value in range(0, self.args.values_count):
-            m = c.map(rule, value, replication_count)
+            m = c.map(rule, value, replication_count, weights)
             for device in m:
                 device2count[device] += 1
 
