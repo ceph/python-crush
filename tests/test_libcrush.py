@@ -756,6 +756,18 @@ class TestLibCrush(object):
         crushmap = c.convert("tests/sample-ceph-crushmap.crush")
         assert 'devices' in crushmap
 
+    def test_pool_pps(self):
+        c = LibCrush()
+
+        pps_1 = c.pool_pps(0, 16, 16)
+        assert 430787817 == pps_1['0.0']
+        pps_1_values = sorted(set(pps_1.values()))
+        assert 16 == len(pps_1)
+
+        pps_2 = c.pool_pps(0, 23, 16)
+        pps_2_values = sorted(set(pps_2.values()))
+        assert pps_1_values == pps_2_values
+
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 tests/test_libcrush.py"
+# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_libcrush.py"
 # End:

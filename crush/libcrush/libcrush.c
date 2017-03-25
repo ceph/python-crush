@@ -24,6 +24,7 @@
 #include "hash.h"
 #include "builder.h"
 #include "mapper.h"
+#include "include/intarith.h"
 
 #define RET_OK      0
 #define RET_ERROR   -1
@@ -1019,6 +1020,48 @@ LibCrush_convert(LibCrush *self, PyObject *args)
   return result;
 }
 
+// copy/pasted from src/include/rados.h
+// from http://github.com/ceph/ceph
+// at 2c319033558a23b06d4a06903f6cfe44f685a59b
+static inline int ceph_stable_mod(int x, int b, int bmask)
+{
+	if ((x & bmask) < b)
+		return x & bmask;
+	else
+		return x & (bmask >> 1);
+}
+
+static PyObject *
+LibCrush_pool_pps(LibCrush *self, PyObject *args)
+{
+  int pool;
+  int pg_num;
+  int pgp_num;
+  if (!PyArg_ParseTuple(args, "iii", &pool, &pg_num, &pgp_num))
+    return 0;
+
+  // copy/pasted from src/osd/osd_types.cc pg_pool_t::calc_pg_masks
+  // from http://github.com/ceph/ceph
+  // at 2c319033558a23b06d4a06903f6cfe44f685a59b
+  int pgp_num_mask = (1 << cbits(pgp_num-1)) - 1;
+
+  PyObject *results = PyDict_New();
+  for (int ps = 0; ps < pg_num; ps++) {
+    int pps = crush_hash32_2(CRUSH_HASH_RJENKINS1,
+                             ceph_stable_mod(ps, pgp_num, pgp_num_mask),
+                             pool);
+    PyObject *value = Py_BuildValue("i", pps);
+    PyObject *name = PyUnicode_FromFormat("%d.%x", pool, ps);
+    int r = PyDict_SetItem(results, name, value);
+    Py_DECREF(value);
+    Py_DECREF(name);
+    if (r != 0)
+      return 0;
+  }
+
+  return results;
+}
+
 static PyMemberDef
 LibCrush_members[] = {
     { NULL }
@@ -1032,6 +1075,8 @@ LibCrush_methods[] = {
             PyDoc_STR("map a value to items") },
     { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
             PyDoc_STR("convert from Ceph txt crushmap ") },
+    { "pool_pps",  (PyCFunction) LibCrush_pool_pps,  METH_VARARGS,
+            PyDoc_STR("list of all pps for a Ceph pool") },
     { NULL }
 };
 
