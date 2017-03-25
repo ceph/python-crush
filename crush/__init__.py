@@ -735,6 +735,6 @@ class Crush(object):
             "Weights must be floating-point values between 0 and 1"
 
         # Don't check that the keys are existing devices, LibCrush will do it
-        # TODO: check that keys are strings, but it's a Py2 vs. Py3 landmine
+        # No need to check that keys are strings, it's enforced by JSON
 
         return weights
