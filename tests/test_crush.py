@@ -103,6 +103,23 @@ class TestCrush(object):
         crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.json")
         assert 'trees' in crushmap
 
+    def test_parse_weights_file(self):
+
+        # Test Simple weights file
+        weights = Crush.parse_weights_file(open("tests/ceph/weights.json"))
+        assert weights == {"osd.0": 0.0, "osd.2": 0.5}
+
+        # Test OSDMap
+        weights = Crush.parse_weights_file(open("tests/ceph/osdmap.json"))
+        assert weights == {"osd.0": 1.0, "osd.1": 0.95, "osd.2": 1.0}
+
+        with pytest.raises(AssertionError):
+            Crush.parse_weights_file(open("tests/ceph/weights-notfloat.json"))
+        with pytest.raises(AssertionError):
+            Crush.parse_weights_file(open("tests/ceph/osdmap-invalid.json"))
+        with pytest.raises(AssertionError):
+            Crush.parse_weights_file(open("tests/sample-ceph-crushmap.txt"))
+
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_crush.py"
 # End:

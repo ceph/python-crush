@@ -32,6 +32,9 @@ log = logging.getLogger(__name__)
 
 class Compare(object):
 
+    orig_weights = None
+    dest_weights = None
+
     def __init__(self, args):
         self.args = args
 
@@ -78,6 +81,12 @@ class Compare(object):
             '--destination',
             metavar='PATH',
             help='PATH to the destination crushmap file')
+        parser.add_argument(
+            "-ow", "--origin-weights",
+            help="Weights file to apply to the origin map")
+        parser.add_argument(
+            "-dw", "--destination-weights",
+            help="Weights file to apply to the destination map")
         parser.add_argument(
             '--order-matters',
             action='store_true', default=False,
@@ -188,11 +197,11 @@ class Compare(object):
         rule = self.args.rule
         self.from_to = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
         for value in range(0, self.args.values_count):
-            am = a.map(rule, value, replication_count)
+            am = a.map(rule, value, replication_count, self.orig_weights)
             assert len(am) == replication_count
             for d in am:
                 self.origin_d[d] += 1
-            bm = b.map(rule, value, replication_count)
+            bm = b.map(rule, value, replication_count, self.dest_weights)
             assert len(bm) == replication_count
             for d in bm:
                 self.destination_d[d] += 1
@@ -257,4 +266,12 @@ class Compare(object):
                   backward_compatibility=self.args.backward_compatibility)
         d.parse(self.args.destination)
         self.set_destination(d)
+
+        if self.args.origin_weights:
+            with open(self.args.origin_weights) as f_ow:
+                self.orig_weights = Crush.parse_weights_file(f_ow)
+        if self.args.destination_weights:
+            with open(self.args.destination_weights) as f_dw:
+                self.dest_weights = Crush.parse_weights_file(f_dw)
+
         self.compare()

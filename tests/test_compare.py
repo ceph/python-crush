@@ -216,6 +216,24 @@ class TestCompare(object):
         assert ("objects%    0.20%    0.17%    1.23%    1.03%"
                 "    1.23%    1.10%    0.77%    1.00%   11.90%   12.50%   31.13%") in out
 
+    def test_origin_weights(self):
+        a = Main().constructor([
+            "compare", "--rule", "replicated_ruleset",
+            "--replication-count", "1",
+            "--origin", "tests/ceph/dump.json",
+            "--destination", "tests/ceph/dump.json",
+            "--origin-weights", "tests/ceph/weights.json"])
+        a.run_compare()
+
+    def test_destination_weights(self):
+        a = Main().constructor([
+            "compare", "--rule", "replicated_ruleset",
+            "--replication-count", "1",
+            "--origin", "tests/ceph/dump.json",
+            "--destination", "tests/ceph/dump.json",
+            "--destination-weights", "tests/ceph/weights.json"])
+        a.run_compare()
+
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_compare.py"
 # End:

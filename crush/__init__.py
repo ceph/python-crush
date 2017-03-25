@@ -685,3 +685,56 @@ class Crush(object):
 
     def get_crushmap(self):
         return self.crushmap
+
+    @staticmethod
+    def parse_weights_file(weights_file):
+        """
+        Parse a file containing information about devices weights.
+        The file is expected to contain JSON data. It can either be:
+
+         - a dictionary that maps weights (as floats between 0 and 1)
+           to device names, e.g.::
+
+            {"device0": 0.71, "device1": 0.212}
+
+         - a JSON dump of a Ceph OSDMap, obtainable with the command::
+
+            ceph osd dump --format json > osdmap.json
+
+        :param weights_file: File object to the weights file
+        :type weights_file: file
+        :return: Parsed weights
+        :rtype: dict[str, float]
+        """
+
+        f_name = weights_file.name
+
+        # Load the JSON data
+        try:
+            raw_data = json.load(weights_file)
+        except ValueError:
+            raise AssertionError("{} is not valid JSON".format(f_name))
+
+        # It should be an object (dict) and not an array (list)
+        assert type(raw_data) is dict, "Expected {} to be a dict".format(f_name)
+
+        osdmap_keys = {"epoch", "fsid", "osds", "pools"}  # And many more!
+        if all(k in raw_data for k in osdmap_keys):
+            # We're likely dealing with an OSDMap
+            try:
+                weights = dict(
+                    ("osd.{}".format(osd["osd"]), osd["weight"])
+                    for osd in raw_data["osds"])
+            except:  # Many different exceptions can happen
+                raise AssertionError("Failed to read Ceph OSDMap {}".format(f_name))
+        else:
+            weights = raw_data
+
+        # Check the weight values
+        assert all(type(v) is float and 0 <= v <= 1 for v in weights.values()), \
+            "Weights must be floating-point values between 0 and 1"
+
+        # Don't check that the keys are existing devices, LibCrush will do it
+        # No need to check that keys are strings, it's enforced by JSON
+
+        return weights
