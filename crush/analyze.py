@@ -34,8 +34,9 @@ log = logging.getLogger(__name__)
 
 class Analyze(object):
 
-    def __init__(self, args):
+    def __init__(self, args, hooks):
         self.args = args
+        self.hooks = hooks
 
     @staticmethod
     def get_parser():
@@ -67,15 +68,12 @@ class Analyze(object):
             help='repeat mapping (default: %d)' % values_count,
             type=int,
             default=values_count)
-        parser.add_argument(
-            '--no-backward-compatibility',
-            dest='backward_compatibility',
-            action='store_false', default=True,
-            help='do not allow backward compatibility tunables (default: allowed)')
         return parser
 
     @staticmethod
-    def set_parser(subparsers):
+    def set_parser(subparsers, arguments):
+        parser = Analyze.get_parser()
+        arguments(parser)
         subparsers.add_parser(
             'analyze',
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -172,7 +170,7 @@ class Analyze(object):
             osd.24    24  3.00     -8.33
             """),
             help='Analyze crushmaps',
-            parents=[Analyze.get_parser()],
+            parents=[parser],
         ).set_defaults(
             func=Analyze,
         )

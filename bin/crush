@@ -20,6 +20,6 @@
 #
 import sys
 import sys
-from crush.main import Main
+from crush.ceph import Ceph
 
-sys.exit(Main().run(sys.argv[1:]))
+sys.exit(Ceph().main(sys.argv[1:]))

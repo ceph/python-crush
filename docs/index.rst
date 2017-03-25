@@ -104,22 +104,24 @@ The `crush` command has a set of subcommands to manipulate and analyze
 crushmaps. Each subcommand is fully documented with `crush subcommand -h`::
 
     $ crush --help
-    usage: crush [-h] [-v] {analyze,ceph} ...
+    usage: crush [-h] [-v] [--no-backward-compatibility] {analyze,compare,convert} ...
 
-    A library to control placement in a hierarchy
+    Ceph crush compare and analyze
 
     optional arguments:
-      -h, --help      show this help message and exit
-      -v, --verbose   be more verbose
+      -h, --help            show this help message and exit
+      -v, --verbose         be more verbose
+      --no-backward-compatibility
+                            do not allow backward compatibility tunables (default: allowed)
 
     subcommands:
       valid subcommands
 
-    {analyze,compare,ceph} sub-command -h
-
-        analyze       Analyze crushmaps
-        compare       Compare crushmaps
-        ceph          Ceph support
+      {analyze,compare,convert}
+                            sub-command -h
+        analyze             Analyze crushmaps
+        compare             Compare crushmaps
+        convert             Convert crushmaps
 
 Contributor Guide
 -----------------

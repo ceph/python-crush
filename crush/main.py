@@ -23,7 +23,6 @@ import textwrap
 
 from crush import analyze
 from crush import compare
-from crush import ceph
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
@@ -31,11 +30,10 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 class Main(object):
 
     def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            description=textwrap.dedent("""\
-            A library to control placement in a hierarchy
-            """))
+        self.create_parser()
+
+        if self.parser.get_default('backward_compatibility') is None:
+            self.parser.set_defaults(backward_compatibility=False)
 
         self.parser.add_argument(
             '-v', '--verbose',
@@ -43,17 +41,23 @@ class Main(object):
             help='be more verbose',
         )
 
-        subparsers = self.parser.add_subparsers(
+        self.subparsers = self.parser.add_subparsers(
             title='subcommands',
             description='valid subcommands',
             help='sub-command -h',
         )
 
-        analyze.Analyze.set_parser(subparsers)
-        compare.Compare.set_parser(subparsers)
-        ceph.Ceph.set_parser(subparsers)
+        analyze.Analyze.set_parser(self.subparsers, self.hook_analyze_args)
+        compare.Compare.set_parser(self.subparsers, self.hook_compare_args)
 
-    def constructor(self, argv):
+    def create_parser(self):
+        self.parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description=textwrap.dedent("""\
+            A library to control placement in a hierarchy
+            """))
+
+    def parse(self, argv):
         self.args = self.parser.parse_args(argv)
 
         if self.args.verbose:
@@ -62,7 +66,15 @@ class Main(object):
             level = logging.INFO
         logging.getLogger('crush').setLevel(level)
 
-        return self.args.func(self.args)
+    def constructor(self, argv):
+        self.parse(argv)
+        return self.args.func(self.args, self)
 
-    def run(self, argv):
+    def main(self, argv):
         return self.constructor(argv).run()
+
+    def hook_analyze_args(self, parser):
+        pass
+
+    def hook_compare_args(self, parser):
+        pass

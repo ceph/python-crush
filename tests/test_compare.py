@@ -22,7 +22,6 @@ import logging
 from pprint import pprint
 import pytest  # noqa import pytest
 
-from crush.compare import Compare
 from crush.main import Main
 from crush import Crush
 

@@ -35,8 +35,9 @@ class Compare(object):
     orig_weights = None
     dest_weights = None
 
-    def __init__(self, args):
+    def __init__(self, args, hooks):
         self.args = args
+        self.hooks = hooks
 
     def set_origin(self, c):
         self.origin = c
@@ -66,11 +67,6 @@ class Compare(object):
             type=int,
             default=values_count)
         parser.add_argument(
-            '--no-backward-compatibility',
-            dest='backward_compatibility',
-            action='store_false', default=True,
-            help='do not allow backward compatibility tunables (default: allowed)')
-        parser.add_argument(
             '--origin',
             metavar='PATH',
             help='PATH to the origin crushmap file')
@@ -91,7 +87,9 @@ class Compare(object):
         return parser
 
     @staticmethod
-    def set_parser(subparsers):
+    def set_parser(subparsers, arguments):
+        parser = Compare.get_parser()
+        arguments(parser)
         subparsers.add_parser(
             'compare',
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -176,7 +174,7 @@ class Compare(object):
 
             """),
             help='Compare crushmaps',
-            parents=[Compare.get_parser()],
+            parents=[parser],
         ).set_defaults(
             func=Compare,
         )

@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import division
+
 import argparse
 import json
 import logging
@@ -27,10 +29,11 @@ from crush import Crush
 log = logging.getLogger(__name__)
 
 
-class Ceph(object):
+class Convert(object):
 
-    def __init__(self, args):
+    def __init__(self, args, hooks):
         self.args = args
+        self.hooks = hooks
 
     @staticmethod
     def get_parser():
@@ -39,21 +42,17 @@ class Ceph(object):
             conflict_handler='resolve',
         )
         parser.add_argument(
-            '--convert',
-            help=('convert PATH into the python-crush JSON format and display '
-                  'the result on the standard output'),
-            metavar='PATH',
-        )
+            'crushmap',
+            help='path to the crushmap file')
         return parser
 
     @staticmethod
     def set_parser(subparsers):
+        parser = Convert.get_parser()
         subparsers.add_parser(
-            'ceph',
+            'convert',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description=textwrap.dedent("""\
-            Ceph support
-
             The Ceph crushmap can be stored in three formats:
 
             - JSON, the output of *ceph osd crush dump* or *ceph report*
@@ -65,41 +64,33 @@ class Ceph(object):
             The JSON used is different from the python-crush format documented at
             http://crush.readthedocs.io/en/latest/api.html#crush.Crush.parse.
 
-            The --convert option reads any of the existing Ceph
-            formats and is compatible with Luminous and below. It
-            converts the crushmap into the python-crush format and
-            display the result on the standard output.
+            It supports any of the existing Ceph formats and is
+            compatible with Luminous and below. It converts the
+            crushmap into the python-crush format and display the
+            result on the standard output.
 
             """),
             epilog=textwrap.dedent("""
             Examples:
 
             Convert a Ceph JSON crushmap into a python-crush crushmap:
-            - crush ceph --convert crushmap-ceph.json > crushmap.json
+            - crush convert crushmap-ceph.json > crushmap.json
 
             Convert a Ceph text crushmap into a python-crush crushmap:
-            - crush ceph --convert crushmap.txt > crushmap-ceph.json
-            - crush ceph --convert crushmap-ceph.json > crushmap.json
+            - crush convert crushmap.txt > crushmap-ceph.json
+            - crush convert crushmap-ceph.json > crushmap.json
 
             Convert a binary crushmap to python-crush crushmap:
-            - crush ceph --convert crushmap.bin > crushmap.json
+            - crush convert crushmap.bin > crushmap.json
             """),
-            help='Ceph support',
-            parents=[Ceph.get_parser()],
+            help='Convert crushmaps',
+            parents=[parser],
         ).set_defaults(
-            func=Ceph,
+            func=Convert,
         )
 
-    @staticmethod
-    def factory(argv):
-        return Ceph(Ceph.get_parser().parse_args(argv))
-
     def run(self):
-        if self.args.convert:
-            self.convert(self.args.convert)
-
-    def convert(self, input):
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
-        crushmap = c._convert_to_crushmap(self.args.convert)
+        crushmap = c._convert_to_crushmap(self.args.crushmap)
         c.parse(crushmap)
         print(json.dumps(crushmap, indent=4, sort_keys=True))
