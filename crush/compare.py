@@ -181,10 +181,6 @@ class Compare(object):
             func=Compare,
         )
 
-    @staticmethod
-    def factory(argv):
-        return Compare(Compare.get_parser().parse_args(argv))
-
     def compare(self):
         a = self.origin
         self.origin_d = collections.defaultdict(lambda: 0)

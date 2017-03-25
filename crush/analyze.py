@@ -178,10 +178,6 @@ class Analyze(object):
         )
 
     @staticmethod
-    def factory(argv):
-        return Analyze(Analyze.get_parser().parse_args(argv))
-
-    @staticmethod
     def collect_paths(children, path):
         children_info = []
         for child in children:
