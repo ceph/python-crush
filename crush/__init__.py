@@ -690,12 +690,15 @@ class Crush(object):
     def parse_weights_file(weights_file):
         """
         Parse a file containing information about devices weights.
-
         The file is expected to contain JSON data. It can either be:
-        - a dictionary that maps weights (as floats between 0 and 1)
-          to device names, e.g.::
+
+         - a dictionary that maps weights (as floats between 0 and 1)
+           to device names, e.g.::
+
             {"device0": 0.71, "device1": 0.212}
-        - a JSON dump of a Ceph OSDMap, obtainable with the command::
+
+         - a JSON dump of a Ceph OSDMap, obtainable with the command::
+
             ceph osd dump --format json > osdmap.json
 
         :param weights_file: File object to the weights file
