@@ -59,9 +59,6 @@ class Compare(object):
         parser.add_argument(
             '--rule',
             help='the name of rule')
-        parser.add_argument(
-            '--crushmap',
-            help='path to the crushmap JSON file')
         values_count = 100000
         parser.add_argument(
             '--values-count',
