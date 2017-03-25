@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import logging
-import pytest  # noqa needed for caplog
+import pytest # noqa needed for caplog
 
 from crush import Crush
 
