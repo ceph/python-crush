@@ -23,6 +23,7 @@ import textwrap
 
 from crush import main
 from crush.ceph import convert
+from crush import LibCrush
 
 log = logging.getLogger(__name__)
 
@@ -50,8 +51,30 @@ class Ceph(main.Main):
             """),
         )
 
+    def hook_common_args(self, parser):
+        parser.add_argument(
+            '--pool',
+            help='pool',
+            type=int)
+
+        parser.add_argument(
+            '--pg-num',
+            help='pg-num',
+            type=int)
+
+        parser.add_argument(
+            '--pgp-num',
+            help='pgp-num',
+            type=int)
+
     def hook_analyze_args(self, parser):
-        pass
+        self.hook_common_args(parser)
 
     def hook_compare_args(self, parser):
-        pass
+        self.hook_common_args(parser)
+
+    def hook_create_values(self):
+        if self.args.pool is not None:
+            return LibCrush().pool_pps(self.args.pool, self.args.pg_num, self.args.pgp_num)
+        else:
+            return super(Ceph, self).hook_create_values()

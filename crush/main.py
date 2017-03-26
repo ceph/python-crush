@@ -78,3 +78,7 @@ class Main(object):
 
     def hook_compare_args(self, parser):
         pass
+
+    def hook_create_values(self):
+        values = range(0, self.args.values_count)
+        return dict(zip(values, values))
