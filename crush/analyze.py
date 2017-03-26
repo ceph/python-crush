@@ -298,8 +298,10 @@ class Analyze(object):
         replication_count = self.args.replication_count
         rule = self.args.rule
         device2count = collections.defaultdict(lambda: 0)
-        for value in range(0, self.args.values_count):
+        values = self.hooks.hook_create_values()
+        for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights)
+            log.debug("{} == {} mapped to {}".format(name, value, m))
             for device in m:
                 device2count[device] += 1
 
@@ -310,7 +312,7 @@ class Analyze(object):
             for item in item2path[device]:
                 d.at[item, '~objects~'] += count
 
-        total_objects = replication_count * self.args.values_count
+        total_objects = replication_count * len(values)
         d = self.collect_usage(d, total_objects)
 
         s = (d['~type~'] == type) & (d['~weight~'] > 0)

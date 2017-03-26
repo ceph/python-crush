@@ -49,6 +49,14 @@ class TestCeph(object):
         out, err = capsys.readouterr()
         assert '"weight": 5.0' in out
 
+    def test_hook_create_values(self):
+        c = Ceph()
+        c.parse([
+            '--verbose',
+            'analyze',
+            '--values-count', '2',
+        ])
+        assert {0: 0, 1: 1} == c.hook_create_values()
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
 # End:
