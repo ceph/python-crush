@@ -22,7 +22,6 @@ import logging
 from pprint import pprint
 import pytest  # noqa import pytest
 
-from crush.compare import Compare
 from crush.main import Main
 from crush import Crush
 
@@ -82,7 +81,9 @@ class TestCompare(object):
 
     def test_display(self):
         c1, c2 = self.define_crushmaps_1()
-        c = Compare.factory([
+        c = Main().constructor([
+            '--verbose',
+            'compare',
             '--rule', 'indep',
             '--replication-count', '2',
             '--values-count', '10',
@@ -99,7 +100,9 @@ class TestCompare(object):
         c1, c2 = self.define_crushmaps_1()
 
         # firstn, mapping order does not matter
-        c = Compare.factory([
+        c = Main().constructor([
+            '--verbose',
+            'compare',
             '--rule', 'firstn',
             '--replication-count', '2',
             '--values-count', '10',
@@ -123,7 +126,9 @@ class TestCompare(object):
         }
 
         # indep, mapping order matters
-        c = Compare.factory([
+        c = Main().constructor([
+            '--verbose',
+            'compare',
             '--rule', 'indep',
             '--replication-count', '2',
             '--values-count', '10',
@@ -223,6 +228,7 @@ class TestCompare(object):
             "--origin", "tests/ceph/dump.json",
             "--destination", "tests/ceph/dump.json",
             "--origin-weights", "tests/ceph/weights.json"])
+        a.args.backward_compatibility = True
         a.run_compare()
 
     def test_destination_weights(self):
@@ -232,6 +238,7 @@ class TestCompare(object):
             "--origin", "tests/ceph/dump.json",
             "--destination", "tests/ceph/dump.json",
             "--destination-weights", "tests/ceph/weights.json"])
+        a.args.backward_compatibility = True
         a.run_compare()
 
 # Local Variables:

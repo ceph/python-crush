@@ -28,7 +28,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG)
 
 
-class TestCeph(object):
+class TestAnalyze(object):
 
     def test_collect_dataframe(self):
         tree = {
@@ -116,6 +116,7 @@ host0     -3      10.0                -0.92\
              "--replication-count", "2", "--type", "device",
              "--crushmap", "tests/ceph/dump.json",
              "--weights", "tests/ceph/weights.json"])
+        a.args.backward_compatibility = True
         res = a.run()
         assert "-100.00" in str(res)  # One of the OSDs has a weight of 0.0
 

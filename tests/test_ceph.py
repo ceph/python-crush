@@ -19,9 +19,9 @@
 #
 
 import logging
-import pytest # noqa needed for capsys
+import pytest  # noqa needed for capsys
 
-from crush.main import Main
+from crush.ceph import Ceph
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG)
@@ -29,15 +29,25 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 class TestCeph(object):
 
-    def test_convert(self, capsys):
-        for ext in ('json', 'txt', 'crush'):
-            Main().run([
-                'ceph',
-                '--convert', 'tests/sample-ceph-crushmap.json',
-            ])
-            out, err = capsys.readouterr()
-            assert '"reference_id": -2' in out
+    def convert(self, ext):
+        Ceph().main([
+            'convert', 'tests/sample-ceph-crushmap.' + ext,
+        ])
 
+    def test_convert_json(self, capsys):
+        self.convert('json')
+        out, err = capsys.readouterr()
+        assert '"reference_id": -2' in out
+
+    def test_convert_txt(self, capsys):
+        self.convert('txt')
+        out, err = capsys.readouterr()
+        assert '"reference_id": -2' in out
+
+    def test_convert_crush(self, capsys):
+        self.convert('crush')
+        out, err = capsys.readouterr()
+        assert '"weight": 5.0' in out
 
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
