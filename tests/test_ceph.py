@@ -57,6 +57,16 @@ class TestCeph(object):
             '--values-count', '2',
         ])
         assert {0: 0, 1: 1} == c.hook_create_values()
+        c.parse([
+            '--verbose',
+            'analyze',
+            '--pool', '2',
+            '--pg-num', '3',
+            '--pgp-num', '3',
+        ])
+        expected = {u'2.0': -113899774, u'2.1': -1215435108, u'2.2': -832918304}
+        assert expected == c.hook_create_values()
+
 # Local Variables:
 # compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
 # End:
