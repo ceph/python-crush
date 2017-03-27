@@ -1,6 +1,31 @@
 CHANGES
 =======
 
+1.0.12
+------
+
+* version 1.0.12
+* analyze,compare: implement --pool/--pg-num for Ceph
+* analyze: implement hook_create_values
+* rework options and subcommands
+* analyze: better naming for the test class
+* analyze,compare: remove factory()
+* compare: remove unused --crushmap argument
+* tests: Reverted un-necessary change
+* compare: Can now apply weights
+* tests: Testing for weights in 'crush analyze'
+* tests: Testing for Crush.parse_weights_file
+* libcrush: get all pps values for a Ceph pool
+* tests: Get test data ready for testing weights
+* analyze: added CLI option for weights
+* docs: Fix docstring for parse_weights_file
+* crush: New method for weight parsing
+* misc: Ignore PyCharm files in Git
+* tests: Added test data for OSDMap
+* doc: python-pip is required
+* doc: s/-dev/-devel/
+* bump 1.0.12
+
 1.0.11
 ------
 
