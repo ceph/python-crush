@@ -1046,7 +1046,8 @@ LibCrush_pool_pps(LibCrush *self, PyObject *args)
   int pgp_num_mask = (1 << cbits(pgp_num-1)) - 1;
 
   PyObject *results = PyDict_New();
-  for (int ps = 0; ps < pg_num; ps++) {
+  int ps;
+  for (ps = 0; ps < pg_num; ps++) {
     int pps = crush_hash32_2(CRUSH_HASH_RJENKINS1,
                              ceph_stable_mod(ps, pgp_num, pgp_num_mask),
                              pool);
