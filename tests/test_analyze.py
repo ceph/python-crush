@@ -100,13 +100,13 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         }
         d = a.analyze()
         expected = """\
-        ~id~  ~weight~  ~over/under used %~
-~name~                                     
-host4     -7       1.0                10.91
-host3     -6      10.0                 1.07
-host2     -5      10.0                -0.37
-host1     -4      10.0                -0.86
-host0     -3      10.0                -0.92\
+        ~id~  ~weight~  ~objects~  ~over/under used %~
+~name~                                                
+host4     -7       1.0        541                10.91
+host3     -6      10.0       4930                 1.07
+host2     -5      10.0       4860                -0.37
+host1     -4      10.0       4836                -0.86
+host0     -3      10.0       4833                -0.92\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 

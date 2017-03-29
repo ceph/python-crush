@@ -84,18 +84,11 @@ Given a Ceph crushmap, show which hosts will be overused or underused::
 
 Output::
 
-            ~id~  ~weight~  ~over/under used %~
+            ~id~  ~weight~  ~objects~  ~over/under used %~
     ~name~
-    g9       -22  2.299988     10.40
-    g3        -4  1.500000     10.12
-    g12      -28  4.000000      4.57
-    g10      -24  4.980988      1.95
-    g2        -3  5.199982      1.90
-    n7        -9  5.484985      1.25
-    g1        -2  5.880997      0.50
-    g11      -25  6.225967     -0.95
-    g8       -20  6.679993     -1.73
-    g5       -15  8.799988     -7.88
+    host2     -4       1.0         70                  5.0
+    host0     -2       1.0         65                 -2.5
+    host1     -3       1.0         65                 -2.5
 
 CLI
 ---
