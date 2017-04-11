@@ -50,4 +50,5 @@ int convert_binary_to_json(const char *in, char **out)
     return -EINVAL;
   }
   *out = crush_to_json(crush);
+  return 0;
 }
