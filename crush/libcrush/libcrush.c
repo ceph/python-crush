@@ -1075,7 +1075,7 @@ LibCrush_methods[] = {
     { "map",      (PyCFunction) LibCrush_map,        METH_VARARGS|METH_KEYWORDS,
             PyDoc_STR("map a value to items") },
     { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
-            PyDoc_STR("convert from Ceph txt crushmap ") },
+            PyDoc_STR("convert from Ceph txt/bin crushmap") },
     { "pool_pps",  (PyCFunction) LibCrush_pool_pps,  METH_VARARGS,
             PyDoc_STR("list of all pps for a Ceph pool") },
     { NULL }
