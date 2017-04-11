@@ -1,6 +1,16 @@
 CHANGES
 =======
 
+1.0.14
+------
+
+* version 1.0.14
+* add crush.8 stub
+* libcrush: fix permissions for ceph_features.h
+* libcrush: add missing return value
+* analyze: display the number of objects
+* bump 1.0.14
+
 1.0.13
 ------
 
