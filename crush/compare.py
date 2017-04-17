@@ -233,7 +233,7 @@ class Compare(object):
         out += textwrap.dedent("""
         The rows below show the number of objects moved from the given
         item to each item named in the columns. The objects% at the
-        end of the rows shows shows the percentage of the total number
+        end of the rows shows the percentage of the total number
         of objects that is moved away from this particular item. The
         last row shows the percentage of the total number of objects
         that is moved to the item named in the column.
