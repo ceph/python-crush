@@ -14,9 +14,7 @@
 
 #include "include/mempool.h"
 #include "armor.h"
-#ifndef __STANDALONE_CRUSH__
 #include "common/environment.h"
-#endif // __STANDALONE_CRUSH__
 #include "common/errno.h"
 #include "common/safe_io.h"
 #include "common/simple_spin.h"
@@ -25,28 +23,14 @@
 #include "common/valgrind.h"
 #include "common/deleter.h"
 #include "include/atomic.h"
-#ifndef __STANDALONE_CRUSH__
 #include "common/RWLock.h"
 #include "include/types.h"
-#endif // __STANDALONE_CRUSH__
 #include "include/compat.h"
-#ifndef __STANDALONE_CRUSH__
 #include "include/inline_memory.h"
 #include "include/scope_guard.h"
 #if defined(HAVE_XIO)
 #include "msg/xio/XioMsg.h"
 #endif
-#else // __STANDALONE_CRUSH__
-using namespace ceph;
-using namespace std;
-#include "include/buffer.h"
-#include "include/intarith.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#define get_env_bool(x) 0
-#define ceph_abort abort
-#endif // __STANDALONE_CRUSH__
 
 #include <errno.h>
 #include <fstream>
@@ -1298,7 +1282,6 @@ static simple_spinlock_t buffer_debug_lock = SIMPLE_SPINLOCK_INITIALIZER;
     return l;
   }
 
-#ifndef __STANDALONE_CRUSH__
   template<bool is_const>
   uint32_t buffer::list::iterator_impl<is_const>::crc32c(
     size_t length, uint32_t crc)
@@ -1312,7 +1295,6 @@ static simple_spinlock_t buffer_debug_lock = SIMPLE_SPINLOCK_INITIALIZER;
     }
     return crc;
   }
-#endif // __STANDALONE_CRUSH__
 
   // explicitly instantiate only the iterator types we need, so we can hide the
   // details in this compilation unit without introducing unnecessary link time
@@ -2393,7 +2375,6 @@ int buffer::list::write_fd_zero_copy(int fd) const
   return 0;
 }
 
-#ifndef __STANDALONE_CRUSH__
 __u32 buffer::list::crc32c(__u32 crc) const
 {
   for (std::list<ptr>::const_iterator it = _buffers.begin();
@@ -2431,7 +2412,6 @@ __u32 buffer::list::crc32c(__u32 crc) const
   }
   return crc;
 }
-#endif // __STANDALONE_CRUSH__
 
 void buffer::list::invalidate_crc()
 {
