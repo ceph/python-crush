@@ -218,8 +218,8 @@ class TestCompare(object):
         c.compare()
         out = c.display()
         print(out)
-        assert ("objects%    0.20%    0.17%    1.23%    1.03%"
-                "    1.23%    1.10%    0.77%    1.00%   11.90%   12.50%   31.13%") in out
+        assert ("objects%    0.17%    0.13%    0.97%    0.77%    0.77%"
+                "    0.63%    0.73%    0.87%   12.30%   12.20%   29.53%") in out
 
     def test_origin_weights(self):
         a = Main().constructor([
