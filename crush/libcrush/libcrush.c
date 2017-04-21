@@ -967,7 +967,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
                                  value,
                                  result, replication_count,
                                  weights, weights_size,
-                                 cwin);
+                                 cwin, 0);
   if (result_len == 0) {
     PyErr_Format(PyExc_RuntimeError, "crush_do_rule() was unable to map %d to any device", value);
     return 0;
