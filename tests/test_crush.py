@@ -102,6 +102,9 @@ class TestCrush(object):
         assert 'trees' in crushmap
         crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.json")
         assert 'trees' in crushmap
+        with pytest.raises(ValueError) as e:
+            crushmap = Crush._convert_to_crushmap("tests/sample-bugous-crushmap.json")
+        assert "Expecting property name" in str(e.value)
 
     def test_parse_weights_file(self):
 

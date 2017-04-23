@@ -22,6 +22,8 @@ from __future__ import division
 import copy
 import json
 import logging
+import re
+import struct
 from crush.libcrush import LibCrush
 
 log = logging.getLogger(__name__)
@@ -625,18 +627,30 @@ class Crush(object):
         return self.c.map(**kwargs)
 
     @staticmethod
+    def _is_ceph_file(something):
+        fmt = "I"
+        crush_magic = 0x00010000
+        head = open(something, mode='rb').read(struct.calcsize(fmt))
+        if struct.unpack(fmt, head)[0] == crush_magic:
+            return True
+        content = open(something).read()
+        if (re.search("^device ", content, re.MULTILINE) and
+                re.search("^type ", content, re.MULTILINE)):
+            return True
+        return False
+
+    @staticmethod
     def _convert_from_file(something):
-        with open(something) as f_json:
-            try:
+        if Crush._is_ceph_file(something):
+            crushmap = LibCrush().convert(something)
+            return (json.loads(crushmap), 'ceph-json')
+        else:
+            with open(something) as f_json:
                 crushmap = json.load(f_json)
                 log.debug("_detect_file_format: valid json file")
                 if 'devices' in crushmap:  # Ceph json format
                     return (crushmap, 'ceph-json')
                 return (crushmap, 'python-crush-json')
-            except ValueError:
-                log.debug("_detect_file_format: not json")
-        crushmap = LibCrush().convert(something)
-        return (json.loads(crushmap), 'ceph-json')
 
     @staticmethod
     def _convert_to_dict(something):
