@@ -1,6 +1,21 @@
 CHANGES
 =======
 
+1.0.15
+------
+
+* version 1.0.15
+* fix error reporting on bugous JSON files
+* doc: reference to the last sync with Ceph
+* tests: tunables now default to optimal which leads to different results
+* libcrush: crush_do_rule now has an extra argument
+* libcrush: extract from Ceph
+* libcrush: sync with Ceph
+* Revert "libcrush: extract from Ceph"
+* doc: typo fix double shows
+* doc: convert handles text or binary
+* bump 1.0.15
+
 1.0.14
 ------
 
