@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.16
+------
+
+* version 1.0.16
+* doc: choose_args structure reference and map semantic
+* crush: add map(choose_args) parameter
+* doc: typos and missing parameters
+* libcrush: parse choose_args
+* libcrush: remove unused variable
+* bump 1.0.16
+
 1.0.15
 ------
 
