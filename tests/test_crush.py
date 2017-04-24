@@ -62,7 +62,8 @@ class TestCrush(object):
         crushmap = self.build_crushmap()
         c = Crush(verbose=1)
         assert c.parse(crushmap)
-        assert len(c.map(rule="data", value=1234, replication_count=1)) == 1
+        assert len(c.map(rule="data", value=1234, replication_count=1,
+                         weights={}, choose_args=[])) == 1
 
     def test_get_item_by_(self):
         crushmap = self.build_crushmap()

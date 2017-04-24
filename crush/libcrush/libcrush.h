@@ -75,6 +75,7 @@ typedef struct LibCrush {
   PyObject *ritems;
   int highest_device_id;
   PyObject *rules;
+  PyObject *choose_args;
 } LibCrush;
 
 extern PyTypeObject LibCrushType;
