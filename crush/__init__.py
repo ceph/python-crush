@@ -149,6 +149,9 @@ class CephConverter(object):
 
         j['tunables'] = self.convert_tunables(ceph['tunables'])
 
+        if 'choose_args' in ceph:
+            j['choose_args'] = ceph['choose_args']
+
         return j
 
 

@@ -52,6 +52,7 @@ LibCrush_init(LibCrush *self, PyObject *args, PyObject *kwds)
   self->items = PyDict_New();
   self->ritems = PyDict_New();
   self->rules = PyDict_New();
+  self->choose_args = PyDict_New();
 
   return RET_OK;
 }
@@ -67,6 +68,7 @@ LibCrush_dealloc(LibCrush *self)
   Py_DECREF(self->items);
   Py_DECREF(self->ritems);
   Py_DECREF(self->rules);
+  Py_DECREF(self->choose_args);
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -110,6 +112,8 @@ static int parse_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
     PyObject *python_id = MyInt_FromInt(*idout);
     int r = PyDict_SetItemString(bucket, "id", python_id);
     Py_DECREF(python_id);
+    if (r < 0)
+      return r;
   } else {
     PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
     *idout = MyInt_AsInt(id);
@@ -807,6 +811,232 @@ static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
   return 1;
 }
 
+static int parse_choose_args_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObject *trace)
+{
+  PyObject *name = PyDict_GetItemString(bucket, "bucket_name");
+  PyObject *id = NULL;
+  if (name != NULL) {
+    id = PyDict_GetItem(self->items, name);
+    if (id == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "%s is not a known bucket", MyText_AsString(name));
+      return 0;
+    }
+  }
+  if ((id != NULL) && PyDict_GetItemString(bucket, "bucket_id")) {
+    PyErr_Format(PyExc_RuntimeError, "bucket_id and bucket_name are mutually exclusive");
+    return 0;
+  }
+  if (id == NULL)
+    id = PyDict_GetItemString(bucket, "bucket_id");
+  if (id == NULL) {
+    PyErr_Format(PyExc_RuntimeError, "either bucket_id or bucket_name are required");
+    return 0;
+  }
+  PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
+  *idout = MyInt_AsInt(id);
+  if (PyErr_Occurred())
+    return 0;
+  if (*idout >= 0) {
+    PyErr_Format(PyExc_RuntimeError, "id must be a negative integer, not %d", *idout);
+    return 0;
+  }
+  return 1;
+}
+
+static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
+{
+  PyObject *python_bucket_ids = PyDict_GetItemString(bucket, "ids");
+  if (python_bucket_ids == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_ids %S", python_bucket_ids));
+
+  if (!PyList_Check(python_bucket_ids)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a list");
+    return 0;
+  }
+
+  if (choose_args->ids_size != PyList_Size(python_bucket_ids)) {
+    PyErr_Format(PyExc_RuntimeError, "expected a list of ids with %d elements and got %ld instead",
+                 choose_args->ids_size, PyList_Size(python_bucket_ids));
+    return 0;
+  }
+
+  Py_ssize_t pos;
+  for (pos = 0; pos < PyList_Size(python_bucket_ids); pos++) {
+    PyObject *python_id = PyList_GetItem(python_bucket_ids, pos);
+    int id = MyInt_AsInt(python_id);
+    if (PyErr_Occurred())
+      return 0;
+    choose_args->ids[pos] = (__u32)id;
+  }
+
+  return 1;
+}
+
+static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
+{
+  PyObject *python_bucket_weight_set = PyDict_GetItemString(bucket, "weight_set");
+  if (python_bucket_weight_set == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set %S", python_bucket_weight_set));
+
+  if (!PyList_Check(python_bucket_weight_set)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a list");
+    return 0;
+  }
+
+  choose_args->weight_set_size = PyList_Size(python_bucket_weight_set);
+
+  Py_ssize_t pos;
+  for (pos = 0; pos < PyList_Size(python_bucket_weight_set); pos++) {
+    PyObject *python_weights = PyList_GetItem(python_bucket_weight_set, pos);
+    PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set weight_set[%d] %S", pos, python_weights));
+
+    if (!PyList_Check(python_weights)) {
+      PyErr_Format(PyExc_RuntimeError, "must be a list");
+      return 0;
+    }
+
+    if (choose_args->weight_set[pos].size != PyList_Size(python_weights)) {
+      PyErr_Format(PyExc_RuntimeError, "expected a list of weights with %d elements and got %ld instead",
+                   choose_args->weight_set[pos].size, PyList_Size(python_weights));
+      return 0;
+    }
+
+    Py_ssize_t i;
+    for (i = 0; i < PyList_Size(python_weights); i++) {
+      PyObject *python_weight = PyList_GetItem(python_weights, i);
+      double weight = PyFloat_AsDouble(python_weight);
+      if (PyErr_Occurred())
+        return 0;
+      choose_args->weight_set[pos].weights[i] = (int)(weight * (double)0x10000);
+    }
+  }
+
+  return 1;
+}
+
+static int parse_choose_args_bucket(LibCrush *self, struct crush_choose_arg_map *choose_arg_map, PyObject *bucket, PyObject *trace)
+{
+  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket %S", bucket));
+
+  int bucket_id;
+  int r = parse_choose_args_bucket_id(self, bucket, &bucket_id, trace);
+  if (!r)
+    return 0;
+
+  if (-1-bucket_id < 0 || -1-bucket_id >= choose_arg_map->size) {
+    PyErr_Format(PyExc_RuntimeError, "id %d out of bounds -1-%d == %d not in [0,%d[",
+                 bucket_id, bucket_id, -1-bucket_id, choose_arg_map->size);
+    return 0;
+  }
+
+  struct crush_choose_arg *choose_args = &choose_arg_map->args[-1-bucket_id];
+
+  r = parse_choose_args_bucket_ids(self, choose_args, bucket, trace);
+  if (!r)
+    return 0;
+
+  r = parse_choose_args_bucket_weight_set(self, choose_args, bucket, trace);
+  if (!r)
+    return 0;
+
+  return 1;
+}
+
+static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *choose_arg_map, PyObject *python_choose_arg_map, PyObject *trace)
+{
+  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_arg_map %S", python_choose_arg_map));
+
+  if (!PyList_Check(python_choose_arg_map)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a list");
+    return 0;
+  }
+
+  int num_positions = 0;
+  Py_ssize_t pos;
+  for (pos = 0; pos < PyList_Size(python_choose_arg_map); pos++) {
+    PyObject *bucket = PyList_GetItem(python_choose_arg_map, pos);
+    PyList_Append(trace, PyUnicode_FromFormat("parse_choose_arg_map[%d] = %S", pos, bucket));
+    if (!PyDict_Check(bucket)) {
+      PyErr_Format(PyExc_RuntimeError, "must be a dict");
+      return 0;
+    }
+    PyObject *weight_set = PyDict_GetItemString(bucket, "weight_set");
+    if (weight_set == NULL)
+      continue;
+    if (!PyList_Check(weight_set)) {
+      PyErr_Format(PyExc_RuntimeError, "must be a list");
+      return 0;
+    }
+    if (num_positions < PyList_Size(weight_set))
+      num_positions = PyList_Size(weight_set);
+  }
+
+  choose_arg_map->args = crush_make_choose_args(self->map, num_positions);
+  if (choose_arg_map->args == NULL)
+    return 0;
+  choose_arg_map->size = self->map->max_buckets;
+
+  for (pos = 0; pos < PyList_Size(python_choose_arg_map); pos++) {
+    PyObject *bucket = PyList_GetItem(python_choose_arg_map, pos);
+    int r = parse_choose_args_bucket(self, choose_arg_map, bucket, trace);
+    if (!r) {
+      crush_destroy_choose_args(choose_arg_map->args);
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+static void choose_args_destructor(PyObject *capsule)
+{
+  struct crush_choose_arg *choose_args = (struct crush_choose_arg *)PyCapsule_GetPointer(capsule, NULL);
+  crush_destroy_choose_args(choose_args);
+}
+
+static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  PyObject *choose_args = PyDict_GetItemString(map, "choose_args");
+  if (choose_args == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("choose_args %S", choose_args));
+
+  if (!PyDict_Check(choose_args)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a dict");
+    return 0;
+  }
+
+  PyDict_Clear(self->choose_args);
+
+  PyObject *python_key;
+  PyObject *python_value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(choose_args, &pos, &python_key, &python_value)) {
+    PyList_Append(trace, PyUnicode_FromFormat("choose_args %S = %S", python_key, python_value));
+    const char *key = MyText_AsString(python_key);
+    if (key == NULL)
+      return 0;
+
+    struct crush_choose_arg_map choose_arg_map;
+    int r = parse_choose_arg_map(self, &choose_arg_map, python_value, trace);
+    if (!r)
+      return 0;
+
+    PyObject *capsule = PyCapsule_New((void *)choose_arg_map.args, NULL, choose_args_destructor);
+    r = PyDict_SetItem(self->choose_args, python_key, capsule);
+    Py_DECREF(capsule);
+    if (r != 0)
+      return 0;
+  }
+
+  return 1;
+}
+
 static int parse(LibCrush *self, PyObject *map, PyObject *trace)
 {
   int r = parse_trees(self, map, trace);
@@ -822,6 +1052,10 @@ static int parse(LibCrush *self, PyObject *map, PyObject *trace)
     return 0;
 
   crush_finalize(self->map);
+
+  r = parse_choose_args(self, map, trace);
+  if (!r)
+    return 0;
 
   return 1;
 }
@@ -864,6 +1098,81 @@ static int print_debug(PyObject *message)
   return r == 0;
 }
 
+static int map_choose_args(LibCrush *self, PyObject *python_choose_args, struct crush_choose_arg_map *choose_arg_map, int *allocated, PyObject *trace)
+{
+  *allocated = 0;
+  choose_arg_map->args = NULL;
+  choose_arg_map->size = 0;
+
+  if (python_choose_args == NULL)
+    return 1;
+
+  PyList_Append(trace, PyUnicode_FromFormat("map_choose_args %S", python_choose_args));
+
+  if (MyText_Check(python_choose_args)) {
+    PyObject *choose_args = PyDict_GetItem(self->choose_args, python_choose_args);
+    if (choose_args == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "map choose_args %s is not found", MyText_AsString(python_choose_args));
+      return 0;
+    }
+    choose_arg_map->args = (struct crush_choose_arg *)PyCapsule_GetPointer(choose_args, NULL);
+    return 1;
+  } else if (PyList_Check(python_choose_args)) {
+    int r = parse_choose_arg_map(self, choose_arg_map, python_choose_args, trace);
+    if (!r)
+      return 0;
+    *allocated = 1;
+    return 1;
+  } else {
+    PyErr_Format(PyExc_RuntimeError, "choose_args must either be a string or a list");
+    return 0;
+  }
+}
+
+static PyObject *map(LibCrush *self, int ruleno, int value, int replication_count, __u32 *weights, int weights_size, struct crush_choose_arg *choose_args)
+{
+  int result[replication_count];
+  memset(result, '\0', sizeof(int) * replication_count);
+  int cwin_size = crush_work_size(self->map, replication_count);
+  char cwin[cwin_size];
+  crush_init_workspace(self->map, cwin);
+
+  int result_len = crush_do_rule(self->map,
+                                 ruleno,
+                                 value,
+                                 result, replication_count,
+                                 weights, weights_size,
+                                 cwin, choose_args);
+  if (result_len == 0) {
+    PyErr_Format(PyExc_RuntimeError, "crush_do_rule() was unable to map %d to any device", value);
+    return 0;
+  }
+
+  PyObject *python_results = PyList_New(result_len);
+  int i;
+  for (i = 0; i < result_len; i++) {
+    PyObject *python_result;
+    if (result[i] == CRUSH_ITEM_NONE) {
+      python_result = Py_None;
+    } else {
+      PyObject *python_id = MyInt_FromInt(result[i]);
+      if (PyErr_Occurred())
+        return 0;
+      python_result = PyDict_GetItem(self->ritems, python_id);
+      Py_DECREF(python_id);
+      if (python_result == NULL) {
+        PyErr_Format(PyExc_RuntimeError, "%d does not map to a device name", result[i]);
+        return 0;
+      }
+    }
+    Py_INCREF(python_result); // because SetItem steals a reference
+    int r = PyList_SetItem(python_results, i, python_result);
+    if (r == -1)
+      return 0;
+  }
+  return python_results;
+}
+
 static PyObject *
 LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
 {
@@ -871,14 +1180,16 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   int value;
   int replication_count = -1;
   PyObject *python_weights = NULL;
+  PyObject *python_choose_args = NULL;
   static char *kwlist[] = {
-    "rule", "value", "replication_count", "weights", NULL
+    "rule", "value", "replication_count", "weights", "choose_args", NULL
   };
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!iI|O!", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!iI|O!O", kwlist,
                                    &MyText_Type, &rule,
                                    &value,
                                    &replication_count,
-                                   &PyDict_Type, &python_weights))
+                                   &PyDict_Type, &python_weights,
+                                   &python_choose_args))
     return 0;
 
   if (self->map == NULL) {
@@ -896,6 +1207,16 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   }
   int ruleno = MyInt_AsInt(python_ruleno);
   if (PyErr_Occurred())
+    return 0;
+
+  PyObject *trace = PyList_New(0);
+  struct crush_choose_arg_map choose_arg_map;
+  int allocated;
+  int r = map_choose_args(self, python_choose_args, &choose_arg_map, &allocated, trace);
+  if (!r || self->verbose)
+    print_trace(trace);
+  Py_DECREF(trace);
+  if (r < 0)
     return 0;
 
   if (self->verbose)
@@ -955,44 +1276,9 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
     }
   }
 
-  int result[replication_count];
-  memset(result, '\0', sizeof(int) * replication_count);
-  int cwin_size = crush_work_size(self->map, replication_count);
-  char cwin[cwin_size];
-  crush_init_workspace(self->map, cwin);
-
-  int result_len = crush_do_rule(self->map,
-                                 ruleno,
-                                 value,
-                                 result, replication_count,
-                                 weights, weights_size,
-                                 cwin, 0);
-  if (result_len == 0) {
-    PyErr_Format(PyExc_RuntimeError, "crush_do_rule() was unable to map %d to any device", value);
-    return 0;
-  }
-
-  PyObject *python_results = PyList_New(result_len);
-  for (i = 0; i < result_len; i++) {
-    PyObject *python_result;
-    if (result[i] == CRUSH_ITEM_NONE) {
-      python_result = Py_None;
-    } else {
-      PyObject *python_id = MyInt_FromInt(result[i]);
-      if (PyErr_Occurred())
-        return 0;
-      python_result = PyDict_GetItem(self->ritems, python_id);
-      Py_DECREF(python_id);
-      if (python_result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "%d does not map to a device name", result[i]);
-        return 0;
-      }
-    }
-    Py_INCREF(python_result); // because SetItem steals a reference
-    int r = PyList_SetItem(python_results, i, python_result);
-    if (r == -1)
-      return 0;
-  }
+  PyObject *python_results = map(self, ruleno, value, replication_count, weights, weights_size, choose_arg_map.args);
+  if (allocated)
+    crush_destroy_choose_args(choose_arg_map.args);
   return python_results;
 }
 

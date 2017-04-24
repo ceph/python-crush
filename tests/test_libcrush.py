@@ -582,6 +582,285 @@ class TestLibCrush(object):
             LibCrush().parse(wrong)
         assert "type is unknown" in str(e.value)
 
+    def test_parse_choose_args(self):
+        wrong = {
+            'choose_args': 0
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a dict" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                1: {}
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'choose_args': {
+                "1": 0
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a list" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    0,
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a dict" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    {
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "bucket_id or bucket_name are required" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": []
+                    },
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": 5
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "id must be a negative integer" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_name": "unknown"
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "not a known bucket" in str(e.value)
+
+        wrong = {
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -3
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "not in [0,0[" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "ids": 0
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a list" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "weight_set": 0
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a list" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "ids": [50]
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "expected a list of ids with 0 elements and got 1 instead" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "weight_set": [[10]]
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "expected a list of weights with 0 elements and got 1 instead" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "weight_set": [0]
+                    },
+                ]
+            }
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert "must be a list" in str(e.value)
+
+        wrong = {
+            'trees': [{
+                'type': 'root',
+                'name': 'dc1',
+                'id': -1,
+                'children': [
+                    {
+                        "id": 0,
+                        "name": "device1",
+                    }
+                ],
+            }],
+            'choose_args': {
+                "1": [
+                    {
+                        "bucket_id": -1,
+                        "weight_set": [["bad"]]
+                    },
+                ]
+            }
+        }
+        with pytest.raises(TypeError) as e:
+            LibCrush().parse(wrong)
+
+    def test_map_ok_choose_args(self):
+        crushmap = {
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "children": [],
+                }
+            ],
+            "rules": {
+                "data": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+                "for_validation": [
+                    ["take", "dc1"],
+                    ["chooseleaf", "firstn", 0, "type", 0],
+                    ["emit"]
+                ],
+            }
+        }
+        crushmap['trees'][0]['children'].extend([
+            {
+                "type": "host",
+                "id": -(i + 2),
+                "name": "host%d" % i,
+                "children": [
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                ],
+            } for i in range(0, 10)
+        ])
+        crushmap['choose_args'] = {
+            "1": [
+                {
+                    "bucket_name": "host9",
+                    "weight_set": [[2.0, 1.0]]  # invert the weights
+                },
+            ]
+        }
+        c = LibCrush(verbose=1)
+        assert c.parse(crushmap)
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=2) == ["device19", "device13"]
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=2,
+                     choose_args="1") == ["device18", "device13"]
+        assert c.map(rule="data",
+                     value=1234,
+                     replication_count=2,
+                     choose_args=crushmap['choose_args']["1"]) == ["device18", "device13"]
+
     def test_map_ok(self):
         crushmap = {
             "trees": [
