@@ -295,8 +295,8 @@ class Crush(object):
               ...
             ]
 
-        Each element can either be a device (i.e. no children and id >= 0)
-        or a bucket (i.e. id < 0).
+        Each element can either be a device (i.e. no children and id >= 0),
+        a bucket (i.e. id < 0) or a reference to a bucket or device.
         ::
 
             bucket = {
@@ -322,7 +322,7 @@ class Crush(object):
         The **type** is a user defined string that can be used by
         **rules** to select all buckets of the same type.
 
-        The **name** is a user defined string that uniquely identify
+        The **name** is a user defined string that uniquely identifies
         the bucket.
 
         The **id** must either be set for all buckets or not at
@@ -419,8 +419,8 @@ class Crush(object):
               ...
             ]
 
-        Each element can either be a device (i.e. no children and id >= 0)
-        or a bucket (i.e. id < 0).
+        Each element can either be a device (i.e. no children and id >= 0),
+        a bucket (i.e. id < 0) or a reference to a bucket or device.
         ::
 
             device = {
@@ -436,8 +436,8 @@ class Crush(object):
 
         The **id** must be a unique positive number.
 
-        The **name** is a user defined string that uniquely identify
-        the bucket.
+        The **name** is a user defined string that uniquely identifies
+        the device.
 
         If the **weight** of a device A is lower than the
         **weight** of a device B, it will be less likely to be used.
@@ -589,7 +589,7 @@ class Crush(object):
         exactly **replication_count** devices is returned. If the
         mapping fails, the list may contains less devices or some
         names may be replaced by None. For instance, if asking
-        for 3 replicas, the result of a failed mapping may be::
+        for 3 replicas, the result of a failed mapping could be::
 
             [ "device1", "device5" ] # 2 instead of 3
             [ "device8", None, "device0" ] # second device is missing
