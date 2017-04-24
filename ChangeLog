@@ -1,14 +1,23 @@
 CHANGES
 =======
 
+1.0.17
+------
+
+* version 1.0.17
+* documentation and helper scripts for manylinux
+* libcrush: include /usr/include/boost148
+* libcrush: lower cmake expectations
+* bump 1.0.17
+
 1.0.16
 ------
 
 * version 1.0.16
-* doc: choose_args structure reference and map semantic
-* crush: add map(choose_args) parameter
+* doc: choose\_args structure reference and map semantic
+* crush: add map(choose\_args) parameter
 * doc: typos and missing parameters
-* libcrush: parse choose_args
+* libcrush: parse choose\_args
 * libcrush: remove unused variable
 * bump 1.0.16
 
@@ -19,7 +28,7 @@ CHANGES
 * fix error reporting on bugous JSON files
 * doc: reference to the last sync with Ceph
 * tests: tunables now default to optimal which leads to different results
-* libcrush: crush_do_rule now has an extra argument
+* libcrush: crush\_do\_rule now has an extra argument
 * libcrush: extract from Ceph
 * libcrush: sync with Ceph
 * Revert "libcrush: extract from Ceph"
@@ -32,7 +41,7 @@ CHANGES
 
 * version 1.0.14
 * add crush.8 stub
-* libcrush: fix permissions for ceph_features.h
+* libcrush: fix permissions for ceph\_features.h
 * libcrush: add missing return value
 * analyze: display the number of objects
 * bump 1.0.14
@@ -49,7 +58,7 @@ CHANGES
 
 * version 1.0.12
 * analyze,compare: implement --pool/--pg-num for Ceph
-* analyze: implement hook_create_values
+* analyze: implement hook\_create\_values
 * rework options and subcommands
 * analyze: better naming for the test class
 * analyze,compare: remove factory()
@@ -57,11 +66,11 @@ CHANGES
 * tests: Reverted un-necessary change
 * compare: Can now apply weights
 * tests: Testing for weights in 'crush analyze'
-* tests: Testing for Crush.parse_weights_file
+* tests: Testing for Crush.parse\_weights\_file
 * libcrush: get all pps values for a Ceph pool
 * tests: Get test data ready for testing weights
 * analyze: added CLI option for weights
-* docs: Fix docstring for parse_weights_file
+* docs: Fix docstring for parse\_weights\_file
 * crush: New method for weight parsing
 * misc: Ignore PyCharm files in Git
 * tests: Added test data for OSDMap
@@ -74,14 +83,14 @@ CHANGES
 
 * version 1.0.11
 * doc: dependencies instructions updates
-* add from __future__ import division
-* move setup_hooks outside of crush
+* add from \_\_future\_\_ import division
+* move setup\_hooks outside of crush
 * ceph: move the actual conversion to Crush
 * tests: remove unused files
 * compare,analyze: files can contain Ceph json,txt,binary
 * crush: transparent format conversion for parse()
 * libcrush: add support for binary crushmaps to convert()
-* crush: implement _convert_to_crushmap
+* crush: implement \_convert\_to\_crushmap
 * crush: define CephConverter
 * doc: update libcrush hacking instructions
 * libcrush: extract from Ceph
@@ -150,9 +159,9 @@ CHANGES
 * version 1.0.7
 * a child may reference an existing bucket or device
 * typo in URL
-* chooseleaf_descend_once is also a tunable
-* set_choose_local*_tries argument is positive
-* support and document default tunables & step set_* tunables
+* chooseleaf\_descend\_once is also a tunable
+* set\_choose\_local\*\_tries argument is positive
+* support and document default tunables & step set\_\* tunables
 * bump 1.0.7
 
 1.0.6
@@ -163,7 +172,7 @@ CHANGES
 * version 1.0.5
 * update the quick start example
 * bucket children must be ordered
-* fix step choose* documentation
+* fix step choose\* documentation
 * bump 1.0.5
 * add links to code and documentation
 * documentation updates
@@ -182,13 +191,13 @@ CHANGES
 -----
 
 * version 1.0.3
-* protect crush/__init__.py from import failure
+* protect crush/\_\_init\_\_.py from import failure
 * make flake8 happy
 * make tests for mapping non random
 * fix Crush tests (trees)
 * API documentation
 * a rule is just a list of steps
-* the rule {min,max}_size is not required
+* the rule {min,max}\_size is not required
 * allow multiple roots
 * remove duplicate ~weight~ comparison
 * implement crush.Crush API
