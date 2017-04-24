@@ -346,7 +346,6 @@ static int parse_reference(LibCrush *self, PyObject *bucket, int *idout, int *we
 
   if (!parse_reference_id(self, bucket, idout, trace))
     return 0;
-  int weight;
   if (!parse_weight(self, bucket, weightout, trace))
     return 0;
 
