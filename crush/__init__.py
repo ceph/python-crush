@@ -281,6 +281,9 @@ class Crush(object):
               "rules": rules,
 
               # optional (default: none)
+              "choose_args": choose_arg_map,
+
+              # optional (default: none)
               "tunables": tunables,
             }
 
@@ -423,6 +426,22 @@ class Crush(object):
         a bucket (i.e. id < 0) or a reference to a bucket or device.
         ::
 
+            reference = {
+              # mandatory
+              "reference_id": <int>,
+
+              # optional (default: 1.0)
+              "weight": <postive float>,
+            }
+
+        The **reference_id** must be equal to the **id** of a bucket or
+        device defined in the hierarchy.
+
+        If the **weight** is omitted, it default to 1.0. The
+        **weight** must either be set for all references or not at
+        all.
+        ::
+
             device = {
               # mandatory
               "id": <positive int>,
@@ -443,22 +462,6 @@ class Crush(object):
         **weight** of a device B, it will be less likely to be used.
         A common pattern is to set the **weight** to 2.0 for 2TB
         devices, 1.0 for 1TB devices, 0.5 for 500GB devices, etc.
-        ::
-
-            reference = {
-              # mandatory
-              "reference_id": <int>,
-
-              # optional (default: 1.0)
-              "weight": <postive float>,
-            }
-
-        The **reference_id** must be equal to the **id** of a bucket or
-        device defined in the hierarchy.
-
-        If the **weight** is omitted, it default to 1.0. The
-        **weight** must either be set for all references or not at
-        all.
         ::
 
             rules = {
@@ -558,6 +561,79 @@ class Crush(object):
         Append the selection to the results and clear the selection
         ::
 
+            choose_arg_map = {
+              <name str>: choose_args,
+              <name str>: choose_args,
+              ...
+            }
+
+        A named collection of **choose_args** for **map()** to use for
+        changing the weights of straw2 buckets or remap the items they
+        contains to arbitrary values. See **map()** for more information.
+        ::
+
+            choose_args = [
+              choose_args_bucket,
+              choose_args_bucket,
+              ...
+            ]
+
+        A list of **choose_args_bucket**, each modifying the weights
+        or the ids of a **bucket**. There must be at most one
+        **choose_args_bucket** for a given bucket in the crushmap.
+        ::
+
+            choose_args_bucket = {
+              # mandatory
+              "bucket_id": <negative int> or "bucket_name": <bucket name str>,
+              # optional (default: none)
+              "ids": choose_args_ids,
+              # optional (default: none)
+              "weight_set": choose_args_weight_set,
+            }
+
+        When calling **map()** with this **choose_args_bucket**,
+        straw2 will use **choose_args_ids** instead of the items it
+        contains. And instead of using the weights stored in the
+        bucket, it will use one of **choose_args_weight_set**,
+        depending on the position. See **map()** for more information.
+
+        The bucket is uniquely identified by either **bucket_id**
+        which must be a negative number or **bucket_name** which is
+        the name of the bucket set in the **bucket** definition. The
+        two are mutually exclusive.
+        ::
+
+            choose_args_ids = [ <int>, <int>, ... ]
+
+        The first element of **choose_args_ids** will be used instead
+        of the id of the first children and so on.
+
+        The size of **choose_args_ids** must be exactly the same as
+        the size of the **children** array of the corresponding
+        **bucket**.
+        ::
+
+            choose_args_weight_set = [
+               [ <positive float>, <positive float>, ... ], # position 0
+               [ <positive float>, <positive float>, ... ], # position 1
+               ...
+            ]
+
+        When **map()** chooses the frist replicas from the
+        corresponding **bucket** it will use the weights at position 0
+        instead of the weights stored in the **bucket**. When choosing
+        the second replica it will use the weights at positon 1 and so
+        on.
+
+        The size of the array for each position must be exactly the
+        same as the size of the **children** array of the corresponding
+        **bucket**.
+
+        If **choose_args_weight_set** does not contain a list of weights
+        for a given position, the weights in the last available position
+        will be used instead.
+        ::
             tunables = {
               "choose_total_tries": 50
             }
@@ -583,7 +659,8 @@ class Crush(object):
         object) to the desired number of devices
         (**replication_count**) and return them in a list. The
         probabilities for a given device to be selected can be
-        modified by the **weights** dictionnary.
+        modified by the **weights** dictionnary or by **choose_args**
+        for straw2 buckets.
 
         If the mapping is successful, a list of device containing
         exactly **replication_count** devices is returned. If the
@@ -608,6 +685,40 @@ class Crush(object):
         reduce it by 50%) and "device1" by 0.75 (i.e, reduce it by
         25%).
 
+        If the **choose_args** is a string, the corresponding list
+        will be retrieved from **choose_arg_map** in the map. Each
+        element in the **choose_args** list modifies the parameters of
+        the choose function for the corresponding straw2 bucket. With
+        a bucket containing two children:
+
+            {
+               "name": "bucket1":
+               "children": [
+                   { "name": "device1", "id": 1, "weight": 1.0 },
+                   { "name": "device2", "id": 2, "weight": 2.0 },
+               ]
+            }
+
+        If map(85) == [ 'device2' ], the result could be different
+        by switching the weights with:
+
+            map(85, choose_args=[
+              { "bucket_name": "bucket1",
+                "weight_set": [ [ 2.0, 1.0 ] ]
+              }]) == [ 'device1' ]
+
+        Similarly the result can be influenced by providing
+        alternative ids. The id of each item is a parameter of the
+        hash considered for placement. However, contrary to the
+        weight, there is no way to guess how it will influence the
+        result.
+
+            map(85, choose_args=[
+              { "bucket_name": "bucket1",
+                "ids": [ 100, 300 ]
+              }]) == [ 'device1' ]
+
+
         - **rule**: the rule name (required string)
 
         - **value**: the number to map (required integer)
@@ -616,6 +727,8 @@ class Crush(object):
             (required positive integer)
 
         - **weights**: map of name to weight float (optional, default to None)
+
+        - **choose_args**: name to lookup in the map or a list (optional, default to None)
 
         Return a list of device names.
 
