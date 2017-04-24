@@ -7,8 +7,16 @@ crush is a library to control placement in a hierarchy
 - Documentation : http://crush.readthedocs.org/
 - PyPi : https://pypi.python.org/pypi/crush
 
-Installation
-============
+GNU/Linux Installation
+======================
+
+* pip install crush
+
+Other Installation
+==================
+
+When using pip versions lower than 8.1 or other operating systems,
+compilation is necessary and packages must be installed first.
 
 * apt-get install -y gcc g++ python-pip python-all-dev libpython3-all-dev cmake libboost-all-dev libatomic-ops-dev
 * dnf / yum / zypper install -y gcc gcc-c++ python-pip python-devel python3-devel cmake boost-devel libatomic_ops-devel
@@ -47,11 +55,19 @@ Release management
 
 * Prepare a new version
 
- - version=1.3.0 ; perl -pi -e "s/^version.*/version = $version/" setup.cfg ; for i in 1 2 ; do python setup.py sdist ; amend=$(git log -1 --oneline | grep --quiet "version $version" && echo --amend) ; git commit $amend -m "version $version" ChangeLog setup.cfg ; git tag -a -f -m "version $version" $version ; done
+ - version=1.0.0 ; perl -pi -e "s/^version.*/version = $version/" setup.cfg ; for i in 1 2 ; do python setup.py sdist ; amend=$(git log -1 --oneline | grep --quiet "version $version" && echo --amend) ; git commit $amend -m "version $version" ChangeLog setup.cfg ; git tag -a -f -m "version $version" $version ; done
 
 * Publish a new version
 
- - python setup.py sdist upload --sign
+ - docker build --tag manylinux manylinux
+ - docker run --rm -v $(pwd):/io manylinux /io/manylinux/build-wheels.sh
+   OR docker run --rm -v $(pwd):/io manylinux env PYBINS=/opt/python/cp27-cp27mu/bin /io/manylinux/build-wheels.sh
+ - twine upload --sign wheelhouse/*crush*
+
+ - rm -fr dist
+ - python setup.py sdist
+ - twine upload --sign dist/*.tar.gz
+
  - git push ; git push --tags
 
 * pypi maintenance

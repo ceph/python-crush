@@ -13,3 +13,4 @@ virtualenv/
 AUTHORS
 build/
 .idea/
+wheelhouse/
