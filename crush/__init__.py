@@ -576,7 +576,7 @@ class Crush(object):
         self._update_info()
         return True
 
-    def map(self, rule, value, replication_count, weights=None):
+    def map(self, rule, value, replication_count, weights=None, choose_args=None):
         """Map an object to a list of devices.
 
         The **rule** is used to map the **value** (representing an
@@ -627,6 +627,8 @@ class Crush(object):
         }
         if weights:
             kwargs["weights"] = weights
+        if choose_args:
+            kwargs["choose_args"] = choose_args
         return self.c.map(**kwargs)
 
     @staticmethod
