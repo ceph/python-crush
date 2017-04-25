@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.0.18
+------
+
+* version 1.0.18
+* doc: sync with README.rst
+* wheel: fix wheelhouse permissions
+* doc: fix README.rst formatting issue
+* bump 1.0.18
+
 1.0.17
 ------
 
