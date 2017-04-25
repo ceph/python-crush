@@ -66,7 +66,7 @@ Release management
 
  - rm -fr dist
  - python setup.py sdist
- - twine upload --sign dist/*.tar.gz
+ - twine upload --sign dist/\*.tar.gz
 
  - git push ; git push --tags
 
