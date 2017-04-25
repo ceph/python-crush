@@ -62,11 +62,12 @@ Release management
  - docker build --tag manylinux manylinux
  - docker run --rm -v $(pwd):/io manylinux /io/manylinux/build-wheels.sh
    OR docker run --rm -v $(pwd):/io manylinux env PYBINS=/opt/python/cp27-cp27mu/bin /io/manylinux/build-wheels.sh
+ - sudo chown -R $(id -u) wheelhouse/
  - twine upload --sign wheelhouse/*crush*
 
  - rm -fr dist
  - python setup.py sdist
- - twine upload --sign dist/*.tar.gz
+ - twine upload --sign dist/\*.tar.gz
 
  - git push ; git push --tags
 
