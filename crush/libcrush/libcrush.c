@@ -422,9 +422,13 @@ static int parse_bucket_or_device(LibCrush *self, PyObject *bucket, int *idout, 
 static int print_trace(PyObject *trace)
 {
   PyObject *f = PySys_GetObject("stdout");
+  if (f == NULL)
+    return 0;
   Py_ssize_t i;
   for (i = 0; i < PyList_Size(trace); i++) {
     const char *msg = MyText_AsString(PyList_GetItem(trace, i));
+    if (msg == NULL)
+      PyFile_WriteString("unexpected NULL pointer instead of message", f);
     if (PyFile_WriteString(msg, f) != 0)
       return 0;
     if (PyFile_WriteString("\n", f) != 0)
@@ -1102,6 +1106,8 @@ static int print_debug(PyObject *message)
   if (message == NULL)
     return 0;
   PyObject *out = PySys_GetObject("stdout");
+  if (out == NULL)
+    return 0;
   int r = PyFile_WriteString(MyText_AsString(message), out);
   return r == 0;
 }
