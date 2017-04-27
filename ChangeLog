@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.0.19
+------
+
+* version 1.0.19
+* libcrush: guard against NULL pointers
+* libcrush: fix leaking trace messages
+* bump 1.0.19
+
 1.0.18
 ------
 
