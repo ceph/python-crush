@@ -72,13 +72,21 @@ LibCrush_dealloc(LibCrush *self)
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
+static void append_trace(PyObject *trace, PyObject *object)
+{
+  if (object == NULL) // may happen on Control-C
+    return;
+  PyList_Append(trace, object);
+  Py_DECREF(object);
+}
+
 static int parse_type(LibCrush *self, PyObject *bucket, int *typeout, PyObject *trace)
 {
   PyObject *type_name = PyDict_GetItemString(bucket, "type");
   if (type_name == NULL) {
     *typeout = -1;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("type %S", type_name));
+    append_trace(trace, PyUnicode_FromFormat("type %S", type_name));
     if (MyText_AsString(type_name) == NULL)
       return 0;
     if (!PyDict_Contains(self->types, type_name)) {
@@ -108,14 +116,14 @@ static int parse_bucket_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
   PyObject *id = PyDict_GetItemString(bucket, "id");
   if (id == NULL) {
     *idout = crush_get_next_bucket_id(self->map);
-    PyList_Append(trace, PyUnicode_FromFormat("id %d (default)", *idout));
+    append_trace(trace, PyUnicode_FromFormat("id %d (default)", *idout));
     PyObject *python_id = MyInt_FromInt(*idout);
     int r = PyDict_SetItemString(bucket, "id", python_id);
     Py_DECREF(python_id);
     if (r < 0)
       return r;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
+    append_trace(trace, PyUnicode_FromFormat("id %S", id));
     *idout = MyInt_AsInt(id);
     if (PyErr_Occurred())
       return 0;
@@ -134,7 +142,7 @@ static int parse_device_id(LibCrush *self, PyObject *bucket, int *idout, PyObjec
     PyErr_SetString(PyExc_RuntimeError, "missing id");
     return 0;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
+    append_trace(trace, PyUnicode_FromFormat("id %S", id));
     *idout = MyInt_AsInt(id);
     if (PyErr_Occurred())
       return 0;
@@ -154,7 +162,7 @@ static int parse_bucket_algorithm(LibCrush *self, PyObject *bucket, int *algorit
   if (algorithm == NULL) {
     *algorithmout = CRUSH_BUCKET_STRAW2;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("algorithm %S", algorithm));
+    append_trace(trace, PyUnicode_FromFormat("algorithm %S", algorithm));
     const char *a = MyText_AsString(algorithm);
     if (a == NULL)
       return 0;
@@ -185,7 +193,7 @@ static int parse_weight(LibCrush *self, PyObject *item, int *weightout, PyObject
   if (weight == NULL) {
     *weightout = 0x10000;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("weight %S", weight));
+    append_trace(trace, PyUnicode_FromFormat("weight %S", weight));
     double w = PyFloat_AsDouble(weight);
     if (PyErr_Occurred())
       return 0;
@@ -233,7 +241,7 @@ static int parse_bucket_or_device(LibCrush *self, PyObject *bucket, int *idout, 
 
 static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("bucket content %S", bucket));
+  append_trace(trace, PyUnicode_FromFormat("bucket content %S", bucket));
   int id;
   if (!parse_bucket_id(self, bucket, &id, trace))
     return 0;
@@ -296,7 +304,7 @@ static int parse_bucket(LibCrush *self, PyObject *bucket, int *idout, int *weigh
   if (children != NULL) {
     for (pos = 0; pos < PyList_Size(children); pos++) {
       PyObject *item = PyList_GetItem(children, pos);
-      PyList_Append(trace, PyUnicode_FromFormat("bucket or device %S", item));
+      append_trace(trace, PyUnicode_FromFormat("bucket or device %S", item));
       if (!PyDict_Check(item)) {
         PyErr_Format(PyExc_RuntimeError, "must be a dict");
         return 0;
@@ -336,7 +344,7 @@ static int parse_reference_id(LibCrush *self, PyObject *bucket, int *idout, PyOb
     PyErr_SetString(PyExc_RuntimeError, "missing reference_id");
     return 0;
   } else {
-    PyList_Append(trace, PyUnicode_FromFormat("reference_id %S", id));
+    append_trace(trace, PyUnicode_FromFormat("reference_id %S", id));
     *idout = MyInt_AsInt(id);
     if (PyErr_Occurred())
       return 0;
@@ -346,7 +354,7 @@ static int parse_reference_id(LibCrush *self, PyObject *bucket, int *idout, PyOb
 
 static int parse_reference(LibCrush *self, PyObject *bucket, int *idout, int *weightout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("reference content %S", bucket));
+  append_trace(trace, PyUnicode_FromFormat("reference content %S", bucket));
 
   if (!parse_reference_id(self, bucket, idout, trace))
     return 0;
@@ -371,7 +379,7 @@ static int parse_reference(LibCrush *self, PyObject *bucket, int *idout, int *we
 
 static int parse_device(LibCrush *self, PyObject *device, int *idout, int *weightout, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("device content %S", device));
+  append_trace(trace, PyUnicode_FromFormat("device content %S", device));
   if (!parse_device_id(self, device, idout, trace))
     return 0;
   if (!parse_weight(self, device, weightout, trace))
@@ -427,7 +435,7 @@ static int print_trace(PyObject *trace)
 
 static int reweight(LibCrush *self, int root, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("reweight bucket %d", root));
+  append_trace(trace, PyUnicode_FromFormat("reweight bucket %d", root));
   if (root >= 0)
     return 1;
   int index = -1-root;
@@ -462,7 +470,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
     return 0;
   }
 
-  PyList_Append(trace, PyUnicode_FromFormat("step choose* %S", step));
+  append_trace(trace, PyUnicode_FromFormat("step choose* %S", step));
   PyObject *python_op = PyList_GetItem(step, 0);
   const char *k = MyText_AsString(python_op);
   if (k == NULL)
@@ -545,7 +553,7 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
 
 static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("step set_* %S", step));
+  append_trace(trace, PyUnicode_FromFormat("step set_* %S", step));
   Py_ssize_t len = PyList_Size(step);
   if (len != 2) {
     PyErr_Format(PyExc_RuntimeError, "must have exactly two elements, not %d", (int)len);
@@ -580,7 +588,7 @@ static int parse_step_set(LibCrush *self, PyObject *step, int step_index, struct
 
 static int parse_step_emit(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("step emit %S", step));
+  append_trace(trace, PyUnicode_FromFormat("step emit %S", step));
   Py_ssize_t len = PyList_Size(step);
   if (len != 1) {
     PyErr_Format(PyExc_RuntimeError, "must have exactly one element, not %d", (int)len);
@@ -592,7 +600,7 @@ static int parse_step_emit(LibCrush *self, PyObject *step, int step_index, struc
 
 static int parse_step_take(LibCrush *self, PyObject *step, int step_index, struct crush_rule *crule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("step take %S", step));
+  append_trace(trace, PyUnicode_FromFormat("step take %S", step));
   Py_ssize_t len = PyList_Size(step);
   if (len != 2) {
     PyErr_Format(PyExc_RuntimeError, "must have exactly two elements, not %d", (int)len);
@@ -646,7 +654,7 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
   Py_ssize_t i;
   for (i = 0; i < PyList_Size(rule); i++) {
      PyObject *step = PyList_GetItem(rule, i);
-     PyList_Append(trace, PyUnicode_FromFormat("step %d %S", i, step));
+     append_trace(trace, PyUnicode_FromFormat("step %d %S", i, step));
      int r = parse_step(self, step, i, crule, trace);
      if (!r)
        return 0;
@@ -656,7 +664,7 @@ static int parse_steps(LibCrush *self, PyObject *rule, struct crush_rule *crule,
 
 static int parse_rule(LibCrush *self, PyObject *name, PyObject *rule, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("rule content %S", rule));
+  append_trace(trace, PyUnicode_FromFormat("rule content %S", rule));
   int steps_size = PyList_Size(rule);
 
   int minsize = 0;
@@ -691,7 +699,7 @@ static int parse_rules(LibCrush *self, PyObject *map, PyObject *trace)
   if (rules == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("rules %S", rules));
+  append_trace(trace, PyUnicode_FromFormat("rules %S", rules));
 
   if (!PyDict_Check(rules)) {
     PyErr_Format(PyExc_RuntimeError, "must be a dict");
@@ -702,7 +710,7 @@ static int parse_rules(LibCrush *self, PyObject *map, PyObject *trace)
   PyObject *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(rules, &pos, &key, &value)) {
-    PyList_Append(trace, PyUnicode_FromFormat("rule name %S", key));
+    append_trace(trace, PyUnicode_FromFormat("rule name %S", key));
     if (MyText_AsString(key) == NULL)
       return 0;
     int r = parse_rule(self, key, value, trace);
@@ -718,7 +726,7 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
   if (trees == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("trees %S", trees));
+  append_trace(trace, PyUnicode_FromFormat("trees %S", trees));
 
   if (!PyList_Check(trees)) {
     PyErr_Format(PyExc_RuntimeError, "must be a list");
@@ -733,7 +741,7 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
   Py_ssize_t pos;
   for (pos = 0; pos < PyList_Size(trees); pos++) {
     PyObject *root = PyList_GetItem(trees, pos);
-    PyList_Append(trace, PyUnicode_FromFormat("root %S", root));
+    append_trace(trace, PyUnicode_FromFormat("root %S", root));
 
     int id;
     int weight;
@@ -743,7 +751,7 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
       return 0;
 
     if (!self->has_bucket_weights) {
-      PyList_Append(trace, PyUnicode_FromFormat("reweight"));
+      append_trace(trace, PyUnicode_FromFormat("reweight"));
       r = reweight(self, id, trace);
       if (!r)
         return 0;
@@ -768,7 +776,7 @@ static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
   if (tunables == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("tunables %S", tunables));
+  append_trace(trace, PyUnicode_FromFormat("tunables %S", tunables));
 
   if (!PyDict_Check(tunables)) {
     PyErr_Format(PyExc_RuntimeError, "must be a dict");
@@ -787,7 +795,7 @@ static int parse_tunables(LibCrush *self, PyObject *map, PyObject *trace)
   PyObject *python_value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(tunables, &pos, &python_key, &python_value)) {
-    PyList_Append(trace, PyUnicode_FromFormat("tunable %S = %S", python_key, python_value));
+    append_trace(trace, PyUnicode_FromFormat("tunable %S = %S", python_key, python_value));
     const char *key = MyText_AsString(python_key);
     if (key == NULL)
       return 0;
@@ -832,7 +840,7 @@ static int parse_choose_args_bucket_id(LibCrush *self, PyObject *bucket, int *id
     PyErr_Format(PyExc_RuntimeError, "either bucket_id or bucket_name are required");
     return 0;
   }
-  PyList_Append(trace, PyUnicode_FromFormat("id %S", id));
+  append_trace(trace, PyUnicode_FromFormat("id %S", id));
   *idout = MyInt_AsInt(id);
   if (PyErr_Occurred())
     return 0;
@@ -849,7 +857,7 @@ static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg 
   if (python_bucket_ids == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_ids %S", python_bucket_ids));
+  append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_ids %S", python_bucket_ids));
 
   if (!PyList_Check(python_bucket_ids)) {
     PyErr_Format(PyExc_RuntimeError, "must be a list");
@@ -880,7 +888,7 @@ static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choo
   if (python_bucket_weight_set == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set %S", python_bucket_weight_set));
+  append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set %S", python_bucket_weight_set));
 
   if (!PyList_Check(python_bucket_weight_set)) {
     PyErr_Format(PyExc_RuntimeError, "must be a list");
@@ -892,7 +900,7 @@ static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choo
   Py_ssize_t pos;
   for (pos = 0; pos < PyList_Size(python_bucket_weight_set); pos++) {
     PyObject *python_weights = PyList_GetItem(python_bucket_weight_set, pos);
-    PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set weight_set[%d] %S", pos, python_weights));
+    append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set weight_set[%d] %S", pos, python_weights));
 
     if (!PyList_Check(python_weights)) {
       PyErr_Format(PyExc_RuntimeError, "must be a list");
@@ -920,7 +928,7 @@ static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choo
 
 static int parse_choose_args_bucket(LibCrush *self, struct crush_choose_arg_map *choose_arg_map, PyObject *bucket, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_args_bucket %S", bucket));
+  append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket %S", bucket));
 
   int bucket_id;
   int r = parse_choose_args_bucket_id(self, bucket, &bucket_id, trace);
@@ -948,7 +956,7 @@ static int parse_choose_args_bucket(LibCrush *self, struct crush_choose_arg_map 
 
 static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *choose_arg_map, PyObject *python_choose_arg_map, PyObject *trace)
 {
-  PyList_Append(trace, PyUnicode_FromFormat("parse_choose_arg_map %S", python_choose_arg_map));
+  append_trace(trace, PyUnicode_FromFormat("parse_choose_arg_map %S", python_choose_arg_map));
 
   if (!PyList_Check(python_choose_arg_map)) {
     PyErr_Format(PyExc_RuntimeError, "must be a list");
@@ -959,7 +967,7 @@ static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *cho
   Py_ssize_t pos;
   for (pos = 0; pos < PyList_Size(python_choose_arg_map); pos++) {
     PyObject *bucket = PyList_GetItem(python_choose_arg_map, pos);
-    PyList_Append(trace, PyUnicode_FromFormat("parse_choose_arg_map[%d] = %S", pos, bucket));
+    append_trace(trace, PyUnicode_FromFormat("parse_choose_arg_map[%d] = %S", pos, bucket));
     if (!PyDict_Check(bucket)) {
       PyErr_Format(PyExc_RuntimeError, "must be a dict");
       return 0;
@@ -1004,7 +1012,7 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
   if (choose_args == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("choose_args %S", choose_args));
+  append_trace(trace, PyUnicode_FromFormat("choose_args %S", choose_args));
 
   if (!PyDict_Check(choose_args)) {
     PyErr_Format(PyExc_RuntimeError, "must be a dict");
@@ -1017,7 +1025,7 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
   PyObject *python_value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(choose_args, &pos, &python_key, &python_value)) {
-    PyList_Append(trace, PyUnicode_FromFormat("choose_args %S = %S", python_key, python_value));
+    append_trace(trace, PyUnicode_FromFormat("choose_args %S = %S", python_key, python_value));
     const char *key = MyText_AsString(python_key);
     if (key == NULL)
       return 0;
@@ -1107,7 +1115,7 @@ static int map_choose_args(LibCrush *self, PyObject *python_choose_args, struct 
   if (python_choose_args == NULL)
     return 1;
 
-  PyList_Append(trace, PyUnicode_FromFormat("map_choose_args %S", python_choose_args));
+  append_trace(trace, PyUnicode_FromFormat("map_choose_args %S", python_choose_args));
 
   if (MyText_Check(python_choose_args)) {
     PyObject *choose_args = PyDict_GetItem(self->choose_args, python_choose_args);
