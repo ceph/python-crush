@@ -1,6 +1,22 @@
 CHANGES
 =======
 
+1.0.20
+------
+
+* version 1.0.20
+* manylinux py27 does not have virtualenv
+* doc: note about the weird hard coded include
+* doc: notes on debugging readthedocs
+* split requirements-dev.txt out of requirement.txt
+* document pip freeze updates
+* remove pip install tox from bootstrap
+* remove obsolete .gitmodule
+* docs: cannot compile LibCrush
+* doc: fix formatting errors
+* doc: make warnings fail on error
+* bump 1.0.20
+
 1.0.19
 ------
 
