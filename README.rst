@@ -50,6 +50,20 @@ Hacking
    python setup.py build_sphinx
    firefox build/html/index.html
 
+* Update requirements
+
+   rm -fr virtualenv
+   virtualenv virtualenv
+   source virtualenv/bin/activate
+   # update some module in requirements.txt
+   tox
+   # if that works
+   pip install -r requirements.txt
+   pip freeze -r requirements.txt > new-requirements.txt
+   .tox/py3/bin/pip freeze -r requirements-dev.txt > new-requirements-dev.txt
+   diff <(.tox/py27/bin/pip freeze -r requirements-dev.txt) new-requirements-dev.txt
+   # all lines after the first "were added by pip freeze" are indirect dependencies
+
 Release management
 ==================
 
