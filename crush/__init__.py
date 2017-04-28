@@ -634,6 +634,7 @@ class Crush(object):
         for a given position, the weights in the last available position
         will be used instead.
         ::
+
             tunables = {
               "choose_total_tries": 50
             }
@@ -689,7 +690,7 @@ class Crush(object):
         will be retrieved from **choose_arg_map** in the map. Each
         element in the **choose_args** list modifies the parameters of
         the choose function for the corresponding straw2 bucket. With
-        a bucket containing two children:
+        a bucket containing two children::
 
             {
                "name": "bucket1":
@@ -700,7 +701,7 @@ class Crush(object):
             }
 
         If map(85) == [ 'device2' ], the result could be different
-        by switching the weights with:
+        by switching the weights with::
 
             map(85, choose_args=[
               { "bucket_name": "bucket1",
@@ -711,13 +712,12 @@ class Crush(object):
         alternative ids. The id of each item is a parameter of the
         hash considered for placement. However, contrary to the
         weight, there is no way to guess how it will influence the
-        result.
+        result.::
 
             map(85, choose_args=[
               { "bucket_name": "bucket1",
                 "ids": [ 100, 300 ]
               }]) == [ 'device1' ]
-
 
         - **rule**: the rule name (required string)
 

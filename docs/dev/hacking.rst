@@ -37,9 +37,9 @@ mentionned in the `[build_ext]` section of the `setup.cfg` file:
    :start-after: [build_ext]
    :language: ini
 
-The definition of the functions are in the `crush/_setup_hooks.py` file:
+The definition of the functions are in the `setup/_setup_hooks.py` file:
 
-.. literalinclude:: ../../crush/_setup_hooks.py
+.. literalinclude:: ../../setup/_setup_hooks.py
    :language: python
 
 Debuging
