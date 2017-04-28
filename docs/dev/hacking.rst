@@ -76,3 +76,15 @@ Start by updating the `bootstrap` instructions and try it manually with::
     sudo docker run -ti -v $(pwd):$(pwd) -w $(pwd) opensuse:42.2 bash
     zypper install -y which
     source bootstrap
+
+Debugging readthedocs
+---------------------
+
+- https://readthedocs.org/dashboard/crush/versions/
+- click "Active" for the debian branch from http://libcrush.org/main/python-crush/
+- https://readthedocs.org/projects/crush/builds/
+- explicitly ask a build for the designated branch, does not happen automatically
+- in https://readthedocs.org/projects/crush/builds/\*/ check all lines from the bottom
+  some may contain error messages that are do not fail the build but do nothing useful
+  either
+

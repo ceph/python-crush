@@ -24,6 +24,7 @@ done
 
 # Install packages and test
 for PYBIN in $PYBINS ; do
+    "${PYBIN}/pip" install virtualenv
     rm -fr /tmp/v
     "${PYBIN}/virtualenv" /tmp/v
     /tmp/v/bin/pip install crush --no-index -f repaired/
