@@ -245,3 +245,18 @@ html_theme_path = ['_themes']
 html_theme = 'kr'
 
 intersphinx_mapping = {'crush': ('http://crush.readthedocs.org/en/latest', None)}
+
+from mock import MagicMock
+
+#
+# We can't compile modules on readthedocs, mock them.
+#
+# http://docs.readthedocs.io/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+#
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ['crush.libcrush', 'libcrush']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
