@@ -2,8 +2,8 @@
 
 [ $(id -u) == 0 ] || SUDO=sudo
 $SUDO $(which apt-get || which true) update
-$SUDO $(which apt-get || which true) install -y git python-virtualenv gcc g++ python-all-dev libpython3-all-dev cmake libboost-all-dev libatomic-ops-dev
-$SUDO $(which yum || which dnf || which zypper || which true) install -y git python-virtualenv gcc gcc-c++ python-devel python3-devel python-pip cmake boost-devel libatomic_ops-devel
+$SUDO $(which apt-get || which true) install -y git python-virtualenv python-tox gcc g++ python-all-dev libpython3-all-dev cmake libboost-all-dev libatomic-ops-dev
+$SUDO $(which yum || which dnf || which zypper || which true) install -y git python-virtualenv python-tox gcc gcc-c++ python-devel python3-devel python-pip cmake boost-devel libatomic_ops-devel
 
 git submodule sync
 git submodule update --force --init --recursive
@@ -12,4 +12,3 @@ rm -fr virtualenv .tox
 virtualenv virtualenv
 source virtualenv/bin/activate
 pip install -v -e .
-pip install tox
