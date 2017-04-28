@@ -1,13 +1,12 @@
-six
-simplejson
-pbr
-d2to1
-Sphinx
-tox
-coverage
-pytest
-flake8
-pytest-capturelog
-pandas
-twine
-collective.checkdocs
+d2to1==0.2.12.post1
+numpy==1.12.1
+pandas==0.19.2
+pbr==3.0.0
+## The following requirements were added by pip freeze:
+pkg-resources==0.0.0
+pyparsing==2.2.0
+python-dateutil==2.6.0
+pytz==2017.2
+six==1.10.0
+appdirs==1.4.3
+packaging==16.8
