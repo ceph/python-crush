@@ -1244,6 +1244,17 @@ static PyObject *map(LibCrush *self, int ruleno, int value, int replication_coun
   return python_results;
 }
 
+static void copy_tunables(struct crush_map *map, struct crush_map *tunables)
+{
+  map->choose_local_tries = tunables->choose_local_tries;
+  map->choose_local_fallback_tries = tunables->choose_local_fallback_tries;
+  map->chooseleaf_descend_once = tunables->chooseleaf_descend_once;
+  map->chooseleaf_vary_r = tunables->chooseleaf_vary_r;
+  map->chooseleaf_stable = tunables->chooseleaf_stable;
+  map->straw_calc_version = tunables->straw_calc_version;
+  map->choose_total_tries = tunables->choose_total_tries;
+}
+
 static PyObject *
 LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
 {
@@ -1297,13 +1308,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
                                      value,
                                      replication_count));
 
-  self->map->choose_local_tries = self->tunables->choose_local_tries;
-  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
-  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
-  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
-  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
-  self->map->straw_calc_version = self->tunables->straw_calc_version;
-  self->map->choose_total_tries = self->tunables->choose_total_tries;
+  copy_tunables(self->map, self->tunables);
 
   self->map->allowed_bucket_algs =
     (1 << CRUSH_BUCKET_UNIFORM) |
