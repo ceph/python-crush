@@ -19,6 +19,7 @@
 #
 
 import logging
+import os
 import pytest  # noqa needed for capsys
 
 from crush.ceph import Ceph
@@ -29,25 +30,25 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 class TestCeph(object):
 
-    def convert(self, ext):
-        Ceph().main([
-            'convert', 'tests/sample-ceph-crushmap.' + ext,
-        ])
-
-    def test_convert_json(self, capsys):
-        self.convert('json')
-        out, err = capsys.readouterr()
-        assert '"reference_id": -2' in out
-
-    def test_convert_txt(self, capsys):
-        self.convert('txt')
-        out, err = capsys.readouterr()
-        assert '"reference_id": -2' in out
-
-    def test_convert_crush(self, capsys):
-        self.convert('crush')
-        out, err = capsys.readouterr()
-        assert '"weight": 5.0' in out
+    def test_conversions(self):
+        base = 'tests/sample-ceph-crushmap.'
+        for ext_in in ('txt', 'crush', 'json', 'python-json'):
+            in_path = base + ext_in
+            for ext_out in ('txt', 'crush', 'json', 'python-json'):
+                expected_path = base + ext_out
+                out_path = expected_path + ".err"
+                Ceph().main([
+                    'convert',
+                    '--in-path', in_path,
+                    '--out-path', out_path,
+                    '--out-format', ext_out,
+                ])
+                if ext_out == 'crush':
+                    cmd = "cmp"
+                else:
+                    cmd = "diff -Bbu"
+                assert os.system(cmd + " " + expected_path + " " + out_path) == 0
+                os.unlink(out_path)
 
     def test_hook_create_values(self):
         c = Ceph()
@@ -68,5 +69,5 @@ class TestCeph(object):
         assert expected == c.hook_create_values()
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
+# compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_ceph.py"
 # End:

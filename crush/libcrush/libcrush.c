@@ -80,6 +80,51 @@ static void append_trace(PyObject *trace, PyObject *object)
   Py_DECREF(object);
 }
 
+static int parse_types(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  PyDict_Clear(self->types);
+
+  PyObject *types = PyDict_GetItemString(map, "types");
+  if (types == NULL)
+    return 1;
+
+  append_trace(trace, PyUnicode_FromFormat("types %S", types));
+
+  if (!PyList_Check(types)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a list");
+    return 0;
+  }
+
+  Py_ssize_t i;
+  for (i = 0; i < PyList_Size(types); i++) {
+    PyObject *e = PyList_GetItem(types, i);
+    if (!PyDict_Check(e)) {
+      PyErr_Format(PyExc_RuntimeError, "must be a dict");
+      return 0;
+    }
+    PyObject *type_id = PyDict_GetItemString(e, "type_id");
+    if (type_id == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "missing type_id");
+      return 0;
+    }
+    (void)MyInt_AsInt(type_id);
+    if (PyErr_Occurred())
+      return 0;
+
+    PyObject *type_name = PyDict_GetItemString(e, "name");
+    if (type_name == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "missing name");
+      return 0;
+    }
+    if (MyText_AsString(type_name) == NULL)
+      return 0;
+
+    PyDict_SetItem(self->types, type_name, type_id);
+  }
+
+  return 1;
+}
+
 static int parse_type(LibCrush *self, PyObject *bucket, int *typeout, PyObject *trace)
 {
   PyObject *type_name = PyDict_GetItemString(bucket, "type");
@@ -737,7 +782,6 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
     return 0;
   }
 
-  PyDict_Clear(self->types);
   PyDict_Clear(self->items);
   PyDict_Clear(self->ritems);
   self->highest_device_id = -1;
@@ -858,8 +902,10 @@ static int parse_choose_args_bucket_id(LibCrush *self, PyObject *bucket, int *id
 static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
 {
   PyObject *python_bucket_ids = PyDict_GetItemString(bucket, "ids");
-  if (python_bucket_ids == NULL)
+  if (python_bucket_ids == NULL) {
+    choose_args->ids_size = 0;
     return 1;
+  }
 
   append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_ids %S", python_bucket_ids));
 
@@ -889,8 +935,10 @@ static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg 
 static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
 {
   PyObject *python_bucket_weight_set = PyDict_GetItemString(bucket, "weight_set");
-  if (python_bucket_weight_set == NULL)
+  if (python_bucket_weight_set == NULL) {
+    choose_args->weight_set_size = 0;
     return 1;
+  }
 
   append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set %S", python_bucket_weight_set));
 
@@ -992,6 +1040,8 @@ static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *cho
     return 0;
   choose_arg_map->size = self->map->max_buckets;
 
+  int known[self->map->max_buckets];
+  memset(known, '\0', sizeof(int) * self->map->max_buckets);
   for (pos = 0; pos < PyList_Size(python_choose_arg_map); pos++) {
     PyObject *bucket = PyList_GetItem(python_choose_arg_map, pos);
     int r = parse_choose_args_bucket(self, choose_arg_map, bucket, trace);
@@ -999,7 +1049,17 @@ static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *cho
       crush_destroy_choose_args(choose_arg_map->args);
       return 0;
     }
+    int bucket_id;
+    parse_choose_args_bucket_id(self, bucket, &bucket_id, trace);
+    known[-1-bucket_id] = 1;
   }
+
+  // clear crush_choose_args that have been initialized by crush_make_choose_args
+  // but do are not otherwise modified
+  int i;
+  for (i = 0; i < choose_arg_map->size; i++)
+    if (known[i] == 0)
+      memset(choose_arg_map->args + i, '\0', sizeof(struct crush_choose_arg));
 
   return 1;
 }
@@ -1030,9 +1090,6 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
   Py_ssize_t pos = 0;
   while (PyDict_Next(choose_args, &pos, &python_key, &python_value)) {
     append_trace(trace, PyUnicode_FromFormat("choose_args %S = %S", python_key, python_value));
-    const char *key = MyText_AsString(python_key);
-    if (key == NULL)
-      return 0;
 
     struct crush_choose_arg_map choose_arg_map;
     int r = parse_choose_arg_map(self, &choose_arg_map, python_value, trace);
@@ -1051,7 +1108,11 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
 
 static int parse(LibCrush *self, PyObject *map, PyObject *trace)
 {
-  int r = parse_trees(self, map, trace);
+  int r = parse_types(self, map, trace);
+  if (!r)
+    return 0;
+
+  r = parse_trees(self, map, trace);
   if (!r)
     return 0;
 
@@ -1187,6 +1248,17 @@ static PyObject *map(LibCrush *self, int ruleno, int value, int replication_coun
   return python_results;
 }
 
+static void copy_tunables(struct crush_map *map, struct crush_map *tunables)
+{
+  map->choose_local_tries = tunables->choose_local_tries;
+  map->choose_local_fallback_tries = tunables->choose_local_fallback_tries;
+  map->chooseleaf_descend_once = tunables->chooseleaf_descend_once;
+  map->chooseleaf_vary_r = tunables->chooseleaf_vary_r;
+  map->chooseleaf_stable = tunables->chooseleaf_stable;
+  map->straw_calc_version = tunables->straw_calc_version;
+  map->choose_total_tries = tunables->choose_total_tries;
+}
+
 static PyObject *
 LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
 {
@@ -1240,13 +1312,7 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
                                      value,
                                      replication_count));
 
-  self->map->choose_local_tries = self->tunables->choose_local_tries;
-  self->map->choose_local_fallback_tries = self->tunables->choose_local_fallback_tries;
-  self->map->chooseleaf_descend_once = self->tunables->chooseleaf_descend_once;
-  self->map->chooseleaf_vary_r = self->tunables->chooseleaf_vary_r;
-  self->map->chooseleaf_stable = self->tunables->chooseleaf_stable;
-  self->map->straw_calc_version = self->tunables->straw_calc_version;
-  self->map->choose_total_tries = self->tunables->choose_total_tries;
+  copy_tunables(self->map, self->tunables);
 
   self->map->allowed_bucket_algs =
     (1 << CRUSH_BUCKET_UNIFORM) |
@@ -1296,22 +1362,40 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   return python_results;
 }
 
-#include "convert.h"
+#include "ceph_read_write.h"
 
 static PyObject *
-LibCrush_convert(LibCrush *self, PyObject *args)
+LibCrush_ceph_write(LibCrush *self, PyObject *args)
 {
-  const char *in;
-  if (!PyArg_ParseTuple(args, "s", &in))
+  const char *path;
+  const char *format;
+  PyObject *info = NULL;
+  if (!PyArg_ParseTuple(args, "ssO", &path, &format, &info))
+    return 0;
+
+  copy_tunables(self->map, self->tunables);
+
+  int r;
+  r = ceph_write(self, path, format, info);
+  if (r < 0)
+    return 0;
+  Py_RETURN_TRUE;
+}
+
+static PyObject *
+LibCrush_ceph_read(LibCrush *self, PyObject *args)
+{
+  const char *path;
+  if (!PyArg_ParseTuple(args, "s", &path))
     return 0;
 
   char *out = NULL;
   int r;
-  r = convert_binary_to_json(in, &out);
+  r = ceph_read_binary_to_json(path, &out);
   if (r < 0)
-    r = convert_txt_to_json(in, &out);
+    r = ceph_read_txt_to_json(path, &out);
   if (r < 0) {
-    PyErr_Format(PyExc_RuntimeError, "%s is neither a text or binary Ceph crushmap", in);
+    PyErr_Format(PyExc_RuntimeError, "%s is neither a text or binary Ceph crushmap", path);
     return 0;
   }
   PyObject *result = Py_BuildValue("s", out);
@@ -1331,7 +1415,7 @@ static inline int ceph_stable_mod(int x, int b, int bmask)
 }
 
 static PyObject *
-LibCrush_pool_pps(LibCrush *self, PyObject *args)
+LibCrush_ceph_pool_pps(LibCrush *self, PyObject *args)
 {
   int pool;
   int pg_num;
@@ -1373,9 +1457,11 @@ LibCrush_methods[] = {
             PyDoc_STR("parse the crush map") },
     { "map",      (PyCFunction) LibCrush_map,        METH_VARARGS|METH_KEYWORDS,
             PyDoc_STR("map a value to items") },
-    { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
-            PyDoc_STR("convert from Ceph txt/bin crushmap") },
-    { "pool_pps",  (PyCFunction) LibCrush_pool_pps,  METH_VARARGS,
+    { "ceph_read",  (PyCFunction) LibCrush_ceph_read,    METH_VARARGS,
+            PyDoc_STR("read from Ceph txt/bin crushmap") },
+    { "ceph_write",  (PyCFunction) LibCrush_ceph_write,    METH_VARARGS,
+            PyDoc_STR("write to Ceph txt/bin/json crushmap") },
+    { "ceph_pool_pps",  (PyCFunction) LibCrush_ceph_pool_pps,  METH_VARARGS,
             PyDoc_STR("list of all pps for a Ceph pool") },
     { NULL }
 };

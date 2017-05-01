@@ -121,5 +121,5 @@ host0     -3      10.0       4833                -0.92\
         assert "-100.00" in str(res)  # One of the OSDs has a weight of 0.0
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_analyze.py"
+# compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_analyze.py"
 # End:

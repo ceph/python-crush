@@ -125,5 +125,5 @@ class TestCrush(object):
             Crush.parse_weights_file(open("tests/sample-ceph-crushmap.txt"))
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_crush.py"
+# compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_crush.py"
 # End:

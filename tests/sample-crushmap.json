@@ -33,5 +33,29 @@
       [ "chooseleaf", "firstn", 0, "type", "host" ],
       [ "emit" ]
     ]
+  },
+  "choose_args": {
+    "1": [
+          {
+              "bucket_id": -1, 
+              "ids": [
+                  -20, 
+                  -30, 
+                  -25
+              ], 
+              "weight_set": [
+                  [
+                      1.0, 
+                      2.0, 
+                      5.0
+                  ], 
+                  [
+                      3.0, 
+                      2.0, 
+                      5.0
+                  ]
+              ]
+          }
+      ]
   }
 }

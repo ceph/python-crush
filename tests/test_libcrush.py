@@ -35,6 +35,64 @@ PARSE_BACKWARDS = STEP_BACKWARDS + [
 
 class TestLibCrush(object):
 
+    def test_parse_types_invalid(self):
+        wrong = {
+            'types': 1
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a list' in str(e.value)
+
+        wrong = {
+            'types': [
+                1
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
+        wrong = {
+            'types': [
+                {}
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'missing type_id' in str(e.value)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': []
+                }
+            ]
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': 1
+                }
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'missing name' in str(e.value)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': 1,
+                    'name': []
+                }
+            ]
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
     def test_parse_tunables(self, capsys):
         total_tries = 1234
         crushmap = {
@@ -592,14 +650,6 @@ class TestLibCrush(object):
 
         wrong = {
             'choose_args': {
-                1: {}
-            }
-        }
-        with pytest.raises(TypeError) as e:
-            LibCrush().parse(wrong)
-
-        wrong = {
-            'choose_args': {
                 "1": 0
             }
         }
@@ -1030,23 +1080,23 @@ class TestLibCrush(object):
 
     def test_convert(self):
         c = LibCrush(verbose=1)
-        crushmap = c.convert("tests/sample-ceph-crushmap.txt")
+        crushmap = c.ceph_read("tests/sample-ceph-crushmap.txt")
         assert 'devices' in crushmap
-        crushmap = c.convert("tests/sample-ceph-crushmap.crush")
+        crushmap = c.ceph_read("tests/sample-ceph-crushmap.crush")
         assert 'devices' in crushmap
 
     def test_pool_pps(self):
         c = LibCrush()
 
-        pps_1 = c.pool_pps(0, 16, 16)
+        pps_1 = c.ceph_pool_pps(0, 16, 16)
         assert 430787817 == pps_1['0.0']
         pps_1_values = sorted(set(pps_1.values()))
         assert 16 == len(pps_1)
 
-        pps_2 = c.pool_pps(0, 23, 16)
+        pps_2 = c.ceph_pool_pps(0, 23, 16)
         pps_2_values = sorted(set(pps_2.values()))
         assert pps_1_values == pps_2_values
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_libcrush.py"
+# compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_libcrush.py"
 # End:

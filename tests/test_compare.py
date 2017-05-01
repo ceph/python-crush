@@ -242,5 +242,5 @@ class TestCompare(object):
         a.run_compare()
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_compare.py"
+# compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_compare.py"
 # End:

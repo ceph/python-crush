@@ -41,9 +41,24 @@ class Convert(object):
             add_help=False,
             conflict_handler='resolve',
         )
+        formats = ('txt', 'json', 'python-json', 'crush')
         parser.add_argument(
-            'crushmap',
-            help='path to the crushmap file')
+            '--in-path',
+            required=True,
+            help='path of the input file')
+        parser.add_argument(
+            '--in-format',
+            choices=formats,
+            help='format of the input file')
+        parser.add_argument(
+            '--out-path',
+            required=True,
+            help='path of the output file')
+        parser.add_argument(
+            '--out-format',
+            choices=formats,
+            default='python-json',
+            help='format of the output file')
         return parser
 
     @staticmethod
@@ -57,7 +72,7 @@ class Convert(object):
 
             - JSON, the output of *ceph osd crush dump* or *ceph report*
 
-            - text, the output of *crushtool -d*
+            - txt, the output of *crushtool -d*
 
             - binary, the output of *crushtool -c* or *ceph getcrushmap*
 
@@ -74,14 +89,17 @@ class Convert(object):
             Examples:
 
             Convert a Ceph JSON crushmap into a python-crush crushmap:
-            - crush convert crushmap-ceph.json > crushmap.json
+            - crush convert --in-path crushmap-ceph.json --out-path crushmap.json
 
             Convert a Ceph text crushmap into a python-crush crushmap:
-            - crush convert crushmap.txt > crushmap-ceph.json
-            - crush convert crushmap-ceph.json > crushmap.json
+            - crush convert --in-path crushmap.txt --out-path crushmap.json
 
             Convert a binary crushmap to python-crush crushmap:
-            - crush convert crushmap.bin > crushmap.json
+            - crush convert --in-path crushmap.bin --out-path crushmap.json
+
+            Convert a python-crush crushmap to Ceph text crushmap
+            - crush convert --in-path crushmap.json \\
+                            --out-path crushmap.json --out-format txt
             """),
             help='Convert crushmaps',
             parents=[parser],
@@ -89,8 +107,23 @@ class Convert(object):
             func=Convert,
         )
 
+    @staticmethod
+    def choose_args_int_index(crushmap):
+        if 'choose_args' not in crushmap:
+            return crushmap
+        crushmap['choose_args'] = {
+            int(k): v for (k, v) in crushmap['choose_args'].items()
+        }
+        return crushmap
+
     def run(self):
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
-        crushmap = c._convert_to_crushmap(self.args.crushmap)
-        c.parse(crushmap)
-        print(json.dumps(crushmap, indent=4, sort_keys=True))
+        crushmap = c._convert_to_crushmap(self.args.in_path)
+        c.parse_crushmap(crushmap)
+        if self.args.out_format == 'python-json':
+            open(self.args.out_path, "w").write(json.dumps(crushmap, indent=4, sort_keys=True))
+        else:
+            c.parse(Convert.choose_args_int_index(crushmap))
+            c.c.ceph_write(self.args.out_path,
+                           self.args.out_format,
+                           crushmap.get('private'))
