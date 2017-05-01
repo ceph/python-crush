@@ -9,12 +9,12 @@ http://github.com/ceph/ceph and should be updated to get the latest
 changes with::
 
     git clone http://github.com/ceph/ceph /tmp/ceph
-    git revert a869b38 # commit with change to make crush standalone
+    git revert 8eadcc0 # commit with change to make crush standalone
     cd crush/libcrush
     for file in {common,crush,include}/*.[ch] {common,crush}/*.cc ; do
        cp /tmp/ceph/src/$file $file
     done
-    git cherry-pick a869b38
+    git cherry-pick 8eadcc0
     git commit --amend
     update the hash above with the new hash
 
