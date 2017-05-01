@@ -139,6 +139,7 @@ class CephConverter(object):
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
 
         j = {}
+        j['types'] = ceph['types']
 
         j['trees'] = [self.convert_bucket(b, ceph) for b in ceph['buckets']]
 

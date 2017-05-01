@@ -80,6 +80,51 @@ static void append_trace(PyObject *trace, PyObject *object)
   Py_DECREF(object);
 }
 
+static int parse_types(LibCrush *self, PyObject *map, PyObject *trace)
+{
+  PyDict_Clear(self->types);
+
+  PyObject *types = PyDict_GetItemString(map, "types");
+  if (types == NULL)
+    return 1;
+
+  append_trace(trace, PyUnicode_FromFormat("types %S", types));
+
+  if (!PyList_Check(types)) {
+    PyErr_Format(PyExc_RuntimeError, "must be a list");
+    return 0;
+  }
+
+  Py_ssize_t i;
+  for (i = 0; i < PyList_Size(types); i++) {
+    PyObject *e = PyList_GetItem(types, i);
+    if (!PyDict_Check(e)) {
+      PyErr_Format(PyExc_RuntimeError, "must be a dict");
+      return 0;
+    }
+    PyObject *type_id = PyDict_GetItemString(e, "type_id");
+    if (type_id == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "missing type_id");
+      return 0;
+    }
+    (void)MyInt_AsInt(type_id);
+    if (PyErr_Occurred())
+      return 0;
+
+    PyObject *type_name = PyDict_GetItemString(e, "name");
+    if (type_name == NULL) {
+      PyErr_Format(PyExc_RuntimeError, "missing name");
+      return 0;
+    }
+    if (MyText_AsString(type_name) == NULL)
+      return 0;
+
+    PyDict_SetItem(self->types, type_name, type_id);
+  }
+
+  return 1;
+}
+
 static int parse_type(LibCrush *self, PyObject *bucket, int *typeout, PyObject *trace)
 {
   PyObject *type_name = PyDict_GetItemString(bucket, "type");
@@ -737,7 +782,6 @@ static int parse_trees(LibCrush *self, PyObject *map, PyObject *trace)
     return 0;
   }
 
-  PyDict_Clear(self->types);
   PyDict_Clear(self->items);
   PyDict_Clear(self->ritems);
   self->highest_device_id = -1;
@@ -1063,7 +1107,11 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
 
 static int parse(LibCrush *self, PyObject *map, PyObject *trace)
 {
-  int r = parse_trees(self, map, trace);
+  int r = parse_types(self, map, trace);
+  if (!r)
+    return 0;
+
+  r = parse_trees(self, map, trace);
   if (!r)
     return 0;
 

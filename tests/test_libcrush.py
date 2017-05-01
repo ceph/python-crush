@@ -35,6 +35,64 @@ PARSE_BACKWARDS = STEP_BACKWARDS + [
 
 class TestLibCrush(object):
 
+    def test_parse_types_invalid(self):
+        wrong = {
+            'types': 1
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a list' in str(e.value)
+
+        wrong = {
+            'types': [
+                1
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'must be a dict' in str(e.value)
+
+        wrong = {
+            'types': [
+                {}
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'missing type_id' in str(e.value)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': []
+                }
+            ]
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': 1
+                }
+            ]
+        }
+        with pytest.raises(RuntimeError) as e:
+            LibCrush().parse(wrong)
+        assert 'missing name' in str(e.value)
+
+        wrong = {
+            'types': [
+                {
+                    'type_id': 1,
+                    'name': []
+                }
+            ]
+        }
+        with pytest.raises(TypeError):
+            LibCrush().parse(wrong)
+
     def test_parse_tunables(self, capsys):
         total_tries = 1234
         crushmap = {
