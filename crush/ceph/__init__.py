@@ -75,6 +75,6 @@ class Ceph(main.Main):
 
     def hook_create_values(self):
         if self.args.pool is not None:
-            return LibCrush().pool_pps(self.args.pool, self.args.pg_num, self.args.pgp_num)
+            return LibCrush().ceph_pool_pps(self.args.pool, self.args.pg_num, self.args.pgp_num)
         else:
             return super(Ceph, self).hook_create_values()

@@ -1343,7 +1343,7 @@ static inline int ceph_stable_mod(int x, int b, int bmask)
 }
 
 static PyObject *
-LibCrush_pool_pps(LibCrush *self, PyObject *args)
+LibCrush_ceph_pool_pps(LibCrush *self, PyObject *args)
 {
   int pool;
   int pg_num;
@@ -1387,7 +1387,7 @@ LibCrush_methods[] = {
             PyDoc_STR("map a value to items") },
     { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
             PyDoc_STR("convert from Ceph txt/bin crushmap") },
-    { "pool_pps",  (PyCFunction) LibCrush_pool_pps,  METH_VARARGS,
+    { "ceph_pool_pps",  (PyCFunction) LibCrush_ceph_pool_pps,  METH_VARARGS,
             PyDoc_STR("list of all pps for a Ceph pool") },
     { NULL }
 };

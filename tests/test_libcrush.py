@@ -1038,12 +1038,12 @@ class TestLibCrush(object):
     def test_pool_pps(self):
         c = LibCrush()
 
-        pps_1 = c.pool_pps(0, 16, 16)
+        pps_1 = c.ceph_pool_pps(0, 16, 16)
         assert 430787817 == pps_1['0.0']
         pps_1_values = sorted(set(pps_1.values()))
         assert 16 == len(pps_1)
 
-        pps_2 = c.pool_pps(0, 23, 16)
+        pps_2 = c.ceph_pool_pps(0, 23, 16)
         pps_2_values = sorted(set(pps_2.values()))
         assert pps_1_values == pps_2_values
 
