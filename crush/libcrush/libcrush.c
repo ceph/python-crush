@@ -902,8 +902,10 @@ static int parse_choose_args_bucket_id(LibCrush *self, PyObject *bucket, int *id
 static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
 {
   PyObject *python_bucket_ids = PyDict_GetItemString(bucket, "ids");
-  if (python_bucket_ids == NULL)
+  if (python_bucket_ids == NULL) {
+    choose_args->ids_size = 0;
     return 1;
+  }
 
   append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_ids %S", python_bucket_ids));
 
@@ -933,8 +935,10 @@ static int parse_choose_args_bucket_ids(LibCrush *self, struct crush_choose_arg 
 static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choose_arg *choose_args, PyObject *bucket, PyObject *trace)
 {
   PyObject *python_bucket_weight_set = PyDict_GetItemString(bucket, "weight_set");
-  if (python_bucket_weight_set == NULL)
+  if (python_bucket_weight_set == NULL) {
+    choose_args->weight_set_size = 0;
     return 1;
+  }
 
   append_trace(trace, PyUnicode_FromFormat("parse_choose_args_bucket_weight_set %S", python_bucket_weight_set));
 
