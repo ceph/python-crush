@@ -992,6 +992,8 @@ static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *cho
     return 0;
   choose_arg_map->size = self->map->max_buckets;
 
+  int known[self->map->max_buckets];
+  memset(known, '\0', sizeof(int) * self->map->max_buckets);
   for (pos = 0; pos < PyList_Size(python_choose_arg_map); pos++) {
     PyObject *bucket = PyList_GetItem(python_choose_arg_map, pos);
     int r = parse_choose_args_bucket(self, choose_arg_map, bucket, trace);
@@ -999,7 +1001,17 @@ static int parse_choose_arg_map(LibCrush *self, struct crush_choose_arg_map *cho
       crush_destroy_choose_args(choose_arg_map->args);
       return 0;
     }
+    int bucket_id;
+    parse_choose_args_bucket_id(self, bucket, &bucket_id, trace);
+    known[-1-bucket_id] = 1;
   }
+
+  // clear crush_choose_args that have been initialized by crush_make_choose_args
+  // but do are not otherwise modified
+  int i;
+  for (i = 0; i < choose_arg_map->size; i++)
+    if (known[i] == 0)
+      memset(choose_arg_map->args + i, '\0', sizeof(struct crush_choose_arg));
 
   return 1;
 }
