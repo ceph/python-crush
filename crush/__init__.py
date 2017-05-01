@@ -816,6 +816,15 @@ class Crush(object):
         return self._name2item[name]
 
     def get_crushmap(self):
+        """
+        Return the original crushmap given to the parse() method.
+
+        The returned crushmap does not contain any reference_id,
+        they are replaced by a pointer to the actual bucket. This
+        is convenient when exploring the crushmap. But it will
+        fail to parse again because duplicated buckets will be
+        found.
+        """
         return self.crushmap
 
     @staticmethod
