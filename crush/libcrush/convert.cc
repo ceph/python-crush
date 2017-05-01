@@ -4,9 +4,6 @@
 
 #include "include/assert.h"
 #include "common/Formatter.h"
-
-using namespace ceph;
-
 #include "crush/CrushWrapper.h"
 #include "crush/CrushCompiler.h"
 
