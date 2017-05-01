@@ -68,5 +68,5 @@ class TestCeph(object):
         assert expected == c.hook_create_values()
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -vv -s tests/test_ceph.py"
+# compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_ceph.py"
 # End:

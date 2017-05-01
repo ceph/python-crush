@@ -1098,5 +1098,5 @@ class TestLibCrush(object):
         assert pps_1_values == pps_2_values
 
 # Local Variables:
-# compile-command: "cd .. ; virtualenv/bin/tox -e py27 -- -s -vv tests/test_libcrush.py"
+# compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_libcrush.py"
 # End:
