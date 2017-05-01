@@ -1080,9 +1080,9 @@ class TestLibCrush(object):
 
     def test_convert(self):
         c = LibCrush(verbose=1)
-        crushmap = c.convert("tests/sample-ceph-crushmap.txt")
+        crushmap = c.ceph_read("tests/sample-ceph-crushmap.txt")
         assert 'devices' in crushmap
-        crushmap = c.convert("tests/sample-ceph-crushmap.crush")
+        crushmap = c.ceph_read("tests/sample-ceph-crushmap.crush")
         assert 'devices' in crushmap
 
     def test_pool_pps(self):

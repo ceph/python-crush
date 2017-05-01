@@ -41,9 +41,24 @@ class Convert(object):
             add_help=False,
             conflict_handler='resolve',
         )
+        formats = ('txt', 'json', 'python-json', 'crush')
         parser.add_argument(
-            'crushmap',
-            help='path to the crushmap file')
+            '--in-path',
+            required=True,
+            help='path of the input file')
+        parser.add_argument(
+            '--in-format',
+            choices=formats,
+            help='format of the input file')
+        parser.add_argument(
+            '--out-path',
+            required=True,
+            help='path of the output file')
+        parser.add_argument(
+            '--out-format',
+            choices=formats,
+            default='python-json',
+            help='format of the output file')
         return parser
 
     @staticmethod
@@ -89,8 +104,23 @@ class Convert(object):
             func=Convert,
         )
 
+    @staticmethod
+    def choose_args_int_index(crushmap):
+        if 'choose_args' not in crushmap:
+            return crushmap
+        crushmap['choose_args'] = {
+            int(k): v for (k, v) in crushmap['choose_args'].items()
+        }
+        return crushmap
+
     def run(self):
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
-        crushmap = c._convert_to_crushmap(self.args.crushmap)
-        c.parse(crushmap)
-        print(json.dumps(crushmap, indent=4, sort_keys=True))
+        crushmap = c._convert_to_crushmap(self.args.in_path)
+        c.parse_crushmap(crushmap)
+        if self.args.out_format == 'python-json':
+            open(self.args.out_path, "w").write(json.dumps(crushmap, indent=4, sort_keys=True))
+        else:
+            c.parse(Convert.choose_args_int_index(crushmap))
+            c.c.ceph_write(self.args.out_path,
+                           self.args.out_format,
+                           crushmap.get('private'))

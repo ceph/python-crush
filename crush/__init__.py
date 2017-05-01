@@ -138,7 +138,10 @@ class CephConverter(object):
         ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
 
-        j = {}
+        j = {
+            'private': {},
+        }
+
         j['types'] = ceph['types']
 
         j['trees'] = [self.convert_bucket(b, ceph) for b in ceph['buckets']]
@@ -147,8 +150,11 @@ class CephConverter(object):
         for ceph_rule in ceph['rules']:
             (name, rule) = self.convert_rule(ceph_rule, ceph)
             j['rules'][name] = rule
+        j['private']['rules'] = ceph['rules']
 
         j['tunables'] = self.convert_tunables(ceph['tunables'])
+
+        j['private']['tunables'] = ceph['tunables']
 
         if 'choose_args' in ceph:
             j['choose_args'] = ceph['choose_args']
@@ -761,7 +767,7 @@ class Crush(object):
     @staticmethod
     def _convert_from_file(something):
         if Crush._is_ceph_file(something):
-            crushmap = LibCrush().convert(something)
+            crushmap = LibCrush().ceph_read(something)
             return (json.loads(crushmap), 'ceph-json')
         else:
             with open(something) as f_json:

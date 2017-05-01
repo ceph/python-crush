@@ -1362,22 +1362,40 @@ LibCrush_map(LibCrush *self, PyObject *args, PyObject *kwds)
   return python_results;
 }
 
-#include "convert.h"
+#include "ceph_read_write.h"
 
 static PyObject *
-LibCrush_convert(LibCrush *self, PyObject *args)
+LibCrush_ceph_write(LibCrush *self, PyObject *args)
 {
-  const char *in;
-  if (!PyArg_ParseTuple(args, "s", &in))
+  const char *path;
+  const char *format;
+  PyObject *info = NULL;
+  if (!PyArg_ParseTuple(args, "ssO", &path, &format, &info))
+    return 0;
+
+  copy_tunables(self->map, self->tunables);
+
+  int r;
+  r = ceph_write(self, path, format, info);
+  if (r < 0)
+    return 0;
+  Py_RETURN_TRUE;
+}
+
+static PyObject *
+LibCrush_ceph_read(LibCrush *self, PyObject *args)
+{
+  const char *path;
+  if (!PyArg_ParseTuple(args, "s", &path))
     return 0;
 
   char *out = NULL;
   int r;
-  r = convert_binary_to_json(in, &out);
+  r = ceph_read_binary_to_json(path, &out);
   if (r < 0)
-    r = convert_txt_to_json(in, &out);
+    r = ceph_read_txt_to_json(path, &out);
   if (r < 0) {
-    PyErr_Format(PyExc_RuntimeError, "%s is neither a text or binary Ceph crushmap", in);
+    PyErr_Format(PyExc_RuntimeError, "%s is neither a text or binary Ceph crushmap", path);
     return 0;
   }
   PyObject *result = Py_BuildValue("s", out);
@@ -1439,8 +1457,10 @@ LibCrush_methods[] = {
             PyDoc_STR("parse the crush map") },
     { "map",      (PyCFunction) LibCrush_map,        METH_VARARGS|METH_KEYWORDS,
             PyDoc_STR("map a value to items") },
-    { "convert",  (PyCFunction) LibCrush_convert,    METH_VARARGS,
-            PyDoc_STR("convert from Ceph txt/bin crushmap") },
+    { "ceph_read",  (PyCFunction) LibCrush_ceph_read,    METH_VARARGS,
+            PyDoc_STR("read from Ceph txt/bin crushmap") },
+    { "ceph_write",  (PyCFunction) LibCrush_ceph_write,    METH_VARARGS,
+            PyDoc_STR("write to Ceph txt/bin/json crushmap") },
     { "ceph_pool_pps",  (PyCFunction) LibCrush_ceph_pool_pps,  METH_VARARGS,
             PyDoc_STR("list of all pps for a Ceph pool") },
     { NULL }
