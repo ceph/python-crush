@@ -72,7 +72,7 @@ class Convert(object):
 
             - JSON, the output of *ceph osd crush dump* or *ceph report*
 
-            - text, the output of *crushtool -d*
+            - txt, the output of *crushtool -d*
 
             - binary, the output of *crushtool -c* or *ceph getcrushmap*
 
@@ -89,14 +89,17 @@ class Convert(object):
             Examples:
 
             Convert a Ceph JSON crushmap into a python-crush crushmap:
-            - crush convert crushmap-ceph.json > crushmap.json
+            - crush convert --in-path crushmap-ceph.json --out-path crushmap.json
 
             Convert a Ceph text crushmap into a python-crush crushmap:
-            - crush convert crushmap.txt > crushmap-ceph.json
-            - crush convert crushmap-ceph.json > crushmap.json
+            - crush convert --in-path crushmap.txt --out-path crushmap.json
 
             Convert a binary crushmap to python-crush crushmap:
-            - crush convert crushmap.bin > crushmap.json
+            - crush convert --in-path crushmap.bin --out-path crushmap.json
+
+            Convert a python-crush crushmap to Ceph text crushmap
+            - crush convert --in-path crushmap.json \\
+                            --out-path crushmap.json --out-format txt
             """),
             help='Convert crushmaps',
             parents=[parser],
