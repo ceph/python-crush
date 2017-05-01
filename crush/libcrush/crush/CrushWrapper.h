@@ -65,7 +65,9 @@ public:
   std::map<int32_t, map<int32_t, int32_t> > class_bucket; /* bucket[id][class] == id */
   std::map<uint64_t, crush_choose_arg_map> choose_args;
 
+#ifndef __STANDALONE_CRUSH__
 private:
+#endif // __STANDALONE_CRUSH__
   struct crush_map *crush;
   /* reverse maps */
   mutable bool have_rmaps;
