@@ -1086,9 +1086,6 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
   Py_ssize_t pos = 0;
   while (PyDict_Next(choose_args, &pos, &python_key, &python_value)) {
     append_trace(trace, PyUnicode_FromFormat("choose_args %S = %S", python_key, python_value));
-    const char *key = MyText_AsString(python_key);
-    if (key == NULL)
-      return 0;
 
     struct crush_choose_arg_map choose_arg_map;
     int r = parse_choose_arg_map(self, &choose_arg_map, python_value, trace);

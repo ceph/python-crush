@@ -650,14 +650,6 @@ class TestLibCrush(object):
 
         wrong = {
             'choose_args': {
-                1: {}
-            }
-        }
-        with pytest.raises(TypeError) as e:
-            LibCrush().parse(wrong)
-
-        wrong = {
-            'choose_args': {
                 "1": 0
             }
         }
