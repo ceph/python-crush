@@ -71,6 +71,31 @@ class CephConverter(object):
             b['children'] = children
         return b
 
+    def collect_items(self, children, ceph):
+        for child in children:
+            if 'id' in child:
+                ceph['id2item'][child['id']] = child
+            self.collect_items(child.get('children', []), ceph)
+
+    def dereference(self, children, ceph):
+        for i in range(len(children)):
+            child = children[i]
+            if 'reference_id' in child:
+                id = child['reference_id']
+                new_child = copy.copy(ceph['id2item'][id])
+                new_child['weight'] = child['weight']
+                ceph['is_child'].add(id)
+                children[i] = new_child
+            self.dereference(child.get('children', []), ceph)
+
+    def convert_buckets(self, ceph):
+        ceph['is_child'] = set()
+        ceph['id2item'] = {}
+        converted = [self.convert_bucket(r, ceph) for r in ceph['buckets']]
+        self.collect_items(converted, ceph)
+        self.dereference(converted, ceph)
+        return list(filter(lambda c: c['id'] not in ceph['is_child'], converted))
+
     def convert_rule(self, ceph_rule, ceph):
         name = ceph_rule['rule_name']
         rule = []
@@ -144,7 +169,7 @@ class CephConverter(object):
 
         j['types'] = ceph['types']
 
-        j['trees'] = [self.convert_bucket(b, ceph) for b in ceph['buckets']]
+        j['trees'] = self.convert_buckets(ceph)
 
         j['rules'] = {}
         for ceph_rule in ceph['rules']:
@@ -800,21 +825,11 @@ class Crush(object):
                 self._id2item[child['id']] = child
             self._collect_items(child.get('children', []))
 
-    def _dereference(self, children):
-        for i in range(len(children)):
-            child = children[i]
-            if 'reference_id' in child:
-                new_child = copy.copy(self._id2item[child['reference_id']])
-                new_child['weight'] = child['weight']
-                children[i] = new_child
-            self._dereference(child.get('children', []))
-
     def _update_info(self):
         self._name2item = {}
         self._id2item = {}
         trees = self.crushmap.get('trees', [])
         self._collect_items(trees)
-        self._dereference(trees)
 
     def get_item_by_id(self, id):
         return self._id2item[id]

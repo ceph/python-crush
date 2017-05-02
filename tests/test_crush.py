@@ -72,26 +72,6 @@ class TestCrush(object):
         assert c.get_item_by_id(-2)['name'] == 'host0'
         assert c.get_item_by_name('host0')['id'] == -2
 
-    def test_dereference(self):
-        crushmap = self.build_crushmap()
-        weight = 1234
-        crushmap['trees'].append({
-            "type": "root",
-            "id": -20,
-            "name": "dc2",
-            "children": [
-                {
-                    "reference_id": -2,
-                    "weight": weight,
-                },
-            ],
-        })
-        c = Crush(verbose=1)
-        assert c.parse(crushmap)
-        trees = c.get_crushmap()['trees']
-        assert trees[1]['children'][0]['weight'] == weight
-        assert trees[1]['children'][0]['name'] == 'host0'
-
     def test_convert_to_crushmap(self, caplog):
         crushmap = {}
         assert crushmap == Crush._convert_to_crushmap(crushmap)
