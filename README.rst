@@ -19,7 +19,7 @@ When using pip versions lower than 8.1 or other operating systems,
 compilation is necessary and packages must be installed first.
 
 * apt-get install -y gcc g++ python-pip python-all-dev libpython3-all-dev cmake libboost-all-dev libatomic-ops-dev
-* dnf / yum / zypper install -y gcc gcc-c++ python-pip python-devel python3-devel cmake boost-devel libatomic_ops-devel
+* dnf / yum / zypper install -y gcc gcc-c++ python-pip python-devel python3-devel cmake make boost-devel libatomic_ops-devel
 * pip install crush
 
 Hacking
