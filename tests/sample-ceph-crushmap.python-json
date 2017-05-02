@@ -166,56 +166,54 @@
             "algorithm": "straw", 
             "children": [
                 {
-                    "id": 0, 
-                    "name": "device0", 
-                    "weight": 1.0
-                }
-            ], 
-            "id": -1, 
-            "name": "host0", 
-            "type": "host", 
-            "weight": 1.0
-        }, 
-        {
-            "algorithm": "straw", 
-            "children": [
-                {
-                    "id": 1, 
-                    "name": "device1", 
-                    "weight": 1.0
-                }
-            ], 
-            "id": -2, 
-            "name": "host1", 
-            "type": "host", 
-            "weight": 1.0
-        }, 
-        {
-            "algorithm": "straw", 
-            "children": [
-                {
-                    "reference_id": -1, 
-                    "weight": 1.0
-                }, 
-                {
-                    "reference_id": -2, 
-                    "weight": 1.0
-                }, 
-                {
-                    "reference_id": -5, 
-                    "weight": 1.0
-                }
-            ], 
-            "id": -3, 
-            "name": "rack0", 
-            "type": "rack", 
-            "weight": 3.0
-        }, 
-        {
-            "algorithm": "straw", 
-            "children": [
-                {
-                    "reference_id": -3, 
+                    "algorithm": "straw", 
+                    "children": [
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 0, 
+                                    "name": "device0", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -1, 
+                            "name": "host0", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }, 
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 1, 
+                                    "name": "device1", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -2, 
+                            "name": "host1", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }, 
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 2, 
+                                    "name": "device2", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -5, 
+                            "name": "host2", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }
+                    ], 
+                    "id": -3, 
+                    "name": "rack0", 
+                    "type": "rack", 
                     "weight": 4.0
                 }
             ], 
@@ -223,20 +221,6 @@
             "name": "root", 
             "type": "root", 
             "weight": 4.0
-        }, 
-        {
-            "algorithm": "straw", 
-            "children": [
-                {
-                    "id": 2, 
-                    "name": "device2", 
-                    "weight": 1.0
-                }
-            ], 
-            "id": -5, 
-            "name": "host2", 
-            "type": "host", 
-            "weight": 1.0
         }
     ], 
     "tunables": {

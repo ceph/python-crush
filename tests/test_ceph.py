@@ -37,6 +37,7 @@ class TestCeph(object):
             for ext_out in ('txt', 'crush', 'json', 'python-json'):
                 expected_path = base + ext_out
                 out_path = expected_path + ".err"
+                print("conversion " + in_path + " => " + expected_path)
                 Ceph().main([
                     'convert',
                     '--in-path', in_path,

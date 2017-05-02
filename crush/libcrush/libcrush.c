@@ -557,10 +557,6 @@ static int parse_step_choose(LibCrush *self, PyObject *step, int step_index, str
   int replication_count = MyInt_AsInt(PyList_GetItem(step, 2));
   if (PyErr_Occurred())
     return 0;
-  if (replication_count < 0) {
-    PyErr_Format(PyExc_RuntimeError, "replication_count %d must be positive", replication_count);
-    return 0;
-  }
 
   const char *type_keyword = MyText_AsString(PyList_GetItem(step, 3));
   if (type_keyword == NULL || strcmp(type_keyword, "type")) {

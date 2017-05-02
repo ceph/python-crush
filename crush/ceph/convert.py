@@ -118,8 +118,8 @@ class Convert(object):
 
     def run(self):
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
-        crushmap = c._convert_to_crushmap(self.args.in_path)
-        c.parse_crushmap(crushmap)
+        c.parse(self.args.in_path)
+        crushmap = c.get_crushmap()
         if self.args.out_format == 'python-json':
             open(self.args.out_path, "w").write(json.dumps(crushmap, indent=4, sort_keys=True))
         else:

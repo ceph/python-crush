@@ -610,17 +610,6 @@ class TestLibCrush(object):
         wrong = {
             'rules': {
                 'data': [
-                    ["choose", "firstn", -1, 3, 4]
-                ]
-            }
-        }
-        with pytest.raises(RuntimeError) as e:
-            LibCrush().parse(wrong)
-        assert 'must be positive' in str(e.value)
-
-        wrong = {
-            'rules': {
-                'data': [
                     ["choose", "firstn", 0, "notgood", 4]
                 ]
             }
