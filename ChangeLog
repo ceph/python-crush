@@ -1,6 +1,25 @@
 CHANGES
 =======
 
+1.0.21
+------
+
+* version 1.0.21
+* convert: update the documentation
+* rework ceph convert
+* libcrush: trim useless ids and weight\_set
+* tests: assume tox is installed system wide
+* libcrush: implement copy\_tunables
+* libcrush: allow for numerical indices for choose\_args
+* libcrush: parse 'types' if available
+* rename pool\_pps into ceph\_pool\_pps
+* document that Crush.get\_crushmap() returns a dereferenced crushmap
+* libcrush: clear choose\_args that are not used
+* doc: reference to the last sync with Ceph
+* libcrush: extract from Ceph
+* Revert "libcrush: extract from Ceph"
+* bump 1.0.21
+
 1.0.20
 ------
 
