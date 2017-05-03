@@ -1,10 +1,16 @@
 CHANGES
 =======
 
-1.0.21
+1.0.22
 ------
 
+* version 1.0.22
+* bump 1.0.22
 * version 1.0.21
+* ceph: resolve reference\_id
+* libcrush: the count argument of step choose can be negative
+* update installation instructions for CentOS 7
+* remove duplicate requirements in requirements-dev.txt
 * convert: update the documentation
 * rework ceph convert
 * libcrush: trim useless ids and weight\_set
