@@ -20,7 +20,6 @@
 from __future__ import division
 
 import argparse
-import copy
 import collections
 import logging
 import textwrap
@@ -156,28 +155,8 @@ class Analyze(object):
         )
 
     @staticmethod
-    def collect_paths(children, path):
-        children_info = []
-        for child in children:
-            child_path = copy.copy(path)
-            child_path[child.get('type', 'device')] = child['name']
-            children_info.append(child_path)
-            if child.get('children'):
-                children_info.extend(Analyze.collect_paths(child['children'], child_path))
-        return children_info
-
-    @staticmethod
-    def collect_item2path(children):
-        paths = Analyze.collect_paths(children, collections.OrderedDict())
-        item2path = {}
-        for path in paths:
-            elements = list(path.values())
-            item2path[elements[-1]] = elements
-        return item2path
-
-    @staticmethod
     def collect_dataframe(crush, child):
-        paths = Analyze.collect_paths([child], collections.OrderedDict())
+        paths = crush.collect_paths([child], collections.OrderedDict())
         #
         # verify all paths have bucket types in the same order in the hierarchy
         # i.e. always rack->host->device and not host->rack->device sometimes
@@ -256,7 +235,7 @@ class Analyze(object):
             for device in m:
                 device2count[device] += 1
 
-        item2path = Analyze.collect_item2path([root])
+        item2path = c.collect_item2path([root])
         log.debug("item2path = " + str(item2path))
         d['~objects~'] = 0
         for (device, count) in device2count.items():
@@ -271,12 +250,16 @@ class Analyze(object):
         pd.set_option('precision', 2)
         return a.sort_values(by='~over/under used %~', ascending=False)
 
+    def analyze_failures(self, c):
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+
     def analyze(self):
         c = Crush(verbose=self.args.verbose,
                   backward_compatibility=self.args.backward_compatibility)
         c.parse(self.args.crushmap)
         a = self.run_simulation(c)
         out = str(a)
+        self.analyze_failures(c)
         return out
 
     def run(self):

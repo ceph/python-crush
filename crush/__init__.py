@@ -19,6 +19,7 @@
 #
 from __future__ import division
 
+import collections
 import copy
 import json
 import logging
@@ -928,3 +929,22 @@ class Crush(object):
                     return found
             return None
         return walk(self.crushmap.get('trees', []))
+
+    @staticmethod
+    def collect_paths(children, path):
+        children_info = []
+        for child in children:
+            child_path = copy.copy(path)
+            child_path[child.get('type', 'device')] = child['name']
+            children_info.append(child_path)
+            if child.get('children'):
+                children_info.extend(Crush.collect_paths(child['children'], child_path))
+        return children_info
+
+    def collect_item2path(self, children):
+        paths = self.collect_paths(children, collections.OrderedDict())
+        item2path = {}
+        for path in paths:
+            elements = list(path.values())
+            item2path[elements[-1]] = elements
+        return item2path
