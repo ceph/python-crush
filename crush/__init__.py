@@ -905,3 +905,26 @@ class Crush(object):
     def get_item_by_name(self, name):
         return self._name2item[name]
 
+    def rule_get_take_failure_domain(self, name):
+        rule = self.crushmap['rules'][name]
+        take = None
+        failure_domain = None
+        for step in rule:
+            if step[0] == 'take':
+                assert take is None
+                take = step[1]
+            elif step[0].startswith('choose'):
+                assert failure_domain is None
+                (op, firstn_or_indep, num, _, failure_domain) = step
+        return (take, failure_domain)
+
+    def find_bucket(self, name):
+        def walk(children):
+            for child in children:
+                if child.get('name') == name:
+                    return child
+                found = self.find_bucket(child.get('children', []))
+                if found:
+                    return found
+            return None
+        return walk(self.crushmap.get('trees', []))

@@ -88,7 +88,7 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
             '--replication-count', '2',
             '--values-count', '10000',
         ])
-        a.crushmap = {
+        a.args.crushmap = {
             "trees": trees,
             "rules": {
                 "data": [

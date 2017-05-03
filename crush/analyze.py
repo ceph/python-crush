@@ -229,51 +229,22 @@ class Analyze(object):
             d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
         return d
 
-    @staticmethod
-    def find_take(children, item):
-        for child in children:
-            if child.get('name') == item:
-                return child
-            found = Analyze.find_take(child.get('children', []), item)
-            if found:
-                return found
-        return None
-
-    @staticmethod
-    def analyze_rule(rule):
-        take = None
-        failure_domain = None
-        for step in rule:
-            if step[0] == 'take':
-                assert take is None
-                take = step[1]
-            elif step[0].startswith('choose'):
-                assert failure_domain is None
-                (op, firstn_or_indep, num, _, failure_domain) = step
-        return (take, failure_domain)
-
-    def analyze(self):
-        c = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
-        c.parse(self.crushmap)
-
+    def run_simulation(self, c):
         if self.args.weights:
             with open(self.args.weights) as f_weights:
                 weights = c.parse_weights_file(f_weights)
         else:
             weights = None
 
-        crushmap = c.get_crushmap()
-        trees = crushmap.get('trees', [])
-        (take, failure_domain) = self.analyze_rule(crushmap['rules'][self.args.rule])
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
         if self.args.type:
             type = self.args.type
         else:
             type = failure_domain
-        root = self.find_take(trees, take)
+        root = c.find_bucket(take)
         log.debug("root = " + str(root))
-        d = self.collect_dataframe(c, root)
-        d = self.collect_nweight(d)
+        d = Analyze.collect_dataframe(c, root)
+        d = Analyze.collect_nweight(d)
 
         replication_count = self.args.replication_count
         rule = self.args.rule
@@ -285,7 +256,7 @@ class Analyze(object):
             for device in m:
                 device2count[device] += 1
 
-        item2path = self.collect_item2path([root])
+        item2path = Analyze.collect_item2path([root])
         log.debug("item2path = " + str(item2path))
         d['~objects~'] = 0
         for (device, count) in device2count.items():
@@ -293,14 +264,22 @@ class Analyze(object):
                 d.at[item, '~objects~'] += count
 
         total_objects = replication_count * len(values)
-        d = self.collect_usage(d, total_objects)
+        d = Analyze.collect_usage(d, total_objects)
 
         s = (d['~type~'] == type) & (d['~weight~'] > 0)
         a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
         pd.set_option('precision', 2)
         return a.sort_values(by='~over/under used %~', ascending=False)
 
+    def analyze(self):
+        c = Crush(verbose=self.args.verbose,
+                  backward_compatibility=self.args.backward_compatibility)
+        c.parse(self.args.crushmap)
+        a = self.run_simulation(c)
+        out = str(a)
+        return out
+
     def run(self):
-        if self.args.crushmap:
-            self.crushmap = Crush._convert_to_crushmap(self.args.crushmap)
-            return self.analyze()
+        if not self.args.crushmap:
+            raise Exception("missing --crushmap")
+        return self.analyze()
