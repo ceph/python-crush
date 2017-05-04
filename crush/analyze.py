@@ -287,6 +287,11 @@ class Analyze(object):
             worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
         return worst.set_index('~type~')
 
+    def _format_report(self, d, type):
+        s = (d['~type~'] == type) & (d['~weight~'] > 0)
+        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
+        return str(a.sort_values(by='~over/under used %~', ascending=False))
+
     def analyze(self):
         c = Crush(verbose=self.args.verbose,
                   backward_compatibility=self.args.backward_compatibility)
@@ -299,9 +304,7 @@ class Analyze(object):
         pd.set_option('precision', 2)
 
         d = self.run_simulation(c, take)
-        s = (d['~type~'] == type) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
-        out = str(a.sort_values(by='~over/under used %~', ascending=False))
+        out = self._format_report(d, type)
         out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
         worst = self.analyze_failures(c, take, failure_domain)
         if worst is not None:
