@@ -78,7 +78,11 @@ class Analyze(object):
             'analyze',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description=textwrap.dedent("""\
-            Analyze a crushmap
+            Analyze a crushmap rule
+
+            The first step shows if the distribution run by a
+            simulation is different from what is expected with the
+            weights assigned to each item in crushmap.
 
             Map a number of objects (--values-count) to devices (three
             by default or --replication-count if specified) using a
@@ -120,7 +124,31 @@ class Analyze(object):
             positive the item is overused, if it is negative the item
             is underused.
 
-            
+            The second step shows the worst case scenario if a bucket
+            in the failure domain is removed from the crushmap. The
+            failure domain is the type argument of the crush rule.
+            For instance in:
+
+                ["chooseleaf", "firstn", 0, "type", "host"]
+
+            the failure domain is the host. If there are four hosts in
+            the crushmap, named host1, host2, etc. a simulation will
+            be run with a crushmap in which only host1 was
+            removed. Another simulation will be run with a crushmap
+            where host2 was removed etc. The result of all simulations
+            are aggregated together.
+
+            The worst case scenario for each item type is when the
+            overfull percentage is higher. It is displayed as follows:
+
+                     ~over used %~
+            ~type~
+            device          25.55
+            host            22.45
+
+            If a host fail, the worst case scenario is that a device
+            will be 25.55% overfull or a host will be 22.45% overfull.
+
             """),
             epilog=textwrap.dedent("""
             Examples:
