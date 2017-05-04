@@ -118,9 +118,9 @@ class Analyze(object):
             The ~over/under used %~ is the variation between the
             expected item usage and the actual item usage. If it is
             positive the item is overused, if it is negative the item
-            is underused. For more information about why this happens
-            see http://tracker.ceph.com/issues/15653#detailed-explanation
+            is underused.
 
+            
             """),
             epilog=textwrap.dedent("""
             Examples:
