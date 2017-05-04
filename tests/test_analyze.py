@@ -106,7 +106,15 @@ host4     -7       1.0        541                10.91
 host3     -6      10.0       4930                 1.07
 host2     -5      10.0       4860                -0.37
 host1     -4      10.0       4836                -0.86
-host0     -3      10.0       4833                -0.92\
+host0     -3      10.0       4833                -0.92
+
+Worst case scenario if a host fails:
+
+        ~over used %~
+~type~               
+device          25.55
+host            22.45
+root             0.00\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 

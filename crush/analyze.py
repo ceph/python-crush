@@ -21,6 +21,7 @@ from __future__ import division
 
 import argparse
 import collections
+import copy
 import logging
 import textwrap
 import pandas as pd
@@ -208,19 +209,14 @@ class Analyze(object):
             d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
         return d
 
-    def run_simulation(self, c):
+    def run_simulation(self, c, root_name):
         if self.args.weights:
             with open(self.args.weights) as f_weights:
                 weights = c.parse_weights_file(f_weights)
         else:
             weights = None
 
-        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
-        if self.args.type:
-            type = self.args.type
-        else:
-            type = failure_domain
-        root = c.find_bucket(take)
+        root = c.find_bucket(root_name)
         log.debug("root = " + str(root))
         d = Analyze.collect_dataframe(c, root)
         d = Analyze.collect_nweight(d)
@@ -243,23 +239,45 @@ class Analyze(object):
                 d.at[item, '~objects~'] += count
 
         total_objects = replication_count * len(values)
-        d = Analyze.collect_usage(d, total_objects)
+        return Analyze.collect_usage(d, total_objects)
 
-        s = (d['~type~'] == type) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
-        pd.set_option('precision', 2)
-        return a.sort_values(by='~over/under used %~', ascending=False)
-
-    def analyze_failures(self, c):
-        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+    def analyze_failures(self, c, take, failure_domain):
+        if failure_domain == 0:  # failure domain == device is a border case
+            return None
+        root = c.find_bucket(take)
+        worst = pd.DataFrame()
+        for may_fail in c.collect_buckets_by_type([root], failure_domain):
+            f = Crush(verbose=self.args.verbose,
+                      backward_compatibility=self.args.backward_compatibility)
+            f.crushmap = copy.deepcopy(c.get_crushmap())
+            root = f.find_bucket(take)
+            Crush.filter(lambda x: x.get('name') != may_fail.get('name'), root)
+            f.parse(f.crushmap)
+            a = self.run_simulation(f, take)
+            a['~over used %~'] = a['~over/under used %~']
+            a = a[['~type~', '~over used %~']]
+            worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+        return worst.set_index('~type~')
 
     def analyze(self):
         c = Crush(verbose=self.args.verbose,
                   backward_compatibility=self.args.backward_compatibility)
         c.parse(self.args.crushmap)
-        a = self.run_simulation(c)
-        out = str(a)
-        self.analyze_failures(c)
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        if self.args.type:
+            type = self.args.type
+        else:
+            type = failure_domain
+        pd.set_option('precision', 2)
+
+        d = self.run_simulation(c, take)
+        s = (d['~type~'] == type) & (d['~weight~'] > 0)
+        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
+        out = str(a.sort_values(by='~over/under used %~', ascending=False))
+        out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
+        worst = self.analyze_failures(c, take, failure_domain)
+        if worst is not None:
+            out += str(worst)
         return out
 
     def run(self):
