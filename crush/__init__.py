@@ -931,6 +931,27 @@ class Crush(object):
         return walk(self.crushmap.get('trees', []))
 
     @staticmethod
+    def collect_buckets_by_type(root, type):
+        def walk(children):
+            found = []
+            for child in children:
+                if child.get('type') == type:
+                    found.append(child)
+                found.extend(Crush.collect_buckets_by_type(child.get('children', []), type))
+            return found
+        return walk(root)
+
+    @staticmethod
+    def filter(fun, root):
+        def walk(bucket):
+            if 'children' not in bucket:
+                return
+            bucket['children'] = list(filter(fun, bucket['children']))
+            for child in bucket['children']:
+                walk(child)
+        walk(root)
+
+    @staticmethod
     def collect_paths(children, path):
         children_info = []
         for child in children:
