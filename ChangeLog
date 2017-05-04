@@ -1,6 +1,21 @@
 CHANGES
 =======
 
+1.0.23
+------
+
+* version 1.0.23
+* analyze: split \_format\_report out of analyze
+* analyze: document the worst over used in case of a failure
+* doc: the issue explaining over/under used is no longer up to date
+* analyze: display the worst over used in case of a failure
+* crush: Crush.filter to trim buckets
+* analyze: move collect\_paths,collect\_item2path to Crush
+* analyze: move find\_take,analyze\_rule to Crush
+* crushmap: distinguish parsing and manipulation
+* bump 1.0.23
+* doc: forgetting to git pull master is a common mistake
+
 1.0.22
 ------
 
