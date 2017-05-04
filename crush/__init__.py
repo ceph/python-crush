@@ -924,7 +924,7 @@ class Crush(object):
             for child in children:
                 if child.get('name') == name:
                     return child
-                found = self.find_bucket(child.get('children', []))
+                found = walk(child.get('children', []))
                 if found:
                     return found
             return None
