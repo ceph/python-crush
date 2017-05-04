@@ -941,15 +941,50 @@ class Crush(object):
             return found
         return walk(root)
 
-    @staticmethod
-    def filter(fun, root):
+    def filter(self, fun, root):
+        def update_choose_args(bucket, pos):
+            if 'choose_args' not in self.crushmap:
+                return
+            for choose_args in self.crushmap['choose_args'].values():
+                for choose_arg in choose_args:
+                    if ('bucket_id' in choose_arg and
+                            choose_arg['bucket_id'] != bucket.get('id')):
+                        continue
+                    if ('bucket_name' in choose_arg and
+                            choose_arg['bucket_name'] != bucket.get('name')):
+                        continue
+                    if 'ids' in choose_arg:
+                        ids = choose_arg['ids']
+                        del ids[pos]
+                    if 'weight_set' in choose_arg:
+                        for weights in choose_arg['weight_set']:
+                            del weights[pos]
+        removed_ids = set()
+
         def walk(bucket):
             if 'children' not in bucket:
                 return
-            bucket['children'] = list(filter(fun, bucket['children']))
-            for child in bucket['children']:
+            children = bucket['children']
+            filtered = []
+            removed = []
+            for pos in range(len(children)):
+                if fun(children[pos]):
+                    filtered.append(children[pos])
+                else:
+                    removed.append(pos)
+                    removed_ids.add(children[pos]['id'])
+            removed.reverse()
+            for pos in removed:
+                update_choose_args(bucket, pos)
+            for child in filtered:
                 walk(child)
+            bucket['children'] = filtered
         walk(root)
+
+        def filter_choose_args(x):
+            return x['bucket_id'] not in removed_ids
+        for k, v in self.crushmap['choose_args'].items():
+            self.crushmap['choose_args'][k] = filter(filter_choose_args, v)
 
     @staticmethod
     def collect_paths(children, path):
