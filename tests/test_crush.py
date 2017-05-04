@@ -104,6 +104,55 @@ class TestCrush(object):
         with pytest.raises(AssertionError):
             Crush.parse_weights_file(open("tests/sample-ceph-crushmap.txt"))
 
+    def test_filter(self):
+        root = {
+            'name': 'root',
+            'children': [
+                {'name': 'bucket1', 'children': [{'id': 1}, {'id': 2}, {'id': 4}]},
+                {'name': 'bucket2'},
+                {'name': 'bucket1', 'children': [{'id': 5}, {'id': 6}, {'id': 7}]},
+            ]
+        }
+        expected = {
+            'name': 'root',
+            'children': [
+                {'name': 'bucket1', 'children': [{'id': 1}]},
+                {'name': 'bucket2'},
+                {'name': 'bucket1', 'children': [{'id': 5}, {'id': 7}]},
+            ]
+        }
+
+        def fun(x):
+            if x.get('id') and x.get('id') % 2 == 0:
+                return False
+            return True
+
+        Crush.filter(fun, root)
+        assert expected == root
+
+    def test_collect_buckets_by_type(self):
+        children = [
+            {
+                'type': 'host',
+                'name': 'host0',
+            },
+            {
+                'type': 'rack',
+                'children': [
+                    {
+                        'name': 'host1',
+                        'type': 'host',
+                    },
+                    {
+                        'name': 'host2',
+                        'type': 'other',
+                    }
+                ],
+            }
+        ]
+        expected = [{'name': 'host0', 'type': 'host'}, {'name': 'host1', 'type': 'host'}]
+        assert expected == Crush.collect_buckets_by_type(children, 'host')
+
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_crush.py"
 # End:

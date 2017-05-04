@@ -19,6 +19,7 @@
 #
 from __future__ import division
 
+import collections
 import copy
 import json
 import logging
@@ -818,37 +819,6 @@ class Crush(object):
             crushmap = CephConverter().parse_ceph(crushmap)
         return crushmap
 
-    def _collect_items(self, children):
-        for child in children:
-            if 'id' in child:
-                self._name2item[child['name']] = child
-                self._id2item[child['id']] = child
-            self._collect_items(child.get('children', []))
-
-    def _update_info(self):
-        self._name2item = {}
-        self._id2item = {}
-        trees = self.crushmap.get('trees', [])
-        self._collect_items(trees)
-
-    def get_item_by_id(self, id):
-        return self._id2item[id]
-
-    def get_item_by_name(self, name):
-        return self._name2item[name]
-
-    def get_crushmap(self):
-        """
-        Return the original crushmap given to the parse() method.
-
-        The returned crushmap does not contain any reference_id,
-        they are replaced by a pointer to the actual bucket. This
-        is convenient when exploring the crushmap. But it will
-        fail to parse again because duplicated buckets will be
-        found.
-        """
-        return self.crushmap
-
     @staticmethod
     def parse_weights_file(weights_file):
         """
@@ -901,3 +871,101 @@ class Crush(object):
         # No need to check that keys are strings, it's enforced by JSON
 
         return weights
+
+    #
+    # Working with the crushmap in memory structure
+    #
+    def get_crushmap(self):
+        """
+        Return the original crushmap given to the parse() method.
+
+        The returned crushmap does not contain any reference_id,
+        they are replaced by a pointer to the actual bucket. This
+        is convenient when exploring the crushmap. But it will
+        fail to parse again because duplicated buckets will be
+        found.
+        """
+        return self.crushmap
+
+    def _collect_items(self, children):
+        for child in children:
+            if 'id' in child:
+                self._name2item[child['name']] = child
+                self._id2item[child['id']] = child
+            self._collect_items(child.get('children', []))
+
+    def _update_info(self):
+        self._name2item = {}
+        self._id2item = {}
+        trees = self.crushmap.get('trees', [])
+        self._collect_items(trees)
+
+    def get_item_by_id(self, id):
+        return self._id2item[id]
+
+    def get_item_by_name(self, name):
+        return self._name2item[name]
+
+    def rule_get_take_failure_domain(self, name):
+        rule = self.crushmap['rules'][name]
+        take = None
+        failure_domain = None
+        for step in rule:
+            if step[0] == 'take':
+                assert take is None
+                take = step[1]
+            elif step[0].startswith('choose'):
+                assert failure_domain is None
+                (op, firstn_or_indep, num, _, failure_domain) = step
+        return (take, failure_domain)
+
+    def find_bucket(self, name):
+        def walk(children):
+            for child in children:
+                if child.get('name') == name:
+                    return child
+                found = self.find_bucket(child.get('children', []))
+                if found:
+                    return found
+            return None
+        return walk(self.crushmap.get('trees', []))
+
+    @staticmethod
+    def collect_buckets_by_type(root, type):
+        def walk(children):
+            found = []
+            for child in children:
+                if child.get('type') == type:
+                    found.append(child)
+                found.extend(Crush.collect_buckets_by_type(child.get('children', []), type))
+            return found
+        return walk(root)
+
+    @staticmethod
+    def filter(fun, root):
+        def walk(bucket):
+            if 'children' not in bucket:
+                return
+            bucket['children'] = list(filter(fun, bucket['children']))
+            for child in bucket['children']:
+                walk(child)
+        walk(root)
+
+    @staticmethod
+    def collect_paths(children, path):
+        children_info = []
+        for child in children:
+            child_path = copy.copy(path)
+            child_path[child.get('type', 'device')] = child['name']
+            children_info.append(child_path)
+            if child.get('children'):
+                children_info.extend(Crush.collect_paths(child['children'], child_path))
+        return children_info
+
+    def collect_item2path(self, children):
+        paths = self.collect_paths(children, collections.OrderedDict())
+        item2path = {}
+        for path in paths:
+            elements = list(path.values())
+            item2path[elements[-1]] = elements
+        return item2path

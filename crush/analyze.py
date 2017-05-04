@@ -20,8 +20,8 @@
 from __future__ import division
 
 import argparse
-import copy
 import collections
+import copy
 import logging
 import textwrap
 import pandas as pd
@@ -78,7 +78,11 @@ class Analyze(object):
             'analyze',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description=textwrap.dedent("""\
-            Analyze a crushmap
+            Analyze a crushmap rule
+
+            The first step shows if the distribution run by a
+            simulation is different from what is expected with the
+            weights assigned to each item in crushmap.
 
             Map a number of objects (--values-count) to devices (three
             by default or --replication-count if specified) using a
@@ -118,8 +122,32 @@ class Analyze(object):
             The ~over/under used %~ is the variation between the
             expected item usage and the actual item usage. If it is
             positive the item is overused, if it is negative the item
-            is underused. For more information about why this happens
-            see http://tracker.ceph.com/issues/15653#detailed-explanation
+            is underused.
+
+            The second step shows the worst case scenario if a bucket
+            in the failure domain is removed from the crushmap. The
+            failure domain is the type argument of the crush rule.
+            For instance in:
+
+                ["chooseleaf", "firstn", 0, "type", "host"]
+
+            the failure domain is the host. If there are four hosts in
+            the crushmap, named host1, host2, etc. a simulation will
+            be run with a crushmap in which only host1 was
+            removed. Another simulation will be run with a crushmap
+            where host2 was removed etc. The result of all simulations
+            are aggregated together.
+
+            The worst case scenario for each item type is when the
+            overfull percentage is higher. It is displayed as follows:
+
+                     ~over used %~
+            ~type~
+            device          25.55
+            host            22.45
+
+            If a host fail, the worst case scenario is that a device
+            will be 25.55% overfull or a host will be 22.45% overfull.
 
             """),
             epilog=textwrap.dedent("""
@@ -156,28 +184,8 @@ class Analyze(object):
         )
 
     @staticmethod
-    def collect_paths(children, path):
-        children_info = []
-        for child in children:
-            child_path = copy.copy(path)
-            child_path[child.get('type', 'device')] = child['name']
-            children_info.append(child_path)
-            if child.get('children'):
-                children_info.extend(Analyze.collect_paths(child['children'], child_path))
-        return children_info
-
-    @staticmethod
-    def collect_item2path(children):
-        paths = Analyze.collect_paths(children, collections.OrderedDict())
-        item2path = {}
-        for path in paths:
-            elements = list(path.values())
-            item2path[elements[-1]] = elements
-        return item2path
-
-    @staticmethod
     def collect_dataframe(crush, child):
-        paths = Analyze.collect_paths([child], collections.OrderedDict())
+        paths = crush.collect_paths([child], collections.OrderedDict())
         #
         # verify all paths have bucket types in the same order in the hierarchy
         # i.e. always rack->host->device and not host->rack->device sometimes
@@ -229,51 +237,17 @@ class Analyze(object):
             d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
         return d
 
-    @staticmethod
-    def find_take(children, item):
-        for child in children:
-            if child.get('name') == item:
-                return child
-            found = Analyze.find_take(child.get('children', []), item)
-            if found:
-                return found
-        return None
-
-    @staticmethod
-    def analyze_rule(rule):
-        take = None
-        failure_domain = None
-        for step in rule:
-            if step[0] == 'take':
-                assert take is None
-                take = step[1]
-            elif step[0].startswith('choose'):
-                assert failure_domain is None
-                (op, firstn_or_indep, num, _, failure_domain) = step
-        return (take, failure_domain)
-
-    def analyze(self):
-        c = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
-        c.parse(self.crushmap)
-
+    def run_simulation(self, c, root_name):
         if self.args.weights:
             with open(self.args.weights) as f_weights:
                 weights = c.parse_weights_file(f_weights)
         else:
             weights = None
 
-        crushmap = c.get_crushmap()
-        trees = crushmap.get('trees', [])
-        (take, failure_domain) = self.analyze_rule(crushmap['rules'][self.args.rule])
-        if self.args.type:
-            type = self.args.type
-        else:
-            type = failure_domain
-        root = self.find_take(trees, take)
+        root = c.find_bucket(root_name)
         log.debug("root = " + str(root))
-        d = self.collect_dataframe(c, root)
-        d = self.collect_nweight(d)
+        d = Analyze.collect_dataframe(c, root)
+        d = Analyze.collect_nweight(d)
 
         replication_count = self.args.replication_count
         rule = self.args.rule
@@ -285,7 +259,7 @@ class Analyze(object):
             for device in m:
                 device2count[device] += 1
 
-        item2path = self.collect_item2path([root])
+        item2path = c.collect_item2path([root])
         log.debug("item2path = " + str(item2path))
         d['~objects~'] = 0
         for (device, count) in device2count.items():
@@ -293,14 +267,51 @@ class Analyze(object):
                 d.at[item, '~objects~'] += count
 
         total_objects = replication_count * len(values)
-        d = self.collect_usage(d, total_objects)
+        return Analyze.collect_usage(d, total_objects)
 
+    def analyze_failures(self, c, take, failure_domain):
+        if failure_domain == 0:  # failure domain == device is a border case
+            return None
+        root = c.find_bucket(take)
+        worst = pd.DataFrame()
+        for may_fail in c.collect_buckets_by_type([root], failure_domain):
+            f = Crush(verbose=self.args.verbose,
+                      backward_compatibility=self.args.backward_compatibility)
+            f.crushmap = copy.deepcopy(c.get_crushmap())
+            root = f.find_bucket(take)
+            Crush.filter(lambda x: x.get('name') != may_fail.get('name'), root)
+            f.parse(f.crushmap)
+            a = self.run_simulation(f, take)
+            a['~over used %~'] = a['~over/under used %~']
+            a = a[['~type~', '~over used %~']]
+            worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+        return worst.set_index('~type~')
+
+    def _format_report(self, d, type):
         s = (d['~type~'] == type) & (d['~weight~'] > 0)
         a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
+        return str(a.sort_values(by='~over/under used %~', ascending=False))
+
+    def analyze(self):
+        c = Crush(verbose=self.args.verbose,
+                  backward_compatibility=self.args.backward_compatibility)
+        c.parse(self.args.crushmap)
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        if self.args.type:
+            type = self.args.type
+        else:
+            type = failure_domain
         pd.set_option('precision', 2)
-        return a.sort_values(by='~over/under used %~', ascending=False)
+
+        d = self.run_simulation(c, take)
+        out = self._format_report(d, type)
+        out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
+        worst = self.analyze_failures(c, take, failure_domain)
+        if worst is not None:
+            out += str(worst)
+        return out
 
     def run(self):
-        if self.args.crushmap:
-            self.crushmap = Crush._convert_to_crushmap(self.args.crushmap)
-            return self.analyze()
+        if not self.args.crushmap:
+            raise Exception("missing --crushmap")
+        return self.analyze()
