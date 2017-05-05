@@ -85,23 +85,36 @@ int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *i
   if (info != Py_None) {
     PyObject *rules = PyDict_GetItemString(info, "rules");
     if (rules != NULL) {
-      Py_ssize_t pos;
-      for (pos = 0; pos < PyList_Size(rules); pos++) {
-        PyObject *python_rule = PyList_GetItem(rules, pos);
-        PyObject *python_rule_id = PyDict_GetItemString(python_rule, "rule_id");
+      PyObject *self_rule_name;
+      PyObject *python_rule_id;
+      pos = 0;
+      while (PyDict_Next(self->rules, &pos, &self_rule_name, &python_rule_id)) {
         int rule_id = MyInt_AsInt(python_rule_id);
         assert(rule_id >= 0);
         assert(rule_id < self->map->max_rules);
-        struct crush_rule *rule = self->map->rules[rule_id];
-
-        PyObject *python_type = PyDict_GetItemString(python_rule, "type");
-        rule->mask.type = MyInt_AsInt(python_type);
-        PyObject *python_min_size = PyDict_GetItemString(python_rule, "min_size");
-        rule->mask.min_size = MyInt_AsInt(python_min_size);
-        PyObject *python_max_size = PyDict_GetItemString(python_rule, "max_size");
-        rule->mask.max_size = MyInt_AsInt(python_max_size);
-        PyObject *python_ruleset = PyDict_GetItemString(python_rule, "ruleset");
-        rule->mask.ruleset = MyInt_AsInt(python_ruleset);
+        Py_ssize_t i;
+        for (i = 0; i < PyList_Size(rules); i++) {
+          PyObject *python_rule = PyList_GetItem(rules, i);
+          PyObject *python_rule_name = PyDict_GetItemString(python_rule, "rule_name");
+          if (python_rule_name == NULL)
+            continue;
+          if (!PyObject_RichCompareBool(self_rule_name, python_rule_name, Py_EQ))
+            continue;
+          struct crush_rule *rule = self->map->rules[rule_id];
+          assert(rule);
+          PyObject *python_type = PyDict_GetItemString(python_rule, "type");
+          assert(python_type);
+          rule->mask.type = MyInt_AsInt(python_type);
+          PyObject *python_min_size = PyDict_GetItemString(python_rule, "min_size");
+          assert(python_min_size);
+          rule->mask.min_size = MyInt_AsInt(python_min_size);
+          PyObject *python_max_size = PyDict_GetItemString(python_rule, "max_size");
+          assert(python_max_size);
+          rule->mask.max_size = MyInt_AsInt(python_max_size);
+          PyObject *python_ruleset = PyDict_GetItemString(python_rule, "ruleset");
+          assert(python_ruleset);
+          rule->mask.ruleset = MyInt_AsInt(python_ruleset);
+        }
       }
     }
     PyObject *tunables = PyDict_GetItemString(info, "tunables");
