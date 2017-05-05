@@ -989,6 +989,11 @@ static int parse_choose_args_bucket(LibCrush *self, struct crush_choose_arg_map 
     return 0;
   }
 
+  if (self->map->buckets[-1-bucket_id] == NULL) {
+    PyErr_Format(PyExc_RuntimeError, "id %d does not exist in the crushmap", bucket_id);
+    return 0;
+  }
+
   struct crush_choose_arg *choose_args = &choose_arg_map->args[-1-bucket_id];
 
   r = parse_choose_args_bucket_ids(self, choose_args, bucket, trace);
