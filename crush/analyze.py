@@ -224,8 +224,25 @@ class Analyze(object):
     def collect_nweight(d):
         d['~nweight~'] = 0.0
         for type in d['~type~'].unique():
-            tw = float(d.loc[d['~type~'] == type, ['~weight~']].sum())
-            d.loc[d['~type~'] == type, ['~nweight~']] = d['~weight~'].apply(lambda w: w / tw)
+            w = d.loc[d['~type~'] == type].copy()
+            tw = float(w['~weight~'].sum())
+            w['~nweight~'] = w['~weight~'].apply(lambda w: w / tw)
+            d.loc[d['~type~'] == type] = w
+        return d
+
+    @staticmethod
+    def collect_expected_objects(d, total):
+        d['~expected~'] = 0
+        for type in d['~type~'].unique():
+            e = d.loc[d['~type~'] == type].copy()
+            e['~expected~'] = e['~nweight~'].apply(lambda w: total * w).astype(int)
+            remainder = total - e['~expected~'].sum()
+            if remainder > 0:
+                rounding = e['~expected~'].copy()
+                rounding[:remainder] += 1
+                e['~expected~'] = rounding
+                assert total - e['~expected~'].sum() == 0
+            d.loc[d['~type~'] == type] = e
         return d
 
     @staticmethod
