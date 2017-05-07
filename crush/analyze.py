@@ -279,7 +279,7 @@ class Analyze(object):
                       backward_compatibility=self.args.backward_compatibility)
             f.crushmap = copy.deepcopy(c.get_crushmap())
             root = f.find_bucket(take)
-            Crush.filter(lambda x: x.get('name') != may_fail.get('name'), root)
+            f.filter(lambda x: x.get('name') != may_fail.get('name'), root)
             f.parse(f.crushmap)
             a = self.run_simulation(f, take)
             a['~over used %~'] = a['~over/under used %~']

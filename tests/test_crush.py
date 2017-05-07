@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import copy
 import logging
 import pytest # noqa needed for caplog
 
@@ -104,56 +105,107 @@ class TestCrush(object):
         with pytest.raises(AssertionError):
             Crush.parse_weights_file(open("tests/sample-ceph-crushmap.txt"))
 
+    def test_merge_split_choose_args(self):
+        c = Crush()
+        split = {
+            'choose_args': {
+                'a': [
+                    {'bucket_id': -3},
+                    {'bucket_id': -2},
+                    {'bucket_id': -1},
+                ],
+                'b': [
+                    {'bucket_id': -1},
+                ]
+            },
+            'trees': [
+                {
+                    'id': -1,
+                    'children': [{
+                        'id': -3,
+                        'children': [{'id': -4}]
+                    }],
+                },
+                {'id': -2},
+            ]
+        }
+        merged = {
+            'trees': [
+                {
+                    'id': -1,
+                    'children': [{
+                        'id': -3,
+                        'children': [{'id': -4}],
+                        'choose_args': {'a': {'bucket_id': -3}},
+                    }],
+                    'choose_args': {'a': {'bucket_id': -1}, 'b': {'bucket_id': -1}},
+                },
+                {'id': -2, 'choose_args': {'a': {'bucket_id': -2}}}
+            ]
+        }
+
+        c.crushmap = copy.deepcopy(split)
+        assert c._merge_choose_args()
+        assert merged == c.crushmap
+        # do nothing if no choose_args
+        assert c._merge_choose_args() is False
+        c._split_choose_args()
+        assert split == c.crushmap
+
     def test_filter_real(self):
         name = 'cloud6-1429'
         c = Crush()
         c.parse('tests/test_crush_filter.json')
         crushmap = c.get_crushmap()
-        assert 3 == len(crushmap['choose_args']['optimize'])
-        assert -2 == crushmap['choose_args']['optimize'][1]['bucket_id']
-        assert 7 == len(crushmap['choose_args']['optimize'][0]['weight_set'][0])
+        optimize = sorted(crushmap['choose_args']['optimize'], key=lambda v: v['bucket_id'])
+        assert 3 == len(optimize)
+        assert -1 == optimize[2]['bucket_id']
+        assert 7 == len(optimize[2]['weight_set'][0])
         bucket = c.find_bucket(name)
         assert name == bucket['name']
         c.filter(lambda x: x.get('name') != name, crushmap['trees'][0])
-        assert 2 == len(crushmap['choose_args']['optimize'])
-        assert -3 == crushmap['choose_args']['optimize'][1]['bucket_id']
-        assert 6 == len(crushmap['choose_args']['optimize'][0]['weight_set'][0])
+        optimize = crushmap['choose_args']['optimize']
+        assert 2 == len(optimize)
+        assert -1 == optimize[1]['bucket_id']
+        assert 6 == len(optimize[1]['weight_set'][0])
         assert c.find_bucket(name) is None
 
     def test_filter_basic(self):
         root = {
             'name': 'root',
+            'id': -5,
             'children': [
-                {'name': 'bucket1', 'children': [{'id': 1}, {'id': 2}, {'id': 4}]},
-                {'name': 'bucket2'},
+                {'name': 'bucket2', 'id': -3},
+                {'name': 'bucket1', 'id': -2, 'children': [{'id': 1}, {'id': 2}, {'id': 4}]},
                 {'name': 'bucket3', 'id': -1, 'children': [{'id': 5}, {'id': 6}, {'id': 7}]},
             ]
         }
         expected_root = {
             'name': 'root',
+            'id': -5,
             'children': [
-                {'name': 'bucket1', 'children': [{'id': 1}]},
-                {'name': 'bucket2'},
+                {'name': 'bucket2', 'id': -3},
+                {'name': 'bucket1', 'id': -2, 'children': [{'id': 1}]},
                 {'name': 'bucket3', 'id': -1, 'children': [{'id': 5}, {'id': 7}]},
             ]
         }
         choose_args = [
+            {'bucket_id': -2, 'ids': [11, 12, 14],
+             'weight_set': [[11.0, 12.0, 14.0]]},
             {'bucket_id': -1, 'ids': [15, 16, 17]},
-            {'bucket_id': -12, 'ids': [100, 101, 102]},
-            {'bucket_name': 'bucket3', 'ids': [11, 12, 14],
-             'weight_set': [[11.0, 12.0, 14.0]]}]
+        ]
         expected_choose_args = [
+            {'bucket_id': -2, 'ids': [11],
+             'weight_set': [[11.0]]},
             {'bucket_id': -1, 'ids': [15, 17]},
-            {'bucket_id': -12, 'ids': [100, 101, 102]},
-            {'bucket_name': 'bucket3', 'ids': [11, 14],
-             'weight_set': [[11.0, 14.0]]}]
+        ]
         c = Crush()
         c.crushmap = {}
         c.crushmap['trees'] = [root]
         c.crushmap['choose_args'] = {"one": choose_args}
 
         def fun(x):
-            if x.get('id') and x.get('id') % 2 == 0:
+            if x.get('id') in (2, 4, 6):
                 return False
             return True
 
