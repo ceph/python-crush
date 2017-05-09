@@ -104,26 +104,26 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         a.args.crushmap = crushmap
         d = a.analyze()
         expected = """\
-The following weights have been modified
-
-        ~id~  ~original weight~  ~weight~
-~name~                                   
-host0     -2                  5       4.5
-
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5       1.0        646                34.06
-host4     -6       1.0        610                26.59
-host2     -4       1.0        575                19.32
-host1     -3       1.0        571                18.49
-host0     -2       4.5       1694               -21.88
+host3     -5         1        646                41.94
+host4     -6         1        610                34.03
+host2     -4         1        575                26.34
+host1     -3         1        571                25.46
+host0     -2         5       1694               -25.56
 
 Worst case scenario if a host fails:
 
         ~over used %~
 ~type~               
-host            41.33
-root             0.00\
+host            61.52
+root             0.00
+
+The following are overweight:
+
+        ~id~  ~weight~
+~name~                
+host0     -2         5\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
