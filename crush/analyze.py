@@ -223,14 +223,13 @@ class Analyze(object):
     @staticmethod
     def collect_nweight(d, replication_count, failure_domain):
         d['~nweight~'] = 0.0
-        d['~original weight~'] = d['~weight~'].copy()
+        d['~overweight~'] = False
         for type in d['~type~'].unique():
             w = d.loc[d['~type~'] == type].copy()
-            tw = w['~original weight~'].sum()
+            tw = w['~weight~'].sum()
             if type == failure_domain:
-                w['~weight~'] = w['~original weight~'].apply(
-                    lambda w: min(w, tw / replication_count))
-                tw = w['~weight~'].sum()
+                w['~overweight~'] = w['~weight~'].apply(
+                    lambda w: w > tw / replication_count)
             w['~nweight~'] = w['~weight~'].apply(lambda w: w / float(tw))
             d.loc[d['~type~'] == type] = w
         return d
@@ -329,15 +328,14 @@ class Analyze(object):
 
         d = self.run_simulation(c, take, failure_domain)
         out = ""
-        if (d['~original weight~'] - d['~weight~']).abs().sum() > 0:
-            out += "The following weights have been modified\n\n"
-            s = (d['~original weight~'] - d['~weight~']) != 0
-            out += str(d.loc[s, ['~id~', '~original weight~', '~weight~']]) + "\n\n"
         out += self._format_report(d, type)
         out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
         worst = self.analyze_failures(c, take, failure_domain)
         if worst is not None:
             out += str(worst)
+        if d['~overweight~'].any():
+            out += "\n\nThe following are overweight:\n\n"
+            out += str(d.loc[d['~overweight~'], ['~id~', '~weight~']])
         return out
 
     def run(self):
