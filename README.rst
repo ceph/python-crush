@@ -27,7 +27,7 @@ Hacking
 
 * Get the code:: 
 
-   git clone --recursive http://libcrush.org/main/python-crush.git
+   git clone http://libcrush.org/main/python-crush.git
 
 * Set up the development environment::
 

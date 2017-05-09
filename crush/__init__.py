@@ -924,7 +924,7 @@ class Crush(object):
             for child in children:
                 if child.get('name') == name:
                     return child
-                found = self.find_bucket(child.get('children', []))
+                found = walk(child.get('children', []))
                 if found:
                     return found
             return None
@@ -941,15 +941,62 @@ class Crush(object):
             return found
         return walk(root)
 
-    @staticmethod
-    def filter(fun, root):
+    def _merge_choose_args(self):
+        if 'choose_args' not in self.crushmap:
+            return False
+        id2choose_args = collections.defaultdict(lambda: {})
+        for name, choose_args in self.crushmap['choose_args'].items():
+            for choose_arg in choose_args:
+                id2choose_args[choose_arg['bucket_id']][name] = choose_arg
+        del self.crushmap['choose_args']
+
         def walk(bucket):
-            if 'children' not in bucket:
-                return
-            bucket['children'] = list(filter(fun, bucket['children']))
-            for child in bucket['children']:
+            if bucket['id'] in id2choose_args:
+                bucket['choose_args'] = id2choose_args[bucket['id']]
+            for child in bucket.get('children', []):
+                walk(child)
+        for root in self.crushmap['trees']:
+            walk(root)
+        return True
+
+    def _split_choose_args(self):
+        assert 'choose_args' not in self.crushmap
+        name2choose_args = collections.defaultdict(lambda: [])
+
+        def walk(bucket):
+            if 'choose_args' in bucket:
+                for name, choose_arg in bucket['choose_args'].items():
+                    assert bucket['id'] == choose_arg['bucket_id']
+                    name2choose_args[name].append(choose_arg)
+                del bucket['choose_args']
+            for child in bucket.get('children', []):
+                walk(child)
+        for root in self.crushmap['trees']:
+            walk(root)
+        self.crushmap['choose_args'] = {}
+        for name, choose_args in name2choose_args.items():
+            self.crushmap['choose_args'][name] = sorted(choose_args, key=lambda v: v['bucket_id'])
+
+    def filter(self, fun, root):
+        self._merge_choose_args()
+
+        def walk(bucket):
+            for pos in reversed(range(len(bucket.get('children', [])))):
+                if not fun(bucket['children'][pos]):
+                    child = bucket['children'][pos]
+                    del bucket['children'][pos]
+                    if 'choose_args' in bucket:
+                        for name, choose_arg in bucket['choose_args'].items():
+                            if 'ids' in choose_arg:
+                                del choose_arg['ids'][pos]
+                            if 'weight_set' in choose_arg:
+                                for weights in choose_arg['weight_set']:
+                                    del weights[pos]
+            for child in bucket.get('children', []):
                 walk(child)
         walk(root)
+
+        self._split_choose_args()
 
     @staticmethod
     def collect_paths(children, path):

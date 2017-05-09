@@ -221,11 +221,33 @@ class Analyze(object):
         return d.set_index('~name~')
 
     @staticmethod
-    def collect_nweight(d):
+    def collect_nweight(d, replication_count, failure_domain):
         d['~nweight~'] = 0.0
+        d['~original weight~'] = d['~weight~'].copy()
         for type in d['~type~'].unique():
-            tw = float(d.loc[d['~type~'] == type, ['~weight~']].sum())
-            d.loc[d['~type~'] == type, ['~nweight~']] = d['~weight~'].apply(lambda w: w / tw)
+            w = d.loc[d['~type~'] == type].copy()
+            tw = w['~original weight~'].sum()
+            if type == failure_domain:
+                w['~weight~'] = w['~original weight~'].apply(
+                    lambda w: min(w, tw / replication_count))
+                tw = w['~weight~'].sum()
+            w['~nweight~'] = w['~weight~'].apply(lambda w: w / float(tw))
+            d.loc[d['~type~'] == type] = w
+        return d
+
+    @staticmethod
+    def collect_expected_objects(d, total):
+        d['~expected~'] = 0
+        for type in d['~type~'].unique():
+            e = d.loc[d['~type~'] == type].copy()
+            e['~expected~'] = e['~nweight~'].apply(lambda w: total * w).astype(int)
+            remainder = total - e['~expected~'].sum()
+            if remainder > 0:
+                rounding = e['~expected~'].copy()
+                rounding[:remainder] += 1
+                e['~expected~'] = rounding
+                assert total - e['~expected~'].sum() == 0
+            d.loc[d['~type~'] == type] = e
         return d
 
     @staticmethod
@@ -237,22 +259,25 @@ class Analyze(object):
             d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
         return d
 
-    def run_simulation(self, c, root_name):
+    def run_simulation(self, c, root_name, failure_domain):
         if self.args.weights:
             with open(self.args.weights) as f_weights:
                 weights = c.parse_weights_file(f_weights)
         else:
             weights = None
 
+        values = self.hooks.hook_create_values()
+        replication_count = self.args.replication_count
+        total_objects = replication_count * len(values)
+
         root = c.find_bucket(root_name)
         log.debug("root = " + str(root))
         d = Analyze.collect_dataframe(c, root)
-        d = Analyze.collect_nweight(d)
+        d = Analyze.collect_nweight(d, replication_count, failure_domain)
+        d = Analyze.collect_expected_objects(d, total_objects)
 
-        replication_count = self.args.replication_count
         rule = self.args.rule
         device2count = collections.defaultdict(lambda: 0)
-        values = self.hooks.hook_create_values()
         for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights)
             log.debug("{} == {} mapped to {}".format(name, value, m))
@@ -266,7 +291,6 @@ class Analyze(object):
             for item in item2path[device]:
                 d.at[item, '~objects~'] += count
 
-        total_objects = replication_count * len(values)
         return Analyze.collect_usage(d, total_objects)
 
     def analyze_failures(self, c, take, failure_domain):
@@ -279,9 +303,9 @@ class Analyze(object):
                       backward_compatibility=self.args.backward_compatibility)
             f.crushmap = copy.deepcopy(c.get_crushmap())
             root = f.find_bucket(take)
-            Crush.filter(lambda x: x.get('name') != may_fail.get('name'), root)
+            f.filter(lambda x: x.get('name') != may_fail.get('name'), root)
             f.parse(f.crushmap)
-            a = self.run_simulation(f, take)
+            a = self.run_simulation(f, take, failure_domain)
             a['~over used %~'] = a['~over/under used %~']
             a = a[['~type~', '~over used %~']]
             worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
@@ -303,8 +327,13 @@ class Analyze(object):
             type = failure_domain
         pd.set_option('precision', 2)
 
-        d = self.run_simulation(c, take)
-        out = self._format_report(d, type)
+        d = self.run_simulation(c, take, failure_domain)
+        out = ""
+        if (d['~original weight~'] - d['~weight~']).abs().sum() > 0:
+            out += "The following weights have been modified\n\n"
+            s = (d['~original weight~'] - d['~weight~']) != 0
+            out += str(d.loc[s, ['~id~', '~original weight~', '~weight~']]) + "\n\n"
+        out += self._format_report(d, type)
         out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
         worst = self.analyze_failures(c, take, failure_domain)
         if worst is not None:
