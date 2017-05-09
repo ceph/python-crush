@@ -22,6 +22,7 @@ import pytest # noqa needed for capsys
 
 from crush import Crush
 from crush.main import Main
+from crush.ceph import Ceph
 from crush.analyze import Analyze
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
@@ -52,6 +53,77 @@ host0     -2       1.0    host  rack0  host0    NaN
 osd.3      3       1.0  device  rack0  host0  osd.3
 host1     -3       1.0    host  rack0  host1    NaN
 osd.4      4       1.0  device  rack0  host1  osd.4\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+
+    def test_analyze_out_of_bounds(self):
+        # [ 5 1 1 1 1]
+        size = 2
+        pg_num = 2048
+        p = [
+            '--replication-count', str(size),
+            '--pool', '0',
+            '--pg-num', str(pg_num),
+            '--pgp-num', str(pg_num),
+        ]
+
+        hosts_count = 5
+        host_weight = [1] * hosts_count
+        host_weight[0] = 5
+        crushmap = {
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "weight": sum(host_weight),
+                    "children": [],
+                }
+            ],
+            "rules": {
+                "firstn": [
+                    ["take", "dc1"],
+                    ["choose", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+            }
+        }
+        crushmap['trees'][0]['children'].extend([
+            {
+                "type": "host",
+                "id": -(i + 2),
+                "name": "host%d" % i,
+                "weight": host_weight[i],
+                "children": [],
+            } for i in range(0, hosts_count)
+        ])
+        a = Ceph().constructor([
+            'analyze',
+            '--rule', 'firstn',
+        ] + p)
+        a.args.crushmap = crushmap
+        d = a.analyze()
+        expected = """\
+The following weights have been modified
+
+        ~id~  ~original weight~  ~weight~
+~name~                                   
+host0     -2                  5       4.5
+
+        ~id~  ~weight~  ~objects~  ~over/under used %~
+~name~                                                
+host3     -5       1.0        646                34.06
+host4     -6       1.0        610                26.59
+host2     -4       1.0        575                19.32
+host1     -3       1.0        571                18.49
+host0     -2       4.5       1694               -21.88
+
+Worst case scenario if a host fails:
+
+        ~over used %~
+~type~               
+host            41.33
+root             0.00\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
