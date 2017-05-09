@@ -1,6 +1,20 @@
 CHANGES
 =======
 
+1.0.24
+------
+
+* version 1.0.24
+* analyze: normalized weights based on the effective weight
+* analyze: implement collect\_expected\_objects
+* crush: fix split/merge choose\_args
+* there are no submodules
+* libcrush: Ceph txt format rule\_id is incorrect
+* libcrush: fail if choose\_args references a non existent bucket
+* crush: filter must filter out choose\_args
+* crush: find\_bucket must recurse on walk
+* bump 1.0.24
+
 1.0.23
 ------
 
