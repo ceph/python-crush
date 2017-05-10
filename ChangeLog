@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.0.26
+------
+
+* version 1.0.26
+* analyze: crop the weight if above the maximum
+* analyze: fail if mapping is incomplete
+* bump 1.0.26
+
 1.0.25
 ------
 
