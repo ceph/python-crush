@@ -221,16 +221,33 @@ class Analyze(object):
         return d.set_index('~name~')
 
     @staticmethod
-    def collect_nweight(d, replication_count, failure_domain):
-        d['~nweight~'] = 0.0
+    def collect_cropped_weights(d, replication_count, failure_domain):
         d['~overweight~'] = False
-        for type in d['~type~'].unique():
+        d['~cropped weight~'] = d['~weight~'].copy()
+        d['~cropped %~'] = 0.0
+        for type in (failure_domain, 'device'):
+            if len(d.loc[d['~type~'] == type]) == 0:
+                continue
             w = d.loc[d['~type~'] == type].copy()
             tw = w['~weight~'].sum()
-            if type == failure_domain:
-                w['~overweight~'] = w['~weight~'].apply(
-                    lambda w: w > tw / replication_count)
-            w['~nweight~'] = w['~weight~'].apply(lambda w: w / float(tw))
+            w['~overweight~'] = w['~weight~'].apply(lambda w: w > tw / replication_count)
+            overweight_count = len(w.loc[w['~overweight~']])
+            if overweight_count > 0:
+                tw_not_overweight = w.loc[~w['~overweight~'], ['~weight~']].sum()['~weight~']
+                assert replication_count > overweight_count
+                cropped_weight = tw_not_overweight / (replication_count - overweight_count)
+                w.loc[w['~overweight~'], ['~cropped weight~']] = cropped_weight
+                w['~cropped %~'] = (1.0 - w['~cropped weight~'] / w['~weight~']) * 100
+            d.loc[d['~type~'] == type] = w
+        return d
+
+    @staticmethod
+    def collect_nweight(d):
+        d['~nweight~'] = 0.0
+        for type in d['~type~'].unique():
+            w = d.loc[d['~type~'] == type].copy()
+            tw = w['~cropped weight~'].sum()
+            w['~nweight~'] = w['~cropped weight~'].apply(lambda w: w / float(tw))
             d.loc[d['~type~'] == type] = w
         return d
 
@@ -252,10 +269,7 @@ class Analyze(object):
     @staticmethod
     def collect_usage(d, total_objects):
         capacity = d['~nweight~'] * float(total_objects)
-        d['~over/under used %~'] = 0.0
-        for type in d['~type~'].unique():
-            usage = d['~objects~'] / capacity - 1.0
-            d.loc[d['~type~'] == type, ['~over/under used %~']] = usage * 100
+        d['~over/under used %~'] = (d['~objects~'] / capacity - 1.0) * 100 - d['~cropped %~']
         return d
 
     def run_simulation(self, c, root_name, failure_domain):
@@ -272,7 +286,8 @@ class Analyze(object):
         root = c.find_bucket(root_name)
         log.debug("root = " + str(root))
         d = Analyze.collect_dataframe(c, root)
-        d = Analyze.collect_nweight(d, replication_count, failure_domain)
+        d = Analyze.collect_cropped_weights(d, replication_count, failure_domain)
+        d = Analyze.collect_nweight(d)
         d = Analyze.collect_expected_objects(d, total_objects)
 
         rule = self.args.rule
@@ -335,8 +350,9 @@ class Analyze(object):
         if worst is not None:
             out += str(worst)
         if d['~overweight~'].any():
-            out += "\n\nThe following are overweight:\n\n"
-            out += str(d.loc[d['~overweight~'], ['~id~', '~weight~']])
+            out += "\n\nThe following are overweight and should be cropped:\n\n"
+            out += str(d.loc[d['~overweight~'],
+                             ['~id~', '~weight~', '~cropped weight~', '~cropped %~']])
         return out
 
     def run(self):
