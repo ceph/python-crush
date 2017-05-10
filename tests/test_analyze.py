@@ -57,73 +57,171 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         assert expected == str(d)
 
     def test_analyze_out_of_bounds(self):
-        # [ 5 1 1 1 1]
-        size = 2
-        pg_num = 2048
-        p = [
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-        ]
 
-        hosts_count = 5
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
+        def make(size, host_weight):
+            pg_num = 2048
+            p = [
+                '--replication-count', str(size),
+                '--pool', '0',
+                '--pg-num', str(pg_num),
+                '--pgp-num', str(pg_num),
+            ]
+
+            hosts_count = len(host_weight)
+            crushmap = {
+                "trees": [
+                    {
+                        "type": "root",
+                        "id": -1,
+                        "name": "dc1",
+                        "weight": sum(host_weight),
+                        "children": [],
+                    }
                 ],
+                "rules": {
+                    "firstn": [
+                        ["take", "dc1"],
+                        ["set_choose_tries", 100],
+                        ["choose", "firstn", 0, "type", "host"],
+                        ["emit"]
+                    ],
+                }
             }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        a = Ceph().constructor([
-            'analyze',
-            '--rule', 'firstn',
-        ] + p)
-        a.args.crushmap = crushmap
+            crushmap['trees'][0]['children'].extend([
+                {
+                    "type": "host",
+                    "id": -(i + 2),
+                    "name": "host%d" % i,
+                    "weight": host_weight[i],
+                    "children": [],
+                } for i in range(0, hosts_count)
+            ])
+            a = Ceph().constructor([
+                'analyze',
+                '--rule', 'firstn',
+            ] + p)
+            a.args.crushmap = crushmap
+            return a
+
+        weights = [7, 7, 7, 3, 3]
+        print("==== weights " + str(weights))
+        a = make(4, weights)
         d = a.analyze()
+        print(str(d))
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5         1        646                41.94
-host4     -6         1        610                34.03
-host2     -4         1        575                26.34
-host1     -3         1        571                25.46
-host0     -2         5       1694               -25.56
+host3     -5         3       1342                31.05
+host4     -6         3       1314                28.32
+host1     -3         7       1868               -23.07
+host0     -2         7       1834               -24.73
+host2     -4         7       1834               -24.73
 
 Worst case scenario if a host fails:
 
         ~over used %~
 ~type~               
-host            61.52
+host              0.0
+root              0.0
+
+The following are overweight and should be cropped:
+
+        ~id~  ~weight~  ~cropped weight~  ~cropped %~
+~name~                                               
+host0     -2         7               6.0        14.29
+host1     -3         7               6.0        14.29
+host2     -4         7               6.0        14.29\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+
+        weights = [5, 1, 1, 1, 1]
+        print("==== weights " + str(weights))
+        a = make(2, weights)
+        d = a.analyze()
+        print(str(d))
+
+        expected = """\
+        ~id~  ~weight~  ~objects~  ~over/under used %~
+~name~                                                
+host3     -5         1        646                26.17
+host4     -6         1        610                19.14
+host2     -4         1        575                12.30
+host1     -3         1        571                11.52
+host0     -2         5       1694               -37.29
+
+Worst case scenario if a host fails:
+
+        ~over used %~
+~type~               
+host            21.14
 root             0.00
 
-The following are overweight:
+The following are overweight and should be cropped:
 
-        ~id~  ~weight~
-~name~                
-host0     -2         5\
+        ~id~  ~weight~  ~cropped weight~  ~cropped %~
+~name~                                               
+host0     -2         5               4.0         20.0\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+
+        weights = [7, 7, 3, 1, 1, 1]
+        print("==== weights " + str(weights))
+        a = make(3, weights)
+        d = a.analyze()
+        print(str(d))
+        expected = """\
+        ~id~  ~weight~  ~objects~  ~over/under used %~
+~name~                                                
+host3     -5         1        477                39.75
+host4     -6         1        468                37.11
+host5     -7         1        451                32.13
+host2     -4         3       1187                15.92
+host1     -3         7       1782               -27.27
+host0     -2         7       1779               -27.42
+
+Worst case scenario if a host fails:
+
+        ~over used %~
+~type~               
+host            35.01
+root             0.00
+
+The following are overweight and should be cropped:
+
+        ~id~  ~weight~  ~cropped weight~  ~cropped %~
+~name~                                               
+host0     -2         7               6.0        14.29
+host1     -3         7               6.0        14.29\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+
+        weights = [5, 5, 3, 3, 3]
+        print("==== weights " + str(weights))
+        a = make(4, weights)
+        d = a.analyze()
+        print(str(d))
+        expected = """\
+        ~id~  ~weight~  ~objects~  ~over/under used %~
+~name~                                                
+host3     -5         3       1517                11.11
+host4     -6         3       1512                10.74
+host2     -4         3       1504                10.16
+host1     -3         5       1839               -20.21
+host0     -2         5       1820               -21.13
+
+Worst case scenario if a host fails:
+
+        ~over used %~
+~type~               
+host              0.0
+root              0.0
+
+The following are overweight and should be cropped:
+
+        ~id~  ~weight~  ~cropped weight~  ~cropped %~
+~name~                                               
+host0     -2         5               4.5         10.0
+host1     -3         5               4.5         10.0\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 

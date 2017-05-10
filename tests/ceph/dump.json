@@ -12,6 +12,14 @@
         {
             "id": 2,
             "name": "osd.2"
+        },
+        {
+            "id": 3,
+            "name": "osd.3"
+        },
+        {
+            "id": 4,
+            "name": "osd.4"
         }
     ],
     "types": [
@@ -100,6 +108,16 @@
                     "id": 2,
                     "weight": 65536,
                     "pos": 2
+                },
+                {
+                    "id": 3,
+                    "weight": 65536,
+                    "pos": 3
+                },
+                {
+                    "id": 4,
+                    "weight": 65536,
+                    "pos": 4
                 }
             ]
         },
@@ -149,6 +167,10 @@
                     "op": "take",
                     "item": -1,
                     "item_name": "default"
+                },
+                {
+                    "op": "set_choose_tries",
+                    "num": 1000
                 },
                 {
                     "op": "choose_firstn",
