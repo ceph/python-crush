@@ -280,6 +280,7 @@ class Analyze(object):
         for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights)
             log.debug("{} == {} mapped to {}".format(name, value, m))
+            assert len(m) == replication_count
             for device in m:
                 device2count[device] += 1
 
