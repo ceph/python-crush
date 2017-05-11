@@ -57,6 +57,9 @@ class Analyze(object):
             '--type',
             help='override the type of bucket shown in the report')
         parser.add_argument(
+            '--choose-args',
+            help='modify the weights')
+        parser.add_argument(
             '--crushmap',
             help='path to the crushmap file')
         parser.add_argument(
@@ -293,7 +296,7 @@ class Analyze(object):
         rule = self.args.rule
         device2count = collections.defaultdict(lambda: 0)
         for (name, value) in values.items():
-            m = c.map(rule, value, replication_count, weights)
+            m = c.map(rule, value, replication_count, weights, choose_args=self.args.choose_args)
             log.debug("{} == {} mapped to {}".format(name, value, m))
             assert len(m) == replication_count
             for device in m:
