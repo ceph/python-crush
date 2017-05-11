@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import argparse
+import collections
 import logging
 import textwrap
 
@@ -25,6 +26,8 @@ from crush import analyze
 from crush import compare
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
+
+log = logging.getLogger(__name__)
 
 
 class Main(object):
@@ -65,6 +68,40 @@ class Main(object):
         else:
             level = logging.INFO
         logging.getLogger('crush').setLevel(level)
+
+    @staticmethod
+    def get_trimmed_argv(to_parser, args):
+        options = []
+        positionals = []
+        dest2option = {}
+        known_dests = []
+        for action in to_parser._actions:
+            option = list(filter(lambda o: o in to_parser._option_string_actions,
+                                 action.option_strings))
+            if len(option) > 0:
+                dest2option[action.dest] = option[0]
+            known_dests.append(action.dest)
+        v = collections.OrderedDict(sorted(vars(args).items(),
+                                           key=lambda t: t[0]))
+        for (key, value) in v.items():
+            log.debug('get_trimmed_argv: checking ' +
+                      str(key) + "=" + str(value))
+            if key not in known_dests:
+                log.debug('get_trimmed_argv: skip unknown ' + str(key))
+                continue
+            if key in dest2option:
+                option = dest2option[key]
+                action = to_parser._option_string_actions[option]
+                if value != action.default:
+                    if action.nargs is None or action.nargs == 1:
+                        options.extend([option, str(value)])
+                    elif action.nargs == 0:
+                        options.append(option)
+            else:
+                log.debug('get_trimmed_argv: positional ' +
+                          str(key) + "=" + str(value))
+                positionals.extend(value)
+        return options + positionals
 
     def constructor(self, argv):
         self.parse(argv)

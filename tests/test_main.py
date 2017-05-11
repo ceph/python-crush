@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import logging
+import argparse
+import pickle
+import pprint
 
+from crush import analyze
 from crush import main
+from crush import optimize
 
 
 class TestCrush(object):
@@ -35,6 +39,33 @@ class TestCrush(object):
         assert (logging.getLogger('crush').getEffectiveLevel() ==
                 logging.DEBUG)
 
+    def test_get_trimmed_argv(self):
+        d_parser = optimize.Optimize.get_parser()
+        parser = argparse.ArgumentParser(
+            parents=[
+                d_parser,
+            ],
+            conflict_handler='resolve',
+        )
+        parser.add_argument('--something-with-arg')
+        parser.add_argument('--no-arg', action='store_true')
+        pprint.pprint(vars(parser))
+        argv_discarded = [
+            '--no-arg',
+            '--something-with-arg', 'arg',
+            '--step', '200',
+        ]
+        argv_preserved = [
+            '--type', 'device',
+        ]
+        argv = argv_discarded + argv_preserved
+        args = parser.parse_args(argv)
+        trimmed_argv = main.Main.get_trimmed_argv(
+            analyze.Analyze.get_parser(), args)
+        expected = ['--type', 'device']
+        assert expected == trimmed_argv
+
+
 # Local Variables:
-# compile-command: "cd .. ; tox -e py27 tests/test_main.py"
+# compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_main.py"
 # End:
