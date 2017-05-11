@@ -31,6 +31,8 @@ from crush import Crush
 
 log = logging.getLogger(__name__)
 
+class BadMapping(Exception):
+    pass
 
 class Analyze(object):
 
@@ -298,7 +300,8 @@ class Analyze(object):
         for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights, choose_args=self.args.choose_args)
             log.debug("{} == {} mapped to {}".format(name, value, m))
-            assert len(m) == replication_count
+            if len(m) != replication_count:
+                raise BadMapping("{} mapped to {}".format(value, m))
             for device in m:
                 device2count[device] += 1
 
@@ -323,10 +326,14 @@ class Analyze(object):
             root = f.find_bucket(take)
             f.filter(lambda x: x.get('name') != may_fail.get('name'), root)
             f.parse(f.crushmap)
-            a = self.run_simulation(f, take, failure_domain)
-            a['~over used %~'] = a['~over/under used %~']
-            a = a[['~type~', '~over used %~']]
-            worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+            try:
+                a = self.run_simulation(f, take, failure_domain)
+                a['~over used %~'] = a['~over/under used %~']
+                a = a[['~type~', '~over used %~']]
+                worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+            except BadMapping:
+                log.error("mapping failed when removing {}".format(may_fail))
+
         return worst.set_index('~type~')
 
     def _format_report(self, d, type):
