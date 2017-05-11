@@ -28,6 +28,7 @@ Hacking
 * Get the code:: 
 
    git clone http://libcrush.org/main/python-crush.git
+   cd python-crush
 
 * Set up the development environment::
 
