@@ -34,9 +34,9 @@ log = logging.getLogger(__name__)
 
 class Analyze(object):
 
-    def __init__(self, args, hooks):
+    def __init__(self, args, main):
         self.args = args
-        self.hooks = hooks
+        self.main = main
 
     @staticmethod
     def get_parser():
@@ -282,7 +282,7 @@ class Analyze(object):
         else:
             weights = None
 
-        values = self.hooks.hook_create_values()
+        values = self.main.hook_create_values()
         replication_count = self.args.replication_count
         total_objects = replication_count * len(values)
 
