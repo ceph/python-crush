@@ -29,15 +29,23 @@ from crush import optimize
 class TestCrush(object):
 
     def test_run(self):
-        return  # needs a bit more love to actually work
-        c = main.Crush()
-        argv = []
-        c.run(argv)
-        assert (logging.getLogger('crush').getEffectiveLevel() ==
-                logging.INFO)
-        c.run(['--verbose'] + argv)
-        assert (logging.getLogger('crush').getEffectiveLevel() ==
-                logging.DEBUG)
+        # needs a bit more love to actually work
+        pass
+        # c = main.Crush()
+        # argv = []
+        # c.run(argv)
+        # assert (logging.getLogger('crush').getEffectiveLevel() ==
+        #         logging.INFO)
+        # c.run(['--verbose'] + argv)
+        # assert (logging.getLogger('crush').getEffectiveLevel() ==
+        #         logging.DEBUG)
+
+    def test_pickle(self):
+        m = main.Main()
+        m.parse(['optimize'])
+        p = pickle.dumps(m)
+        n = pickle.loads(p)
+        assert n.argv == m.argv
 
     def test_get_trimmed_argv(self):
         d_parser = optimize.Optimize.get_parser()

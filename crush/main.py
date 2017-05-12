@@ -60,7 +60,15 @@ class Main(object):
             A library to control placement in a hierarchy
             """))
 
+    def __getstate__(self):
+        return (self.argv,)
+
+    def __setstate__(self, state):
+        self.__init__()
+        self.parse(state[0])
+
     def parse(self, argv):
+        self.argv = argv
         self.args = self.parser.parse_args(argv)
 
         if self.args.verbose:
