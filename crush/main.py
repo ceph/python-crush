@@ -24,6 +24,7 @@ import textwrap
 
 from crush import analyze
 from crush import compare
+from crush import optimize
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
@@ -52,6 +53,7 @@ class Main(object):
 
         analyze.Analyze.set_parser(self.subparsers, self.hook_analyze_args)
         compare.Compare.set_parser(self.subparsers, self.hook_compare_args)
+        optimize.Optimize.set_parser(self.subparsers, self.hook_optimize_args)
 
     def create_parser(self):
         self.parser = argparse.ArgumentParser(
@@ -125,6 +127,9 @@ class Main(object):
         pass
 
     def hook_compare_args(self, parser):
+        pass
+
+    def hook_optimize_args(self, parser):
         pass
 
     def hook_create_values(self):

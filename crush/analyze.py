@@ -299,7 +299,7 @@ class Analyze(object):
         device2count = collections.defaultdict(lambda: 0)
         for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights, choose_args=self.args.choose_args)
-            log.debug("{} == {} mapped to {}".format(name, value, m))
+#            log.debug("{} == {} mapped to {}".format(name, value, m))
             if len(m) != replication_count:
                 raise BadMapping("{} mapped to {}".format(value, m))
             for device in m:

@@ -76,6 +76,9 @@ class Ceph(main.Main):
     def hook_compare_args(self, parser):
         self.hook_common_args(parser)
 
+    def hook_optimize_args(self, parser):
+        self.hook_common_args(parser)
+
     def hook_create_values(self):
         if self.args.pool is not None:
             return LibCrush().ceph_pool_pps(self.args.pool, self.args.pg_num, self.args.pgp_num)
