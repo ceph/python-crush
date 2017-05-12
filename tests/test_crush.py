@@ -202,7 +202,10 @@ class TestCrush(object):
         c = Crush()
         c.crushmap = {}
         c.crushmap['trees'] = [root]
-        c.crushmap['choose_args'] = {"one": choose_args}
+        c.crushmap['choose_args'] = {
+            "one": choose_args,
+            "empty": [],
+        }
 
         def fun(x):
             if x.get('id') in (2, 4, 6):
@@ -212,6 +215,7 @@ class TestCrush(object):
         c.filter(fun, root)
         assert expected_root == root
         assert expected_choose_args == choose_args
+        assert "empty" in c.crushmap['choose_args']
 
     def test_collect_buckets_by_type(self):
         children = [
@@ -235,6 +239,26 @@ class TestCrush(object):
         ]
         expected = [{'name': 'host0', 'type': 'host'}, {'name': 'host1', 'type': 'host'}]
         assert expected == Crush.collect_buckets_by_type(children, 'host')
+
+    def test_update_choose_args(self):
+        c = Crush()
+        c.crushmap = {}
+        choose_args = [{"bucket_id": -1}]
+        c.update_choose_args('name', choose_args)
+        assert choose_args == c.crushmap['choose_args']['name']
+
+        c.update_choose_args('other_name', choose_args)
+        assert choose_args == c.crushmap['choose_args']['other_name']
+
+        choose_args = [{"bucket_id": -2}]
+        c.update_choose_args('name', choose_args)
+        expected = [{'bucket_id': -2}, {'bucket_id': -1}]
+        assert expected == c.crushmap['choose_args']['name']
+
+        choose_args[0]['modified'] = True
+        c.update_choose_args('name', choose_args)
+        expected = [{'bucket_id': -2, 'modified': True}, {'bucket_id': -1}]
+        assert expected == c.crushmap['choose_args']['name']
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_crush.py"
