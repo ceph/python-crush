@@ -51,6 +51,9 @@ class Ceph(main.Main):
             """),
         )
 
+    def clone(self):
+        return Ceph()
+
     def hook_common_args(self, parser):
         parser.add_argument(
             '--pool',
