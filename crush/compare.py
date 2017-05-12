@@ -35,9 +35,9 @@ class Compare(object):
     orig_weights = None
     dest_weights = None
 
-    def __init__(self, args, hooks):
+    def __init__(self, args, main):
         self.args = args
-        self.hooks = hooks
+        self.main = main
 
     def set_origin(self, c):
         self.origin = c
@@ -198,6 +198,7 @@ class Compare(object):
         b = self.destination
         self.destination_d = collections.defaultdict(lambda: 0)
         replication_count = self.args.replication_count
+        values = self.main.hook_create_values()
         rule = self.args.rule
         self.from_to = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
         for (name, value) in values.items():
