@@ -54,7 +54,7 @@ class Compare(object):
         d = Crush(backward_compatibility=self.args.backward_compatibility)
         d.parse(destination)
         self.set_destination(d)
-        
+
     @staticmethod
     def get_parser():
         parser = argparse.ArgumentParser(
