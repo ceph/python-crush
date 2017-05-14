@@ -31,8 +31,10 @@ from crush import Crush
 
 log = logging.getLogger(__name__)
 
+
 class BadMapping(Exception):
     pass
+
 
 class Analyze(object):
 
@@ -299,7 +301,6 @@ class Analyze(object):
         device2count = collections.defaultdict(lambda: 0)
         for (name, value) in values.items():
             m = c.map(rule, value, replication_count, weights, choose_args=self.args.choose_args)
-#            log.debug("{} == {} mapped to {}".format(name, value, m))
             if len(m) != replication_count:
                 raise BadMapping("{} mapped to {}".format(value, m))
             for device in m:
@@ -341,23 +342,30 @@ class Analyze(object):
         a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
         return str(a.sort_values(by='~over/under used %~', ascending=False))
 
+    def analyze_crushmap(self, crushmap):
+        c = Crush(backward_compatibility=self.args.backward_compatibility)
+        c.parse(crushmap)
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        return self.run_simulation(c, take, failure_domain)
+
     def analyze(self):
-        c = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
+        c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(self.args.crushmap)
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        d = self.run_simulation(c, take, failure_domain)
+        worst = self.analyze_failures(c, take, failure_domain)
+        return (d, worst, failure_domain)
+
+    def analyze_report(self, d, worst, failure_domain):
         if self.args.type:
             type = self.args.type
         else:
             type = failure_domain
         pd.set_option('precision', 2)
-
-        d = self.run_simulation(c, take, failure_domain)
         out = ""
         out += self._format_report(d, type)
-        out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
-        worst = self.analyze_failures(c, take, failure_domain)
         if worst is not None:
+            out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
             out += str(worst)
         if d['~overweight~'].any():
             out += "\n\nThe following are overweight and should be cropped:\n\n"
@@ -368,4 +376,4 @@ class Analyze(object):
     def run(self):
         if not self.args.crushmap:
             raise Exception("missing --crushmap")
-        return self.analyze()
+        return self.analyze_report(*self.analyze())
