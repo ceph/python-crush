@@ -990,6 +990,7 @@ class Crush(object):
         self.crushmap['choose_args'][name] = sorted(u.values(), key=lambda v: v['bucket_id'])
 
     def filter(self, fun, root):
+        names = self.crushmap.get('choose_args', {}).keys()
         self._merge_choose_args()
 
         def walk(bucket):
@@ -1009,6 +1010,10 @@ class Crush(object):
         walk(root)
 
         self._split_choose_args()
+        if 'choose_args' in self.crushmap:
+            for name in names:
+                if name not in self.crushmap['choose_args']:
+                    self.crushmap['choose_args'][name] = []
 
     @staticmethod
     def collect_paths(children, path):
