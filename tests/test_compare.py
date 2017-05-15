@@ -34,7 +34,7 @@ class TestCompare(object):
     def setup_class(self):
         pass
 
-    def define_crushmaps_1(self):
+    def define_crushmap_10(self):
         crushmap = {
             "trees": [
                 {
@@ -68,13 +68,17 @@ class TestCompare(object):
                 ],
             } for i in range(0, 10)
         ])
+        return crushmap
+
+    def define_crushmaps_1(self):
+        crushmap = self.define_crushmap_10()
         pprint(crushmap)
-        c1 = Crush(verbose=1)
+        c1 = Crush()
         c1.parse(crushmap)
 
         m2 = copy.deepcopy(crushmap)
         del m2['trees'][0]['children'][2]['children'][1]
-        c2 = Crush(verbose=1)
+        c2 = Crush()
         c2.parse(m2)
 
         return (c1, c2)
@@ -82,7 +86,6 @@ class TestCompare(object):
     def test_display(self):
         c1, c2 = self.define_crushmaps_1()
         c = Main().constructor([
-            '--verbose',
             'compare',
             '--rule', 'indep',
             '--replication-count', '2',
@@ -96,12 +99,126 @@ class TestCompare(object):
         assert 'device04        0        0        1        1   10.00%' in out
         assert 'objects%   10.00%    5.00%    5.00%    5.00%   25.00%' in out
 
+    def test_compare_bucket_firstn(self):
+        origin = self.define_crushmap_10()
+        pprint(origin)
+
+        # firstn, mapping order does not matter
+        c = Main().constructor([
+            '--verbose',
+            'compare',
+            '--rule', 'firstn',
+            '--replication-count', '2',
+        ])
+
+        c.set_origin_crushmap(origin)
+
+        #
+        # Swapping weights within a bucket, values stay
+        # in the bucket but move between children
+        #
+        destination = copy.deepcopy(origin)
+        host0 = destination['trees'][0]['children'][0]
+        w0 = host0['children'][0]['weight']
+        w1 = host0['children'][1]['weight']
+        host0['children'][0]['weight'] = w1
+        host0['children'][1]['weight'] = w0
+        c.set_destination_crushmap(destination)
+
+        c.args.values_count = 100
+        (from_to, in_out) = c.compare_bucket(host0)
+        assert from_to == {
+            'device01': {'device00': 4}
+        }
+        assert in_out == {}
+
+        #
+        # Increasing the weight of the items it contains changes the
+        # weight of the bucket and items move in/out of the bucket.
+        #
+        print("collisions")
+        destination = copy.deepcopy(origin)
+        host0 = destination['trees'][0]['children'][0]
+        host0['children'][0]['weight'] *= 10
+        c.set_destination_crushmap(destination)
+
+        c.args.values_count = 10
+        (from_to, in_out) = c.compare_bucket(host0)
+        print("from_to " + str(from_to))
+        print("in_out " + str(in_out))
+        assert from_to == {
+            'device01': {'device00': 1}
+        }
+        assert in_out == {
+            'device05': {'device00': 1},
+            'device08': {'device00': 1},
+            'device04': {'device00': 1},
+        }
+
+    def test_compare_bucket_indep(self):
+        origin = self.define_crushmap_10()
+
+        # indep, mapping order does not matter
+        c = Main().constructor([
+            'compare',
+            '--rule', 'indep',
+            '--replication-count', '2',
+            '--order-matters',
+        ])
+
+        c.set_origin_crushmap(origin)
+
+        #
+        # Swapping weights within a bucket, values stay
+        # in the bucket but move between children
+        #
+        destination = copy.deepcopy(origin)
+        host0 = destination['trees'][0]['children'][0]
+        w0 = host0['children'][0]['weight']
+        w1 = host0['children'][1]['weight']
+        host0['children'][0]['weight'] = w1
+        host0['children'][1]['weight'] = w0
+        c.set_destination_crushmap(destination)
+
+        c.args.values_count = 100
+        (from_to, in_out) = c.compare_bucket(host0)
+        assert from_to == {
+            'device01': {'device00': 5}
+        }
+        assert in_out == {}
+
+        #
+        # Increasing the weight of the items it contains changes the
+        # weight of the bucket and items move in/out of the bucket.
+        #
+        destination = copy.deepcopy(origin)
+        host0 = destination['trees'][0]['children'][0]
+        host0['children'][0]['weight'] *= 10
+        c.set_destination_crushmap(destination)
+
+        c.args.values_count = 30
+        (from_to, in_out) = c.compare_bucket(host0)
+        print("from_to " + str(from_to))
+        print("in_out " + str(in_out))
+        assert from_to == {
+            'device01': {'device00': 1}
+        }
+        assert in_out == {
+            'device01': {'device05': 1},
+            'device04': {'device00': 1},
+            'device05': {'device00': 2},
+            'device09': {'device01': 1},
+            'device13': {'device00': 1},
+            'device17': {'device00': 1},
+            'device19': {'device00': 1},
+            'device00': {'device19': 1},
+        }
+
     def test_compare(self):
         c1, c2 = self.define_crushmaps_1()
 
         # firstn, mapping order does not matter
         c = Main().constructor([
-            '--verbose',
             'compare',
             '--rule', 'firstn',
             '--replication-count', '2',
@@ -127,7 +244,6 @@ class TestCompare(object):
 
         # indep, mapping order matters
         c = Main().constructor([
-            '--verbose',
             'compare',
             '--rule', 'indep',
             '--replication-count', '2',
@@ -189,19 +305,18 @@ class TestCompare(object):
         first[0]['weight'] = 0.5
         first[1]['weight'] = 0.5
         pprint(crushmap)
-        c1 = Crush(verbose=1)
+        c1 = Crush()
         c1.parse(crushmap)
 
         m2 = copy.deepcopy(crushmap)
         del m2['trees'][0]['children'][4]
-        c2 = Crush(verbose=1)
+        c2 = Crush()
         c2.parse(m2)
 
         return (c1, c2)
 
     def test_compare_display(self):
         c = Main().constructor([
-            '--verbose',
             'compare',
             '--rule', 'firstn',
             '--values-count', '1000',

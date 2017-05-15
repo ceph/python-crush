@@ -106,7 +106,7 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         weights = [7, 7, 7, 3, 3]
         print("==== weights " + str(weights))
         a = make(4, weights)
-        d = a.analyze()
+        d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
@@ -137,7 +137,7 @@ host2     -4         7               6.0        14.29\
         weights = [5, 1, 1, 1, 1]
         print("==== weights " + str(weights))
         a = make(2, weights)
-        d = a.analyze()
+        d = a.analyze_report(*a.analyze())
         print(str(d))
 
         expected = """\
@@ -167,7 +167,7 @@ host0     -2         5               4.0         20.0\
         weights = [7, 7, 3, 1, 1, 1]
         print("==== weights " + str(weights))
         a = make(3, weights)
-        d = a.analyze()
+        d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
@@ -198,7 +198,7 @@ host1     -3         7               6.0        14.29\
         weights = [5, 5, 3, 3, 3]
         print("==== weights " + str(weights))
         a = make(4, weights)
-        d = a.analyze()
+        d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
@@ -268,7 +268,7 @@ host1     -3         5               4.5         10.0\
                 ]
             }
         }
-        d = a.analyze()
+        d = a.analyze_report(*a.analyze())
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                

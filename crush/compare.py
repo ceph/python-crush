@@ -35,15 +35,29 @@ class Compare(object):
     orig_weights = None
     dest_weights = None
 
-    def __init__(self, args, hooks):
+    def __init__(self, args, main):
         self.args = args
-        self.hooks = hooks
+        if self.args.choose_args and self.args.destination_choose_args is None:
+            self.args.destination_choose_args = self.args.choose_args
+        if self.args.choose_args and self.args.origin_choose_args is None:
+            self.args.origin_choose_args = self.args.choose_args
+        self.main = main
 
     def set_origin(self, c):
         self.origin = c
 
+    def set_origin_crushmap(self, origin):
+        o = Crush(backward_compatibility=self.args.backward_compatibility)
+        o.parse(origin)
+        self.set_origin(o)
+
     def set_destination(self, c):
         self.destination = c
+
+    def set_destination_crushmap(self, destination):
+        d = Crush(backward_compatibility=self.args.backward_compatibility)
+        d.parse(destination)
+        self.set_destination(d)
 
     @staticmethod
     def get_parser():
@@ -60,6 +74,15 @@ class Compare(object):
         parser.add_argument(
             '--rule',
             help='the name of rule')
+        parser.add_argument(
+            '--choose-args',
+            help='modify the origin and destination weights')
+        parser.add_argument(
+            '--origin-choose-args',
+            help='modify the origin weights')
+        parser.add_argument(
+            '--destination-choose-args',
+            help='modify the destination weights')
         values_count = 100000
         parser.add_argument(
             '--values-count',
@@ -185,14 +208,19 @@ class Compare(object):
         b = self.destination
         self.destination_d = collections.defaultdict(lambda: 0)
         replication_count = self.args.replication_count
+        values = self.main.hook_create_values()
         rule = self.args.rule
         self.from_to = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
-        for value in range(0, self.args.values_count):
-            am = a.map(rule, value, replication_count, self.orig_weights)
+        for (name, value) in values.items():
+            am = a.map(rule, value, replication_count, self.orig_weights,
+                       choose_args=self.args.origin_choose_args)
+            log.debug("am {} == {} mapped to {}".format(name, value, am))
             assert len(am) == replication_count
             for d in am:
                 self.origin_d[d] += 1
-            bm = b.map(rule, value, replication_count, self.dest_weights)
+            bm = b.map(rule, value, replication_count, self.dest_weights,
+                       choose_args=self.args.destination_choose_args)
+            log.debug("bm {} == {} mapped to {}".format(name, value, bm))
             assert len(bm) == replication_count
             for d in bm:
                 self.destination_d[d] += 1
@@ -210,6 +238,56 @@ class Compare(object):
                 for i in range(len(ar)):
                     self.from_to[ar[i]][br[i]] += 1
         return self.from_to
+
+    def compare_bucket(self, bucket):
+        a = self.origin
+        self.origin_d = collections.defaultdict(lambda: 0)
+        b = self.destination
+        self.destination_d = collections.defaultdict(lambda: 0)
+        replication_count = self.args.replication_count
+        values = self.main.hook_create_values()
+        rule = self.args.rule
+        self.from_to = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
+        self.in_out = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
+        item2path = a.collect_item2path([bucket])
+        log.debug("item2path " + str(item2path))
+        for (name, value) in values.items():
+            am = a.map(rule, value, replication_count, self.orig_weights,
+                       choose_args=self.args.choose_args)
+            log.debug("am {} == {} mapped to {}".format(name, value, am))
+            assert len(am) == replication_count
+            bm = b.map(rule, value, replication_count, self.dest_weights,
+                       choose_args=self.args.choose_args)
+            log.debug("bm {} == {} mapped to {}".format(name, value, bm))
+            assert len(bm) == replication_count
+            if self.args.order_matters:
+                for i in range(len(am)):
+                    if am[i] != bm[i]:
+                        a_path = item2path.get(am[i])
+                        b_path = item2path.get(bm[i])
+                        if a_path is None and b_path is None:
+                            continue
+                        if a_path is None or b_path is None:
+                            self.in_out[am[i]][bm[i]] += 1
+                            continue
+                        self.from_to[a_path[1]][b_path[1]] += 1
+            else:
+                am = set(am)
+                bm = set(bm)
+                if am == bm:
+                    continue
+                ar = sorted(list(am - bm))
+                br = sorted(list(bm - am))
+                for i in range(len(ar)):
+                    a_path = item2path.get(ar[i])
+                    b_path = item2path.get(br[i])
+                    if a_path is None and b_path is None:
+                        continue
+                    if a_path is None or b_path is None:
+                        self.in_out[ar[i]][br[i]] += 1
+                        continue
+                    self.from_to[a_path[1]][b_path[1]] += 1
+        return (self.from_to, self.in_out)
 
     def display(self):
         out = ""
@@ -249,14 +327,8 @@ class Compare(object):
         print(self.display())
 
     def run_compare(self):
-        o = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
-        o.parse(self.args.origin)
-        self.set_origin(o)
-        d = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
-        d.parse(self.args.destination)
-        self.set_destination(d)
+        self.set_origin_crushmap(self.args.origin)
+        self.set_destination_crushmap(self.args.destination)
 
         if self.args.origin_weights:
             with open(self.args.origin_weights) as f_ow:

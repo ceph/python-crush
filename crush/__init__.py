@@ -977,7 +977,20 @@ class Crush(object):
         for name, choose_args in name2choose_args.items():
             self.crushmap['choose_args'][name] = sorted(choose_args, key=lambda v: v['bucket_id'])
 
+    def update_choose_args(self, name, choose_args):
+        if 'choose_args' not in self.crushmap:
+            self.crushmap['choose_args'] = {name: choose_args}
+            return
+        if name not in self.crushmap['choose_args']:
+            self.crushmap['choose_args'][name] = choose_args
+            return
+        u = {}
+        for choose_arg in self.crushmap['choose_args'][name] + choose_args:
+            u[choose_arg['bucket_id']] = choose_arg
+        self.crushmap['choose_args'][name] = sorted(u.values(), key=lambda v: v['bucket_id'])
+
     def filter(self, fun, root):
+        names = self.crushmap.get('choose_args', {}).keys()
         self._merge_choose_args()
 
         def walk(bucket):
@@ -997,6 +1010,10 @@ class Crush(object):
         walk(root)
 
         self._split_choose_args()
+        if 'choose_args' in self.crushmap:
+            for name in names:
+                if name not in self.crushmap['choose_args']:
+                    self.crushmap['choose_args'][name] = []
 
     @staticmethod
     def collect_paths(children, path):

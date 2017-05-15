@@ -32,11 +32,15 @@ from crush import Crush
 log = logging.getLogger(__name__)
 
 
+class BadMapping(Exception):
+    pass
+
+
 class Analyze(object):
 
-    def __init__(self, args, hooks):
+    def __init__(self, args, main):
         self.args = args
-        self.hooks = hooks
+        self.main = main
 
     @staticmethod
     def get_parser():
@@ -56,6 +60,9 @@ class Analyze(object):
         parser.add_argument(
             '--type',
             help='override the type of bucket shown in the report')
+        parser.add_argument(
+            '--choose-args',
+            help='modify the weights')
         parser.add_argument(
             '--crushmap',
             help='path to the crushmap file')
@@ -279,7 +286,7 @@ class Analyze(object):
         else:
             weights = None
 
-        values = self.hooks.hook_create_values()
+        values = self.main.hook_create_values()
         replication_count = self.args.replication_count
         total_objects = replication_count * len(values)
 
@@ -293,9 +300,9 @@ class Analyze(object):
         rule = self.args.rule
         device2count = collections.defaultdict(lambda: 0)
         for (name, value) in values.items():
-            m = c.map(rule, value, replication_count, weights)
-            log.debug("{} == {} mapped to {}".format(name, value, m))
-            assert len(m) == replication_count
+            m = c.map(rule, value, replication_count, weights, choose_args=self.args.choose_args)
+            if len(m) != replication_count:
+                raise BadMapping("{} mapped to {}".format(value, m))
             for device in m:
                 device2count[device] += 1
 
@@ -320,10 +327,14 @@ class Analyze(object):
             root = f.find_bucket(take)
             f.filter(lambda x: x.get('name') != may_fail.get('name'), root)
             f.parse(f.crushmap)
-            a = self.run_simulation(f, take, failure_domain)
-            a['~over used %~'] = a['~over/under used %~']
-            a = a[['~type~', '~over used %~']]
-            worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+            try:
+                a = self.run_simulation(f, take, failure_domain)
+                a['~over used %~'] = a['~over/under used %~']
+                a = a[['~type~', '~over used %~']]
+                worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
+            except BadMapping:
+                log.error("mapping failed when removing {}".format(may_fail))
+
         return worst.set_index('~type~')
 
     def _format_report(self, d, type):
@@ -331,23 +342,30 @@ class Analyze(object):
         a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
         return str(a.sort_values(by='~over/under used %~', ascending=False))
 
+    def analyze_crushmap(self, crushmap):
+        c = Crush(backward_compatibility=self.args.backward_compatibility)
+        c.parse(crushmap)
+        (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        return self.run_simulation(c, take, failure_domain)
+
     def analyze(self):
-        c = Crush(verbose=self.args.verbose,
-                  backward_compatibility=self.args.backward_compatibility)
+        c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(self.args.crushmap)
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
+        d = self.run_simulation(c, take, failure_domain)
+        worst = self.analyze_failures(c, take, failure_domain)
+        return (d, worst, failure_domain)
+
+    def analyze_report(self, d, worst, failure_domain):
         if self.args.type:
             type = self.args.type
         else:
             type = failure_domain
         pd.set_option('precision', 2)
-
-        d = self.run_simulation(c, take, failure_domain)
         out = ""
         out += self._format_report(d, type)
-        out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
-        worst = self.analyze_failures(c, take, failure_domain)
         if worst is not None:
+            out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
             out += str(worst)
         if d['~overweight~'].any():
             out += "\n\nThe following are overweight and should be cropped:\n\n"
@@ -358,4 +376,4 @@ class Analyze(object):
     def run(self):
         if not self.args.crushmap:
             raise Exception("missing --crushmap")
-        return self.analyze()
+        return self.analyze_report(*self.analyze())
