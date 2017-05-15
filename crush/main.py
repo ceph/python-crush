@@ -28,7 +28,7 @@ from crush import optimize
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('crush')
 
 
 class Main(object):
@@ -43,6 +43,12 @@ class Main(object):
             '-v', '--verbose',
             action='store_true', default=None,
             help='be more verbose',
+        )
+
+        self.parser.add_argument(
+            '--debug',
+            action='store_true', default=None,
+            help='debugging output, very verbose',
         )
 
         self.subparsers = self.parser.add_subparsers(
@@ -76,11 +82,14 @@ class Main(object):
         self.argv = argv
         self.args = self.parser.parse_args(argv)
 
-        if self.args.verbose:
+        if self.args.debug:
             level = logging.DEBUG
+        elif self.args.verbose:
+            level = logging.WARNING
         else:
             level = logging.INFO
-        logging.getLogger('crush').setLevel(level)
+        if log.getEffectiveLevel() == 0 or log.getEffectiveLevel() > level:
+            log.setLevel(level)
 
     @staticmethod
     def get_trimmed_argv(to_parser, args):
