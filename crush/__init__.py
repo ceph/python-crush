@@ -89,9 +89,40 @@ class CephConverter(object):
                 children[i] = new_child
             self.dereference(child.get('children', []), ceph)
 
+    @staticmethod
+    def recover_choose_args(ceph):
+        buckets = []
+        name2target_weights = {}
+        has_target_weight = False
+        for bucket in ceph['buckets']:
+            if bucket['name'].endswith('-target-weight'):
+                has_target_weight = True
+                name = bucket['name'][:-14]
+                name2target_weights[name] = [c['weight'] for c in bucket['children']]
+            else:
+                buckets.append(bucket)
+        if not has_target_weight:
+            return
+        choose_args = []
+        for bucket in buckets:
+            if bucket['name'] in name2target_weights:
+                target_weights = name2target_weights[bucket['name']]
+                assert len(bucket['children']) == len(target_weights)
+                weight_set = []
+                for child in bucket['children']:
+                    weight_set.append(child['weight'])
+                    child['weight'] = target_weights.pop(0)
+                choose_args.append({
+                    'bucket_id': bucket['id'],
+                    'weight_set': [weight_set],
+                })
+        ceph['buckets'] = buckets
+        ceph['choose_args'] = {"compat": choose_args}
+
     def convert_buckets(self, ceph):
         ceph['is_child'] = set()
         ceph['id2item'] = {}
+        self.recover_choose_args(ceph)
         converted = [self.convert_bucket(r, ceph) for r in ceph['buckets']]
         self.collect_items(converted, ceph)
         self.dereference(converted, ceph)

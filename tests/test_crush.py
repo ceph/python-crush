@@ -20,7 +20,7 @@
 import copy
 import pytest # noqa needed for caplog
 
-from crush import Crush
+from crush import Crush, CephConverter
 
 
 class TestCrush(object):
@@ -256,6 +256,46 @@ class TestCrush(object):
         c.update_choose_args('name', choose_args)
         expected = [{'bucket_id': -2, 'modified': True}, {'bucket_id': -1}]
         assert expected == c.crushmap['choose_args']['name']
+
+
+class TestCephConverter(object):
+
+    def test_recover_choose_args(self):
+        ceph = {
+            'buckets': [
+                {
+                    'name': 'SELF-target-weight',
+                    'id': -10,
+                    'children': [
+                        {'weight': 1, },
+                        {'weight': 2, }
+                    ]
+                },
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'children': [
+                        {'weight': 10, },
+                        {'weight': 20, }
+                    ]
+                },
+            ]
+        }
+        CephConverter.recover_choose_args(ceph)
+        expected = {
+            'choose_args': {'compat': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
+            'buckets': [
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'children': [
+                        {'weight': 1, },
+                        {'weight': 2, }
+                    ]
+                },
+            ]
+        }
+        assert expected == ceph
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_crush.py"
