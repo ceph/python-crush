@@ -37,6 +37,10 @@ class Compare(object):
 
     def __init__(self, args, main):
         self.args = args
+        if self.args.choose_args and self.args.destination_choose_args is None:
+            self.args.destination_choose_args = self.args.choose_args
+        if self.args.choose_args and self.args.origin_choose_args is None:
+            self.args.origin_choose_args = self.args.choose_args
         self.main = main
 
     def set_origin(self, c):
@@ -72,7 +76,13 @@ class Compare(object):
             help='the name of rule')
         parser.add_argument(
             '--choose-args',
-            help='modify the weights')
+            help='modify the origin and destination weights')
+        parser.add_argument(
+            '--origin-choose-args',
+            help='modify the origin weights')
+        parser.add_argument(
+            '--destination-choose-args',
+            help='modify the destination weights')
         values_count = 100000
         parser.add_argument(
             '--values-count',
@@ -203,12 +213,13 @@ class Compare(object):
         self.from_to = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
         for (name, value) in values.items():
             am = a.map(rule, value, replication_count, self.orig_weights,
-                       choose_args=self.args.choose_args)
+                       choose_args=self.args.origin_choose_args)
             log.debug("am {} == {} mapped to {}".format(name, value, am))
             assert len(am) == replication_count
             for d in am:
                 self.origin_d[d] += 1
-            bm = b.map(rule, value, replication_count, self.dest_weights)
+            bm = b.map(rule, value, replication_count, self.dest_weights,
+                       choose_args=self.args.destination_choose_args)
             log.debug("bm {} == {} mapped to {}".format(name, value, bm))
             assert len(bm) == replication_count
             for d in bm:
