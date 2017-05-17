@@ -20,6 +20,7 @@
 from __future__ import division
 
 import argparse
+import copy
 import json
 import logging
 import textwrap
@@ -44,7 +45,6 @@ class Convert(object):
         formats = ('txt', 'json', 'python-json', 'crush')
         parser.add_argument(
             '--in-path',
-            required=True,
             help='path of the input file')
         parser.add_argument(
             '--in-format',
@@ -52,13 +52,18 @@ class Convert(object):
             help='format of the input file')
         parser.add_argument(
             '--out-path',
-            required=True,
             help='path of the output file')
         parser.add_argument(
             '--out-format',
             choices=formats,
             default='python-json',
             help='format of the output file')
+        versions = ('hammer', 'jewel', 'kraken', 'luminous')
+        parser.add_argument(
+            '--out-version',
+            choices=versions,
+            default='luminous',
+            help='version of the output file (default luminous)')
         return parser
 
     @staticmethod
@@ -116,6 +121,66 @@ class Convert(object):
         }
         return crushmap
 
+    def ceph_version_compat(self, c):
+        #
+        # sanity checks
+        #
+        crushmap = c.get_crushmap()
+        if len(crushmap['choose_args']) > 1:
+            raise Exception("expected exactly one choose_args, got " +
+                            str(crushmap['choose_args'].keys()) + " instead")
+        # ... if c.c.crushwapper cannot encode raise
+
+        c._merge_choose_args()
+        crushmap = c.get_crushmap()
+
+        #
+        # create the shadow trees with the target weights
+        #
+        self.max_bucket_id = min(c._id2item.keys())
+
+        def rename(bucket):
+            if 'children' not in bucket:
+                return
+            self.max_bucket_id -= 1
+            bucket['id'] = self.max_bucket_id
+            bucket['name'] += '-target-weight'
+            if 'choose_args' in bucket:
+                del bucket['choose_args']
+            for child in bucket.get('children', []):
+                rename(child)
+        shadow_trees = copy.deepcopy(crushmap['trees'])
+        for tree in shadow_trees:
+            rename(tree)
+
+        #
+        # override the target weights with the weight set
+        #
+        def reweight(bucket):
+            if 'children' not in bucket:
+                return
+            children = bucket['children']
+            if 'choose_args' in bucket:
+                choose_arg = next(iter(bucket['choose_args'].values()))
+                weight_set = choose_arg['weight_set'][0]
+                for i in range(len(children)):
+                    children[i]['weight'] = weight_set[i]
+                del bucket['choose_args']
+            for child in children:
+                reweight(child)
+        for tree in crushmap['trees']:
+            reweight(tree)
+
+        crushmap['trees'].extend(shadow_trees)
+        return crushmap
+
+    def ceph_convert(self, c):
+        if self.args.out_version == 'luminous':
+            return self.choose_args_int_index(c.get_crushmap())
+        if 'choose_args' not in c.get_crushmap():
+            return c.get_crushmap()
+        return self.ceph_version_compat(c)
+
     def run(self):
         c = Crush(verbose=self.args.verbose, backward_compatibility=True)
         c.parse(self.args.in_path)
@@ -123,7 +188,7 @@ class Convert(object):
         if self.args.out_format == 'python-json':
             open(self.args.out_path, "w").write(json.dumps(crushmap, indent=4, sort_keys=True))
         else:
-            c.parse(Convert.choose_args_int_index(crushmap))
+            c.parse(self.ceph_convert(c))
             c.c.ceph_write(self.args.out_path,
                            self.args.out_format,
                            crushmap.get('private'))
