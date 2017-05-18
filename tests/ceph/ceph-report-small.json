@@ -1,0 +1,1139 @@
+{
+    "cluster_fingerprint": "0beadd30-e4b8-4cff-93d5-4ed80b6e3720",
+    "version": "10.2.7-7-g5e27fb4",
+    "health": {
+        "health": {},
+        "timechecks": {},
+        "summary": [],
+        "overall_status": "HEALTH_OK",
+        "detail": []
+    },
+    "osdmap": {
+        "pools": [
+            {
+                "pool": 3,
+                "pool_name": "cephstor3",
+                "flags": 1,
+                "flags_names": "hashpspool",
+                "type": 1,
+                "size": 3,
+                "crush_ruleset": 0,
+                "object_hash": 2,
+                "pg_num": 1,
+                "pg_placement_num": 1
+            }
+        ],
+        "osds": [
+            {
+                "osd": 0,
+                "weight": 1.000000,
+                "primary_affinity": 1.000000
+            }
+        ]
+    },
+    "crushmap": {
+        "devices": [
+            {
+                "id": 0,
+                "name": "osd.0"
+            },
+            {
+                "id": 1,
+                "name": "osd.1"
+            },
+            {
+                "id": 2,
+                "name": "osd.2"
+            },
+            {
+                "id": 3,
+                "name": "osd.3"
+            },
+            {
+                "id": 4,
+                "name": "osd.4"
+            },
+            {
+                "id": 5,
+                "name": "osd.5"
+            },
+            {
+                "id": 6,
+                "name": "osd.6"
+            },
+            {
+                "id": 7,
+                "name": "osd.7"
+            },
+            {
+                "id": 8,
+                "name": "osd.8"
+            },
+            {
+                "id": 9,
+                "name": "osd.9"
+            },
+            {
+                "id": 10,
+                "name": "osd.10"
+            },
+            {
+                "id": 11,
+                "name": "osd.11"
+            },
+            {
+                "id": 12,
+                "name": "osd.12"
+            },
+            {
+                "id": 13,
+                "name": "osd.13"
+            },
+            {
+                "id": 14,
+                "name": "osd.14"
+            },
+            {
+                "id": 15,
+                "name": "osd.15"
+            },
+            {
+                "id": 16,
+                "name": "osd.16"
+            },
+            {
+                "id": 17,
+                "name": "osd.17"
+            },
+            {
+                "id": 18,
+                "name": "osd.18"
+            },
+            {
+                "id": 19,
+                "name": "osd.19"
+            },
+            {
+                "id": 20,
+                "name": "osd.20"
+            },
+            {
+                "id": 21,
+                "name": "osd.21"
+            },
+            {
+                "id": 22,
+                "name": "osd.22"
+            },
+            {
+                "id": 23,
+                "name": "osd.23"
+            },
+            {
+                "id": 24,
+                "name": "osd.24"
+            },
+            {
+                "id": 25,
+                "name": "osd.25"
+            },
+            {
+                "id": 26,
+                "name": "osd.26"
+            },
+            {
+                "id": 27,
+                "name": "osd.27"
+            },
+            {
+                "id": 28,
+                "name": "osd.28"
+            },
+            {
+                "id": 29,
+                "name": "osd.29"
+            },
+            {
+                "id": 30,
+                "name": "osd.30"
+            },
+            {
+                "id": 31,
+                "name": "osd.31"
+            },
+            {
+                "id": 32,
+                "name": "osd.32"
+            },
+            {
+                "id": 33,
+                "name": "osd.33"
+            },
+            {
+                "id": 34,
+                "name": "osd.34"
+            },
+            {
+                "id": 35,
+                "name": "osd.35"
+            },
+            {
+                "id": 36,
+                "name": "osd.36"
+            },
+            {
+                "id": 37,
+                "name": "osd.37"
+            },
+            {
+                "id": 38,
+                "name": "osd.38"
+            },
+            {
+                "id": 39,
+                "name": "device39"
+            },
+            {
+                "id": 40,
+                "name": "osd.40"
+            },
+            {
+                "id": 41,
+                "name": "osd.41"
+            },
+            {
+                "id": 42,
+                "name": "osd.42"
+            },
+            {
+                "id": 43,
+                "name": "osd.43"
+            },
+            {
+                "id": 44,
+                "name": "osd.44"
+            },
+            {
+                "id": 45,
+                "name": "osd.45"
+            },
+            {
+                "id": 46,
+                "name": "osd.46"
+            },
+            {
+                "id": 47,
+                "name": "osd.47"
+            },
+            {
+                "id": 48,
+                "name": "osd.48"
+            },
+            {
+                "id": 49,
+                "name": "osd.49"
+            },
+            {
+                "id": 50,
+                "name": "osd.50"
+            },
+            {
+                "id": 51,
+                "name": "osd.51"
+            },
+            {
+                "id": 52,
+                "name": "osd.52"
+            },
+            {
+                "id": 53,
+                "name": "osd.53"
+            },
+            {
+                "id": 54,
+                "name": "osd.54"
+            },
+            {
+                "id": 55,
+                "name": "osd.55"
+            },
+            {
+                "id": 56,
+                "name": "osd.56"
+            },
+            {
+                "id": 57,
+                "name": "osd.57"
+            },
+            {
+                "id": 58,
+                "name": "osd.58"
+            },
+            {
+                "id": 59,
+                "name": "osd.59"
+            },
+            {
+                "id": 60,
+                "name": "osd.60"
+            },
+            {
+                "id": 61,
+                "name": "osd.61"
+            },
+            {
+                "id": 62,
+                "name": "osd.62"
+            },
+            {
+                "id": 63,
+                "name": "osd.63"
+            },
+            {
+                "id": 64,
+                "name": "osd.64"
+            },
+            {
+                "id": 65,
+                "name": "osd.65"
+            },
+            {
+                "id": 66,
+                "name": "osd.66"
+            },
+            {
+                "id": 67,
+                "name": "osd.67"
+            },
+            {
+                "id": 68,
+                "name": "osd.68"
+            },
+            {
+                "id": 69,
+                "name": "osd.69"
+            },
+            {
+                "id": 70,
+                "name": "osd.70"
+            },
+            {
+                "id": 71,
+                "name": "osd.71"
+            },
+            {
+                "id": 72,
+                "name": "osd.72"
+            },
+            {
+                "id": 73,
+                "name": "osd.73"
+            },
+            {
+                "id": 74,
+                "name": "osd.74"
+            },
+            {
+                "id": 75,
+                "name": "osd.75"
+            },
+            {
+                "id": 76,
+                "name": "osd.76"
+            },
+            {
+                "id": 77,
+                "name": "osd.77"
+            },
+            {
+                "id": 78,
+                "name": "osd.78"
+            },
+            {
+                "id": 79,
+                "name": "osd.79"
+            },
+            {
+                "id": 80,
+                "name": "osd.80"
+            },
+            {
+                "id": 81,
+                "name": "osd.81"
+            },
+            {
+                "id": 82,
+                "name": "osd.82"
+            },
+            {
+                "id": 83,
+                "name": "osd.83"
+            },
+            {
+                "id": 84,
+                "name": "osd.84"
+            },
+            {
+                "id": 85,
+                "name": "osd.85"
+            },
+            {
+                "id": 86,
+                "name": "osd.86"
+            },
+            {
+                "id": 87,
+                "name": "osd.87"
+            },
+            {
+                "id": 88,
+                "name": "osd.88"
+            }
+        ],
+        "types": [
+            {
+                "type_id": 0,
+                "name": "osd"
+            },
+            {
+                "type_id": 1,
+                "name": "host"
+            },
+            {
+                "type_id": 2,
+                "name": "rack"
+            },
+            {
+                "type_id": 3,
+                "name": "row"
+            },
+            {
+                "type_id": 4,
+                "name": "room"
+            },
+            {
+                "type_id": 5,
+                "name": "datacenter"
+            },
+            {
+                "type_id": 6,
+                "name": "root"
+            }
+        ],
+        "buckets": [
+            {
+                "id": -1,
+                "name": "default",
+                "type_id": 6,
+                "type_name": "root",
+                "weight": 5130094,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": -2,
+                        "weight": 419424,
+                        "pos": 0
+                    },
+                    {
+                        "id": -3,
+                        "weight": 419424,
+                        "pos": 1
+                    },
+                    {
+                        "id": -4,
+                        "weight": 424668,
+                        "pos": 2
+                    },
+                    {
+                        "id": -5,
+                        "weight": 419424,
+                        "pos": 3
+                    },
+                    {
+                        "id": -6,
+                        "weight": 419424,
+                        "pos": 4
+                    },
+                    {
+                        "id": -7,
+                        "weight": 427290,
+                        "pos": 5
+                    },
+                    {
+                        "id": -8,
+                        "weight": 644866,
+                        "pos": 6
+                    },
+                    {
+                        "id": -9,
+                        "weight": 644866,
+                        "pos": 7
+                    },
+                    {
+                        "id": -10,
+                        "weight": 644866,
+                        "pos": 8
+                    },
+                    {
+                        "id": -11,
+                        "weight": 665842,
+                        "pos": 9
+                    }
+                ]
+            },
+            {
+                "id": -2,
+                "name": "cloud3-1359",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 419424,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 24,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 25,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 27,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 72,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 0,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 1,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 2,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 3,
+                        "weight": 52428,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -3,
+                "name": "cloud3-1360",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 419424,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 4,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 5,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 6,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 7,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 28,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 33,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 38,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 43,
+                        "weight": 52428,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -4,
+                "name": "cloud3-1361",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 424668,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 8,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 9,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 10,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 11,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 29,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 44,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 34,
+                        "weight": 55050,
+                        "pos": 6
+                    },
+                    {
+                        "id": 88,
+                        "weight": 55050,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -5,
+                "name": "cloud3-1362",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 419424,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 12,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 13,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 14,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 15,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 30,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 35,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 40,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 45,
+                        "weight": 52428,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -6,
+                "name": "cloud3-1363",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 419424,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 16,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 17,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 18,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 19,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 31,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 36,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 41,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 46,
+                        "weight": 52428,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -7,
+                "name": "cloud3-1364",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 427290,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 20,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 21,
+                        "weight": 55050,
+                        "pos": 1
+                    },
+                    {
+                        "id": 22,
+                        "weight": 55050,
+                        "pos": 2
+                    },
+                    {
+                        "id": 37,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 42,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 47,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 26,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 78,
+                        "weight": 55050,
+                        "pos": 7
+                    }
+                ]
+            },
+            {
+                "id": -8,
+                "name": "cloud3-1396",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 644866,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 48,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 51,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 54,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 57,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 60,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 63,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 66,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 69,
+                        "weight": 52428,
+                        "pos": 7
+                    },
+                    {
+                        "id": 32,
+                        "weight": 112721,
+                        "pos": 8
+                    },
+                    {
+                        "id": 75,
+                        "weight": 112721,
+                        "pos": 9
+                    }
+                ]
+            },
+            {
+                "id": -9,
+                "name": "cloud3-1397",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 644866,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 49,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 52,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 55,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 58,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 61,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 64,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 67,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 70,
+                        "weight": 52428,
+                        "pos": 7
+                    },
+                    {
+                        "id": 73,
+                        "weight": 112721,
+                        "pos": 8
+                    },
+                    {
+                        "id": 76,
+                        "weight": 112721,
+                        "pos": 9
+                    }
+                ]
+            },
+            {
+                "id": -10,
+                "name": "cloud3-1398",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 644866,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 50,
+                        "weight": 52428,
+                        "pos": 0
+                    },
+                    {
+                        "id": 53,
+                        "weight": 52428,
+                        "pos": 1
+                    },
+                    {
+                        "id": 56,
+                        "weight": 52428,
+                        "pos": 2
+                    },
+                    {
+                        "id": 59,
+                        "weight": 52428,
+                        "pos": 3
+                    },
+                    {
+                        "id": 62,
+                        "weight": 52428,
+                        "pos": 4
+                    },
+                    {
+                        "id": 65,
+                        "weight": 52428,
+                        "pos": 5
+                    },
+                    {
+                        "id": 68,
+                        "weight": 52428,
+                        "pos": 6
+                    },
+                    {
+                        "id": 71,
+                        "weight": 52428,
+                        "pos": 7
+                    },
+                    {
+                        "id": 74,
+                        "weight": 112721,
+                        "pos": 8
+                    },
+                    {
+                        "id": 77,
+                        "weight": 112721,
+                        "pos": 9
+                    }
+                ]
+            },
+            {
+                "id": -11,
+                "name": "cloud3-1456",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 665842,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 23,
+                        "weight": 55050,
+                        "pos": 0
+                    },
+                    {
+                        "id": 79,
+                        "weight": 55050,
+                        "pos": 1
+                    },
+                    {
+                        "id": 80,
+                        "weight": 55050,
+                        "pos": 2
+                    },
+                    {
+                        "id": 81,
+                        "weight": 55050,
+                        "pos": 3
+                    },
+                    {
+                        "id": 82,
+                        "weight": 55050,
+                        "pos": 4
+                    },
+                    {
+                        "id": 83,
+                        "weight": 55050,
+                        "pos": 5
+                    },
+                    {
+                        "id": 84,
+                        "weight": 55050,
+                        "pos": 6
+                    },
+                    {
+                        "id": 85,
+                        "weight": 55050,
+                        "pos": 7
+                    },
+                    {
+                        "id": 86,
+                        "weight": 112721,
+                        "pos": 8
+                    },
+                    {
+                        "id": 87,
+                        "weight": 112721,
+                        "pos": 9
+                    }
+                ]
+            }
+        ],
+        "rules": [
+            {
+                "rule_id": 0,
+                "rule_name": "data",
+                "ruleset": 0,
+                "type": 1,
+                "min_size": 1,
+                "max_size": 10,
+                "steps": [
+                    {
+                        "op": "take",
+                        "item": -1,
+                        "item_name": "default"
+                    },
+                    {
+                        "op": "chooseleaf_firstn",
+                        "num": 0,
+                        "type": "host"
+                    },
+                    {
+                        "op": "emit"
+                    }
+                ]
+            },
+            {
+                "rule_id": 1,
+                "rule_name": "metadata",
+                "ruleset": 1,
+                "type": 1,
+                "min_size": 1,
+                "max_size": 10,
+                "steps": [
+                    {
+                        "op": "take",
+                        "item": -1,
+                        "item_name": "default"
+                    },
+                    {
+                        "op": "chooseleaf_firstn",
+                        "num": 0,
+                        "type": "host"
+                    },
+                    {
+                        "op": "emit"
+                    }
+                ]
+            },
+            {
+                "rule_id": 2,
+                "rule_name": "rbd",
+                "ruleset": 2,
+                "type": 1,
+                "min_size": 1,
+                "max_size": 10,
+                "steps": [
+                    {
+                        "op": "take",
+                        "item": -1,
+                        "item_name": "default"
+                    },
+                    {
+                        "op": "chooseleaf_firstn",
+                        "num": 0,
+                        "type": "host"
+                    },
+                    {
+                        "op": "emit"
+                    }
+                ]
+            }
+        ],
+        "tunables": {
+            "choose_local_tries": 0,
+            "choose_local_fallback_tries": 0,
+            "choose_total_tries": 50,
+            "chooseleaf_descend_once": 1,
+            "chooseleaf_vary_r": 1,
+            "chooseleaf_stable": 1,
+            "straw_calc_version": 2,
+            "allowed_bucket_algs": 54,
+            "profile": "jewel",
+            "optimal_tunables": 1,
+            "legacy_tunables": 0,
+            "minimum_required_version": "jewel",
+            "require_feature_tunables": 1,
+            "require_feature_tunables2": 1,
+            "has_v2_rules": 0,
+            "require_feature_tunables3": 1,
+            "has_v3_rules": 0,
+            "has_v4_buckets": 1,
+            "require_feature_tunables5": 1,
+            "has_v5_rules": 0
+        }
+    },
+    "pgmap": {
+        "pg_stats": [
+            {
+                "pgid": "3.0",
+                "up": [74, 34, 23],
+                "acting": [74, 34, 23]
+            }
+        ]
+    }
+}

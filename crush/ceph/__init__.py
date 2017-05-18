@@ -20,6 +20,7 @@
 from __future__ import division
 
 import argparse
+import collections
 import copy
 import json
 import logging
@@ -34,7 +35,112 @@ from crush import Crush, LibCrush
 log = logging.getLogger(__name__)
 
 
-class CephConverter(object):
+class MappingError(Exception):
+    pass
+
+
+class UnsupportedError(Exception):
+    pass
+
+
+class HealthError(Exception):
+    pass
+
+
+class CephReport(object):
+
+    def parse_report(self, report):
+        if report['health']['overall_status'] != 'HEALTH_OK':
+            raise HealthError("expected health overall_status == HEALTH_OK but got " +
+                              report['health']['overall_status'] + "instead")
+        crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'])
+        mappings = collections.defaultdict(lambda: {})
+        for pg_stat in report['pgmap']['pg_stats']:
+            mappings[pg_stat['pgid']] = pg_stat['acting']
+
+        ruleset2name = {}
+        for rule in crushmap['private']['rules']:
+            ruleset2name[rule['ruleset']] = rule['rule_name']
+
+        c = LibCrush(backward_compatibility=True)
+        c.parse(crushmap)
+
+        name2id = {}
+
+        def collect_items(children):
+            for child in children:
+                if 'id' in child:
+                    name2id[child['name']] = child['id']
+                collect_items(child.get('children', []))
+        collect_items(crushmap['trees'])
+
+        weights = Crush.parse_osdmap_weights(report['osdmap'])
+
+        for osd in report['osdmap']["osds"]:
+            if osd["primary_affinity"] != 1.0:
+                raise UnsupportedError(
+                    "osd." + str(osd["osd"]) + " primary affinity is != 1.0")
+
+        failed_mapping = False
+        for pool in report['osdmap']['pools']:
+            if pool['type'] != 1:
+                raise UnsupportedError(
+                    "pool " + pool['pool_name'] + " is type " + str(pool['type']) +
+                    " is not supported, only type == 1 (replicated)")
+            if pool['object_hash'] != 2:
+                raise UnsupportedError(
+                    "pool " + pool['pool_name'] + " object_hash " + str(pool['object_hash']) +
+                    " is not supported, only object_hash == 2 (rjenkins)")
+            if pool['flags_names'] != 'hashpspool':
+                raise UnsupportedError(
+                    "pool " + pool['pool_name'] + " has flags_names " +
+                    "'" + str(pool['flags_names']) + "'" +
+                    " is no supported, only hashpspool")
+            ruleset = pool['crush_ruleset']
+            if str(ruleset) in crushmap.get('choose_args', {}):
+                choose_args = str(ruleset)
+            else:
+                choose_args = None
+            rule = ruleset2name[ruleset]
+            size = pool['size']
+            log.info("verifying pool {} pg_num {} pgp_num {}".format(
+                pool['pool'], pool['pg_num'], pool['pg_placement_num']))
+            values = LibCrush().ceph_pool_pps(pool['pool'],
+                                              pool['pg_num'],
+                                              pool['pg_placement_num'])
+            kwargs = {
+                "rule": str(rule),
+                "replication_count": size,
+            }
+            if choose_args:
+                kwargs["choose_args"] = choose_args
+            if weights:
+                kwargs["weights"] = weights
+            for (name, pps) in values.items():
+                if name not in mappings:
+                    failed_mapping = True
+                    log.error(name + " is not in pgmap")
+                    continue
+                kwargs["value"] = pps
+                mapped = c.map(**kwargs)
+                osds = [name2id[x] for x in mapped]
+                if osds != mappings[name]:
+                    failed_mapping = True
+                    log.error("{} map to {} instead of {}".format(
+                        name, osds, mappings[name]))
+                    continue
+        if failed_mapping:
+            raise MappingError("some mapping failed, please file a bug at "
+                               "http://libcrush.org/main/python-crush/issues/new")
+        crushmap['private']['pools'] = report['osdmap']['pools']
+
+        (version, rest) = report['version'].split('.', 1)
+        crushmap['private']['version'] = int(version)
+
+        return crushmap
+
+
+class CephCrushmapConverter(object):
 
     @staticmethod
     def weight_as_float(i):
@@ -99,10 +205,11 @@ class CephConverter(object):
         name2target_weights = {}
         has_target_weight = False
         for bucket in ceph['buckets']:
+            log.debug(str(bucket))
             if bucket['name'].endswith('-target-weight'):
                 has_target_weight = True
                 name = bucket['name'][:-14]
-                name2target_weights[name] = [c['weight'] for c in bucket['children']]
+                name2target_weights[name] = [c['weight'] for c in bucket['items']]
             else:
                 buckets.append(bucket)
         if not has_target_weight:
@@ -111,10 +218,10 @@ class CephConverter(object):
         for bucket in buckets:
             if bucket['name'] in name2target_weights:
                 target_weights = name2target_weights[bucket['name']]
-                assert len(bucket['children']) == len(target_weights)
+                assert len(bucket['items']) == len(target_weights)
                 weight_set = []
-                for child in bucket['children']:
-                    weight_set.append(child['weight'])
+                for child in bucket['items']:
+                    weight_set.append(CephCrushmapConverter.weight_as_float(child['weight']))
                     child['weight'] = target_weights.pop(0)
                 choose_args.append({
                     'bucket_id': bucket['id'],
@@ -253,21 +360,29 @@ class CephCrush(Crush):
                 log.debug("_detect_file_format: valid json file")
                 if 'devices' in crushmap:  # Ceph json format
                     return (crushmap, 'ceph-json')
+                elif 'cluster_fingerprint' in crushmap:
+                    return (crushmap, 'ceph-report')
                 return (crushmap, 'python-crush-json')
 
     @staticmethod
     def _convert_to_dict(something):
         if type(something) is dict:
-            if 'devices' in something:  # Ceph json format
+            if 'devices' in something:
                 return (something, 'ceph-json')
+            elif 'cluster_fingerprint' in something:
+                return (something, 'ceph-report')
             return (something, 'python-crush-json')
         else:
             return CephCrush._convert_from_file(something)
 
     def _convert_to_crushmap(self, something):
-        (crushmap, format) = CephCrush._convert_to_dict(something)
+        (something, format) = CephCrush._convert_to_dict(something)
         if format == 'ceph-json':
-            crushmap = CephConverter().parse_ceph(crushmap)
+            crushmap = CephCrushmapConverter().parse_ceph(something)
+        elif format == 'ceph-report':
+            crushmap = CephReport().parse_report(something)
+        else:
+            crushmap = something
         return crushmap
 
     #
@@ -408,9 +523,14 @@ class Ceph(main.Main):
         parser.add_argument(
             '--out-format',
             choices=Ceph.formats,
-            default='python-json',
+            default='txt',
             help='format of the output file')
-        versions = ('hammer', 'jewel', 'kraken', 'luminous')
+        versions = ('h', 'hammer',
+                    'j', 'jewel',
+                    'k', 'kraken',
+                    'l', 'luminous',
+                    'm',
+                    'n')
         parser.add_argument(
             '--out-version',
             choices=versions,
@@ -437,11 +557,63 @@ class Ceph(main.Main):
         else:
             return super(Ceph, self).hook_create_values()
 
+    def set_analyze_args(self, crushmap):
+        if not hasattr(self.args, 'pool'):
+            return
+        if 'private' not in crushmap:
+            return
+        if 'pools' not in crushmap['private']:
+            return
+
+        for pool in crushmap['private']['pools']:
+            if pool['pool'] == self.args.pool:
+                self.args.replication_count = pool['size']
+                self.argv.append('--replication-count=' + str(pool['size']))
+                self.args.pg_num = pool['pg_num']
+                self.argv.append('--pg-num=' + str(pool['pg_num']))
+                self.args.pgp_num = pool['pg_placement_num']
+                self.argv.append('--pgp-num=' + str(pool['pg_placement_num']))
+                for rule in crushmap['private']['rules']:
+                    if rule['ruleset'] == pool['crush_ruleset']:
+                        self.args.rule = str(rule['rule_name'])
+                        self.argv.append('--rule=' + str(rule['rule_name']))
+        if crushmap.get('choose_args', {}).get(str(self.args.pool)):
+            self.args.choose_args = str(self.args.pool)
+            self.argv.append('--choose-args=' + self.args.choose_args)
+        log.info('argv = ' + " ".join(self.argv))
+
+    def set_optimize_args(self, crushmap):
+        if not hasattr(self.args, 'out_version'):
+            return
+        if 'version' not in crushmap['private']:
+            return
+        self.args.out_version = chr(crushmap['private']['version'] - 1 + ord('a'))
+        self.argv.append('--out-version=' + self.args.out_version)
+
+        if self.args.out_version < 'luminous':
+            self.args.with_positions = False
+            self.argv.append('--no-positions')
+
+        if not hasattr(self.args, 'pool'):
+            return
+        if 'private' not in crushmap:
+            return
+        if 'pools' not in crushmap['private']:
+            return
+
+        self.args.choose_args = str(self.args.pool)
+        self.argv.append('--choose-args=' + self.args.choose_args)
+
+        log.info('argv = ' + " ".join(self.argv))
+
     def convert_to_crushmap(self, crushmap):
         c = CephCrush(verbose=self.args.debug,
                       backward_compatibility=self.args.backward_compatibility)
         c.parse(crushmap)
-        return c.get_crushmap()
+        crushmap = c.get_crushmap()
+        self.set_analyze_args(crushmap)
+        self.set_optimize_args(crushmap)
+        return crushmap
 
     def crushmap_to_file(self, crushmap):
         c = CephCrush(verbose=self.args.debug,

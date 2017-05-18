@@ -19,7 +19,7 @@
 #
 import pytest
 
-from crush.ceph import CephConverter, CephCrush
+from crush.ceph import CephCrushmapConverter, CephCrush
 
 
 class TestCephCrush(object):
@@ -41,7 +41,7 @@ class TestCephCrush(object):
         assert "Expecting property name" in str(e.value)
 
 
-class TestCephConverter(object):
+class TestCephCrushmapConverter(object):
 
     def test_recover_choose_args(self):
         ceph = {
@@ -49,31 +49,31 @@ class TestCephConverter(object):
                 {
                     'name': 'SELF-target-weight',
                     'id': -10,
-                    'children': [
-                        {'weight': 1, },
-                        {'weight': 2, }
+                    'items': [
+                        {'weight': 1 * 0x10000, },
+                        {'weight': 2 * 0x10000, }
                     ]
                 },
                 {
                     'name': 'SELF',
                     'id': -1,
-                    'children': [
-                        {'weight': 10, },
-                        {'weight': 20, }
+                    'items': [
+                        {'weight': 10 * 0x10000, },
+                        {'weight': 20 * 0x10000, }
                     ]
                 },
             ]
         }
-        CephConverter.recover_choose_args(ceph)
+        CephCrushmapConverter.recover_choose_args(ceph)
         expected = {
-            'choose_args': {'compat': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
+            'choose_args': {'compat': [{'bucket_id': -1, 'weight_set': [[10.0, 20.0]]}]},
             'buckets': [
                 {
                     'name': 'SELF',
                     'id': -1,
-                    'children': [
-                        {'weight': 1, },
-                        {'weight': 2, }
+                    'items': [
+                        {'weight': 1 * 0x10000, },
+                        {'weight': 2 * 0x10000, }
                     ]
                 },
             ]

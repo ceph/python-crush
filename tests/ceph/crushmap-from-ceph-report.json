@@ -1,0 +1,782 @@
+{
+    "private": {
+        "pools": [
+            {
+                "auid": 0, 
+                "cache_min_evict_age": 0, 
+                "cache_min_flush_age": 0, 
+                "cache_mode": "none", 
+                "cache_target_dirty_high_ratio_micro": 600000, 
+                "cache_target_dirty_ratio_micro": 0, 
+                "cache_target_full_ratio_micro": 0, 
+                "crash_replay_interval": 0, 
+                "crush_ruleset": 0, 
+                "erasure_code_profile": "", 
+                "expected_num_objects": 0, 
+                "fast_read": false, 
+                "flags": 1, 
+                "flags_names": "hashpspool", 
+                "grade_table": [], 
+                "hit_set_count": 0, 
+                "hit_set_grade_decay_rate": 0, 
+                "hit_set_params": {
+                    "type": "none"
+                }, 
+                "hit_set_period": 0, 
+                "hit_set_search_last_n": 1, 
+                "last_change": "681296", 
+                "last_force_op_resend": "0", 
+                "min_read_recency_for_promote": 1, 
+                "min_size": 1, 
+                "min_write_recency_for_promote": 1, 
+                "object_hash": 2, 
+                "options": {}, 
+                "pg_num": 4096, 
+                "pg_placement_num": 4096, 
+                "pool": 3, 
+                "pool_name": "cephstor3", 
+                "pool_snaps": [], 
+                "quota_max_bytes": 0, 
+                "quota_max_objects": 0, 
+                "read_tier": -1, 
+                "removed_snaps": "", 
+                "size": 3, 
+                "snap_epoch": 681296, 
+                "snap_mode": "selfmanaged", 
+                "snap_seq": 600528, 
+                "stripe_width": 0, 
+                "target_max_bytes": 0, 
+                "target_max_objects": 0, 
+                "tier_of": -1, 
+                "tiers": [], 
+                "type": 1, 
+                "use_gmt_hitset": false, 
+                "write_tier": -1
+            }
+        ], 
+        "rules": [
+            {
+                "max_size": 10, 
+                "min_size": 1, 
+                "rule_id": 0, 
+                "rule_name": "data", 
+                "ruleset": 0, 
+                "steps": [
+                    {
+                        "item": -1, 
+                        "item_name": "default", 
+                        "op": "take"
+                    }, 
+                    {
+                        "num": 0, 
+                        "op": "chooseleaf_firstn", 
+                        "type": "host"
+                    }, 
+                    {
+                        "op": "emit"
+                    }
+                ], 
+                "type": 1
+            }, 
+            {
+                "max_size": 10, 
+                "min_size": 1, 
+                "rule_id": 1, 
+                "rule_name": "metadata", 
+                "ruleset": 1, 
+                "steps": [
+                    {
+                        "item": -1, 
+                        "item_name": "default", 
+                        "op": "take"
+                    }, 
+                    {
+                        "num": 0, 
+                        "op": "chooseleaf_firstn", 
+                        "type": "host"
+                    }, 
+                    {
+                        "op": "emit"
+                    }
+                ], 
+                "type": 1
+            }, 
+            {
+                "max_size": 10, 
+                "min_size": 1, 
+                "rule_id": 2, 
+                "rule_name": "rbd", 
+                "ruleset": 2, 
+                "steps": [
+                    {
+                        "item": -1, 
+                        "item_name": "default", 
+                        "op": "take"
+                    }, 
+                    {
+                        "num": 0, 
+                        "op": "chooseleaf_firstn", 
+                        "type": "host"
+                    }, 
+                    {
+                        "op": "emit"
+                    }
+                ], 
+                "type": 1
+            }
+        ], 
+        "tunables": {
+            "allowed_bucket_algs": 54, 
+            "choose_local_fallback_tries": 0, 
+            "choose_local_tries": 0, 
+            "choose_total_tries": 50, 
+            "chooseleaf_descend_once": 1, 
+            "chooseleaf_stable": 1, 
+            "chooseleaf_vary_r": 1, 
+            "has_v2_rules": 0, 
+            "has_v3_rules": 0, 
+            "has_v4_buckets": 1, 
+            "has_v5_rules": 0, 
+            "legacy_tunables": 0, 
+            "minimum_required_version": "jewel", 
+            "optimal_tunables": 1, 
+            "profile": "jewel", 
+            "require_feature_tunables": 1, 
+            "require_feature_tunables2": 1, 
+            "require_feature_tunables3": 1, 
+            "require_feature_tunables5": 1, 
+            "straw_calc_version": 2
+        }, 
+        "version": 10
+    }, 
+    "rules": {
+        "data": [
+            [
+                "take", 
+                "default"
+            ], 
+            [
+                "chooseleaf", 
+                "firstn", 
+                0, 
+                "type", 
+                "host"
+            ], 
+            [
+                "emit"
+            ]
+        ], 
+        "metadata": [
+            [
+                "take", 
+                "default"
+            ], 
+            [
+                "chooseleaf", 
+                "firstn", 
+                0, 
+                "type", 
+                "host"
+            ], 
+            [
+                "emit"
+            ]
+        ], 
+        "rbd": [
+            [
+                "take", 
+                "default"
+            ], 
+            [
+                "chooseleaf", 
+                "firstn", 
+                0, 
+                "type", 
+                "host"
+            ], 
+            [
+                "emit"
+            ]
+        ]
+    }, 
+    "trees": [
+        {
+            "algorithm": "straw2", 
+            "children": [
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 24, 
+                            "name": "osd.24", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 25, 
+                            "name": "osd.25", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 27, 
+                            "name": "osd.27", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 72, 
+                            "name": "osd.72", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 0, 
+                            "name": "osd.0", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 1, 
+                            "name": "osd.1", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 2, 
+                            "name": "osd.2", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 3, 
+                            "name": "osd.3", 
+                            "weight": 0.79998779296875
+                        }
+                    ], 
+                    "id": -2, 
+                    "name": "cloud3-1359", 
+                    "type": "host", 
+                    "weight": 6.39990234375
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 4, 
+                            "name": "osd.4", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 5, 
+                            "name": "osd.5", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 6, 
+                            "name": "osd.6", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 7, 
+                            "name": "osd.7", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 28, 
+                            "name": "osd.28", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 33, 
+                            "name": "osd.33", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 38, 
+                            "name": "osd.38", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 43, 
+                            "name": "osd.43", 
+                            "weight": 0.79998779296875
+                        }
+                    ], 
+                    "id": -3, 
+                    "name": "cloud3-1360", 
+                    "type": "host", 
+                    "weight": 6.39990234375
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 8, 
+                            "name": "osd.8", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 9, 
+                            "name": "osd.9", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 10, 
+                            "name": "osd.10", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 11, 
+                            "name": "osd.11", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 29, 
+                            "name": "osd.29", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 44, 
+                            "name": "osd.44", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 34, 
+                            "name": "osd.34", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 88, 
+                            "name": "osd.88", 
+                            "weight": 0.839996337890625
+                        }
+                    ], 
+                    "id": -4, 
+                    "name": "cloud3-1361", 
+                    "type": "host", 
+                    "weight": 6.47991943359375
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 12, 
+                            "name": "osd.12", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 13, 
+                            "name": "osd.13", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 14, 
+                            "name": "osd.14", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 15, 
+                            "name": "osd.15", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 30, 
+                            "name": "osd.30", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 35, 
+                            "name": "osd.35", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 40, 
+                            "name": "osd.40", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 45, 
+                            "name": "osd.45", 
+                            "weight": 0.79998779296875
+                        }
+                    ], 
+                    "id": -5, 
+                    "name": "cloud3-1362", 
+                    "type": "host", 
+                    "weight": 6.39990234375
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 16, 
+                            "name": "osd.16", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 17, 
+                            "name": "osd.17", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 18, 
+                            "name": "osd.18", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 19, 
+                            "name": "osd.19", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 31, 
+                            "name": "osd.31", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 36, 
+                            "name": "osd.36", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 41, 
+                            "name": "osd.41", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 46, 
+                            "name": "osd.46", 
+                            "weight": 0.79998779296875
+                        }
+                    ], 
+                    "id": -6, 
+                    "name": "cloud3-1363", 
+                    "type": "host", 
+                    "weight": 6.39990234375
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 20, 
+                            "name": "osd.20", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 21, 
+                            "name": "osd.21", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 22, 
+                            "name": "osd.22", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 37, 
+                            "name": "osd.37", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 42, 
+                            "name": "osd.42", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 47, 
+                            "name": "osd.47", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 26, 
+                            "name": "osd.26", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 78, 
+                            "name": "osd.78", 
+                            "weight": 0.839996337890625
+                        }
+                    ], 
+                    "id": -7, 
+                    "name": "cloud3-1364", 
+                    "type": "host", 
+                    "weight": 6.519927978515625
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 48, 
+                            "name": "osd.48", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 51, 
+                            "name": "osd.51", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 54, 
+                            "name": "osd.54", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 57, 
+                            "name": "osd.57", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 60, 
+                            "name": "osd.60", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 63, 
+                            "name": "osd.63", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 66, 
+                            "name": "osd.66", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 69, 
+                            "name": "osd.69", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 32, 
+                            "name": "osd.32", 
+                            "weight": 1.7199859619140625
+                        }, 
+                        {
+                            "id": 75, 
+                            "name": "osd.75", 
+                            "weight": 1.7199859619140625
+                        }
+                    ], 
+                    "id": -8, 
+                    "name": "cloud3-1396", 
+                    "type": "host", 
+                    "weight": 9.839874267578125
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 49, 
+                            "name": "osd.49", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 52, 
+                            "name": "osd.52", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 55, 
+                            "name": "osd.55", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 58, 
+                            "name": "osd.58", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 61, 
+                            "name": "osd.61", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 64, 
+                            "name": "osd.64", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 67, 
+                            "name": "osd.67", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 70, 
+                            "name": "osd.70", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 73, 
+                            "name": "osd.73", 
+                            "weight": 1.7199859619140625
+                        }, 
+                        {
+                            "id": 76, 
+                            "name": "osd.76", 
+                            "weight": 1.7199859619140625
+                        }
+                    ], 
+                    "id": -9, 
+                    "name": "cloud3-1397", 
+                    "type": "host", 
+                    "weight": 9.839874267578125
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 50, 
+                            "name": "osd.50", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 53, 
+                            "name": "osd.53", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 56, 
+                            "name": "osd.56", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 59, 
+                            "name": "osd.59", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 62, 
+                            "name": "osd.62", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 65, 
+                            "name": "osd.65", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 68, 
+                            "name": "osd.68", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 71, 
+                            "name": "osd.71", 
+                            "weight": 0.79998779296875
+                        }, 
+                        {
+                            "id": 74, 
+                            "name": "osd.74", 
+                            "weight": 1.7199859619140625
+                        }, 
+                        {
+                            "id": 77, 
+                            "name": "osd.77", 
+                            "weight": 1.7199859619140625
+                        }
+                    ], 
+                    "id": -10, 
+                    "name": "cloud3-1398", 
+                    "type": "host", 
+                    "weight": 9.839874267578125
+                }, 
+                {
+                    "algorithm": "straw2", 
+                    "children": [
+                        {
+                            "id": 23, 
+                            "name": "osd.23", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 79, 
+                            "name": "osd.79", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 80, 
+                            "name": "osd.80", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 81, 
+                            "name": "osd.81", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 82, 
+                            "name": "osd.82", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 83, 
+                            "name": "osd.83", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 84, 
+                            "name": "osd.84", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 85, 
+                            "name": "osd.85", 
+                            "weight": 0.839996337890625
+                        }, 
+                        {
+                            "id": 86, 
+                            "name": "osd.86", 
+                            "weight": 1.7199859619140625
+                        }, 
+                        {
+                            "id": 87, 
+                            "name": "osd.87", 
+                            "weight": 1.7199859619140625
+                        }
+                    ], 
+                    "id": -11, 
+                    "name": "cloud3-1456", 
+                    "type": "host", 
+                    "weight": 10.159942626953125
+                }
+            ], 
+            "id": -1, 
+            "name": "default", 
+            "type": "root", 
+            "weight": 78.27902221679688
+        }
+    ], 
+    "tunables": {
+        "choose_local_fallback_tries": 0, 
+        "choose_local_tries": 0, 
+        "choose_total_tries": 50, 
+        "chooseleaf_descend_once": 1, 
+        "chooseleaf_stable": 1, 
+        "chooseleaf_vary_r": 1, 
+        "straw_calc_version": 2
+    }, 
+    "types": [
+        {
+            "name": "osd", 
+            "type_id": 0
+        }, 
+        {
+            "name": "host", 
+            "type_id": 1
+        }, 
+        {
+            "name": "rack", 
+            "type_id": 2
+        }, 
+        {
+            "name": "row", 
+            "type_id": 3
+        }, 
+        {
+            "name": "room", 
+            "type_id": 4
+        }, 
+        {
+            "name": "datacenter", 
+            "type_id": 5
+        }, 
+        {
+            "name": "root", 
+            "type_id": 6
+        }
+    ]
+}

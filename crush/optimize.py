@@ -174,7 +174,7 @@ class Optimize(object):
     def optimize_bucket(self, p, origin_crushmap, bucket):
         if len(bucket.get('children', [])) == 0:
             return None
-        log.debug(bucket['name'] + " optimizing")
+        log.warning(bucket['name'] + " optimizing")
         crushmap = copy.deepcopy(origin_crushmap)
         if self.args.with_positions:
             for replication_count in range(1, self.args.replication_count + 1):
@@ -191,7 +191,7 @@ class Optimize(object):
     def optimize_replica(self, p, origin_crushmap,
                          crushmap, bucket,
                          replication_count, choose_arg_position):
-        a = self.main.constructor(['analyze'] + p)
+        a = self.main.clone().constructor(['analyze'] + p)
         a.args.replication_count = replication_count
 
         parser = compare.Compare.get_parser()
@@ -208,9 +208,8 @@ class Optimize(object):
             v = choose_arg['weight_set'][choose_arg_position][pos]
             id2weight[bucket['children'][pos]['id']] = v
 
-        log.warning(bucket['name'] + " optimizing " +
-                    "replica " + str(replication_count) + " " +
-                    str(list(id2weight.values())))
+        log.info(bucket['name'] + " optimizing replica " + str(replication_count) + " " +
+                 str(list(id2weight.values())))
         c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(crushmap)
 
@@ -285,8 +284,8 @@ class Optimize(object):
             id2weight[d.iloc[-1]['~id~']] += shift
         if iterations >= max_iterations - 1:
             log.debug("stopped after " + str(iterations))
-        log.info(bucket['name'] + " replica " + str(replication_count) + " optimized")
-        log.warning(bucket['name'] + " weights " + str(list(id2weight.values())))
+        log.warning(bucket['name'] + " replica " + str(replication_count) + " optimized")
+        log.info(bucket['name'] + " weights " + str(list(id2weight.values())))
         return from_to_count
 
     def optimize(self, crushmap):
@@ -332,8 +331,8 @@ class Optimize(object):
     def run(self):
         if not self.args.crushmap:
             raise Exception("missing --crushmap")
+        crushmap = self.main.convert_to_crushmap(self.args.crushmap)
         if not self.args.choose_args:
             raise Exception("missing --choose-args")
-        crushmap = self.main.convert_to_crushmap(self.args.crushmap, self.args)
         (count, crushmap) = self.optimize(crushmap)
         self.main.crushmap_to_file(crushmap, self.args)
