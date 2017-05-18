@@ -88,11 +88,11 @@ class TestCrush(object):
 
         # Test OSDMap
         weights = Crush.parse_weights_file(open("tests/ceph/osdmap.json"))
-        assert weights == {"osd.0": 1.0, "osd.1": 0.95, "osd.2": 1.0}
+        assert weights == {"osd.1": 0.95}
 
         with pytest.raises(AssertionError):
             Crush.parse_weights_file(open("tests/ceph/weights-notfloat.json"))
-        with pytest.raises(AssertionError):
+        with pytest.raises(Exception):
             Crush.parse_weights_file(open("tests/ceph/osdmap-invalid.json"))
         with pytest.raises(AssertionError):
             Crush.parse_weights_file(open("tests/sample-ceph-crushmap.txt"))

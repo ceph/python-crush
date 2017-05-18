@@ -628,6 +628,15 @@ class Crush(object):
         open(out_path, "w").write(json.dumps(self.crushmap, indent=4, sort_keys=True))
 
     @staticmethod
+    def parse_osdmap_weights(osdmap):
+        weights = {}
+        for osd in osdmap["osds"]:
+            if osd["weight"] < 1.0:
+                key = "osd.{}".format(osd["osd"])
+                weights[key] = osd["weight"]
+        return weights
+
+    @staticmethod
     def parse_weights_file(weights_file):
         """
         Parse a file containing information about devices weights.
@@ -661,13 +670,7 @@ class Crush(object):
 
         osdmap_keys = {"epoch", "fsid", "osds", "pools"}  # And many more!
         if all(k in raw_data for k in osdmap_keys):
-            # We're likely dealing with an OSDMap
-            try:
-                weights = dict(
-                    ("osd.{}".format(osd["osd"]), osd["weight"])
-                    for osd in raw_data["osds"])
-            except:  # Many different exceptions can happen
-                raise AssertionError("Failed to read Ceph OSDMap {}".format(f_name))
+            weights = Crush.parse_osdmap_weights(raw_data)
         else:
             weights = raw_data
 
