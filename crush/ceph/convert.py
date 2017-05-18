@@ -32,9 +32,9 @@ log = logging.getLogger(__name__)
 
 class Convert(object):
 
-    def __init__(self, args, hooks):
+    def __init__(self, args, main):
         self.args = args
-        self.hooks = hooks
+        self.main = main
 
     @staticmethod
     def get_parser():
