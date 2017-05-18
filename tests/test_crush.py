@@ -20,7 +20,7 @@
 import copy
 import pytest # noqa needed for caplog
 
-from crush import Crush, CephConverter
+from crush import Crush
 
 
 class TestCrush(object):
@@ -70,25 +70,20 @@ class TestCrush(object):
         assert c.get_item_by_id(-2)['name'] == 'host0'
         assert c.get_item_by_name('host0')['id'] == -2
 
-    def test_convert_to_crushmap(self, caplog):
+    def test_convert_to_crushmap(self):
+        c = Crush()
         crushmap = {}
-        assert crushmap == Crush._convert_to_crushmap(crushmap)
-        crushmap = Crush._convert_to_crushmap("tests/sample-crushmap.json")
-        assert 'trees' in crushmap
-        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.txt")
-        assert 'trees' in crushmap
-        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.crush")
-        assert 'trees' in crushmap
-        crushmap = Crush._convert_to_crushmap("tests/sample-ceph-crushmap.json")
+        assert crushmap == c._convert_to_crushmap(crushmap)
+        crushmap = c._convert_to_crushmap("tests/sample-crushmap.json")
         assert 'trees' in crushmap
         with pytest.raises(ValueError) as e:
-            crushmap = Crush._convert_to_crushmap("tests/sample-bugous-crushmap.json")
+            crushmap = c._convert_to_crushmap("tests/sample-bugous-crushmap.json")
         assert "Expecting property name" in str(e.value)
 
     def test_parse_weights_file(self):
 
         # Test Simple weights file
-        weights = Crush.parse_weights_file(open("tests/ceph/weights.json"))
+        weights = Crush.parse_weights_file(open("tests/weights.json"))
         assert weights == {"osd.0": 0.0, "osd.2": 0.5}
 
         # Test OSDMap
@@ -257,45 +252,6 @@ class TestCrush(object):
         expected = [{'bucket_id': -2, 'modified': True}, {'bucket_id': -1}]
         assert expected == c.crushmap['choose_args']['name']
 
-
-class TestCephConverter(object):
-
-    def test_recover_choose_args(self):
-        ceph = {
-            'buckets': [
-                {
-                    'name': 'SELF-target-weight',
-                    'id': -10,
-                    'children': [
-                        {'weight': 1, },
-                        {'weight': 2, }
-                    ]
-                },
-                {
-                    'name': 'SELF',
-                    'id': -1,
-                    'children': [
-                        {'weight': 10, },
-                        {'weight': 20, }
-                    ]
-                },
-            ]
-        }
-        CephConverter.recover_choose_args(ceph)
-        expected = {
-            'choose_args': {'compat': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
-            'buckets': [
-                {
-                    'name': 'SELF',
-                    'id': -1,
-                    'children': [
-                        {'weight': 1, },
-                        {'weight': 2, }
-                    ]
-                },
-            ]
-        }
-        assert expected == ceph
 
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_crush.py"

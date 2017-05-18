@@ -350,7 +350,7 @@ class Analyze(object):
 
     def analyze(self):
         c = Crush(backward_compatibility=self.args.backward_compatibility)
-        c.parse(self.args.crushmap)
+        c.parse(self.main.convert_to_crushmap(self.args.crushmap))
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
         d = self.run_simulation(c, take, failure_domain)
         worst = self.analyze_failures(c, take, failure_domain)

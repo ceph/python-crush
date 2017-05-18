@@ -340,9 +340,9 @@ class TestCompare(object):
         a = Main().constructor([
             "compare", "--rule", "replicated_ruleset",
             "--replication-count", "1",
-            "--origin", "tests/ceph/dump.json",
-            "--destination", "tests/ceph/dump.json",
-            "--origin-weights", "tests/ceph/weights.json"])
+            "--origin", "tests/weights-crushmap.json",
+            "--destination", "tests/weights-crushmap.json",
+            "--origin-weights", "tests/weights.json"])
         a.args.backward_compatibility = True
         a.run_compare()
 
@@ -350,9 +350,9 @@ class TestCompare(object):
         a = Main().constructor([
             "compare", "--rule", "replicated_ruleset",
             "--replication-count", "1",
-            "--origin", "tests/ceph/dump.json",
-            "--destination", "tests/ceph/dump.json",
-            "--destination-weights", "tests/ceph/weights.json"])
+            "--origin", "tests/weights-crushmap.json",
+            "--destination", "tests/weights-crushmap.json",
+            "--destination-weights", "tests/weights.json"])
         a.args.backward_compatibility = True
         a.run_compare()
 

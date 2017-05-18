@@ -22,7 +22,6 @@ from __future__ import division
 import argparse
 import collections
 import copy
-import json
 import logging
 import textwrap
 
@@ -335,5 +334,6 @@ class Optimize(object):
             raise Exception("missing --crushmap")
         if not self.args.choose_args:
             raise Exception("missing --choose-args")
-        (count, crushmap) = self.optimize(self.args.crushmap)
-        open(self.args.out_path, "w").write(json.dumps(crushmap, indent=4, sort_keys=True))
+        crushmap = self.main.convert_to_crushmap(self.args.crushmap, self.args)
+        (count, crushmap) = self.optimize(crushmap)
+        self.main.crushmap_to_file(crushmap, self.args)

@@ -22,7 +22,6 @@ import pytest # noqa needed for capsys
 
 from crush import Crush
 from crush.main import Main
-from crush.ceph import Ceph
 from crush.analyze import Analyze
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
@@ -59,12 +58,9 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
     def test_analyze_out_of_bounds(self):
 
         def make(size, host_weight):
-            pg_num = 2048
             p = [
                 '--replication-count', str(size),
-                '--pool', '0',
-                '--pg-num', str(pg_num),
-                '--pgp-num', str(pg_num),
+                '--values-count', '2048',
             ]
 
             hosts_count = len(host_weight)
@@ -96,7 +92,7 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
                     "children": [],
                 } for i in range(0, hosts_count)
             ])
-            a = Ceph().constructor([
+            a = Main().constructor([
                 'analyze',
                 '--rule', 'firstn',
             ] + p)
@@ -111,11 +107,11 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5         3       1342                31.05
-host4     -6         3       1314                28.32
-host1     -3         7       1868               -23.07
-host0     -2         7       1834               -24.73
-host2     -4         7       1834               -24.73
+host4     -6         3       1329                29.79
+host3     -5         3       1325                29.39
+host1     -3         7       1857               -23.61
+host0     -2         7       1848               -24.05
+host2     -4         7       1833               -24.78
 
 Worst case scenario if a host fails:
 
@@ -143,17 +139,17 @@ host2     -4         7               6.0        14.29\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5         1        646                26.17
-host4     -6         1        610                19.14
-host2     -4         1        575                12.30
-host1     -3         1        571                11.52
-host0     -2         5       1694               -37.29
+host4     -6         1        617                20.51
+host3     -5         1        612                19.53
+host2     -4         1        593                15.82
+host1     -3         1        584                14.06
+host0     -2         5       1690               -37.48
 
 Worst case scenario if a host fails:
 
         ~over used %~
 ~type~               
-host            21.14
+host            17.19
 root             0.00
 
 The following are overweight and should be cropped:
@@ -172,18 +168,18 @@ host0     -2         5               4.0         20.0\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5         1        477                39.75
-host4     -6         1        468                37.11
+host3     -5         1        468                37.11
+host4     -6         1        461                35.06
 host5     -7         1        451                32.13
-host2     -4         3       1187                15.92
-host1     -3         7       1782               -27.27
-host0     -2         7       1779               -27.42
+host2     -4         3       1215                18.65
+host0     -2         7       1791               -26.83
+host1     -3         7       1758               -28.45
 
 Worst case scenario if a host fails:
 
         ~over used %~
 ~type~               
-host            35.01
+host            30.86
 root             0.00
 
 The following are overweight and should be cropped:
@@ -203,11 +199,11 @@ host1     -3         7               6.0        14.29\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under used %~
 ~name~                                                
-host3     -5         3       1517                11.11
-host4     -6         3       1512                10.74
-host2     -4         3       1504                10.16
-host1     -3         5       1839               -20.21
-host0     -2         5       1820               -21.13
+host3     -5         3       1535                12.43
+host4     -6         3       1504                10.16
+host2     -4         3       1484                 8.69
+host0     -2         5       1835               -20.40
+host1     -3         5       1834               -20.45
 
 Worst case scenario if a host fails:
 
@@ -292,8 +288,8 @@ root             0.00\
         a = Main().constructor(
             ["analyze", "--rule", "replicated_ruleset",
              "--replication-count", "2", "--type", "device",
-             "--crushmap", "tests/ceph/dump.json",
-             "--weights", "tests/ceph/weights.json"])
+             "--crushmap", "tests/weights-crushmap.json",
+             "--weights", "tests/weights.json"])
         a.args.backward_compatibility = True
         res = a.run()
         assert "-100.00" in str(res)  # One of the OSDs has a weight of 0.0

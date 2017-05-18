@@ -48,7 +48,7 @@ class Compare(object):
 
     def set_origin_crushmap(self, origin):
         o = Crush(backward_compatibility=self.args.backward_compatibility)
-        o.parse(origin)
+        o.parse(self.main.convert_to_crushmap(origin))
         self.set_origin(o)
 
     def set_destination(self, c):
@@ -56,7 +56,7 @@ class Compare(object):
 
     def set_destination_crushmap(self, destination):
         d = Crush(backward_compatibility=self.args.backward_compatibility)
-        d.parse(destination)
+        d.parse(self.main.convert_to_crushmap(destination))
         self.set_destination(d)
 
     @staticmethod
