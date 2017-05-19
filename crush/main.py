@@ -22,11 +22,10 @@ import collections
 import logging
 import textwrap
 
+from crush import Crush
 from crush import analyze
 from crush import compare
 from crush import optimize
-
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
 log = logging.getLogger('crush')
 
@@ -84,12 +83,16 @@ class Main(object):
 
         if self.args.debug:
             level = logging.DEBUG
+            format = '%(asctime)s %(funcName)20s %(message)s'
         elif self.args.verbose:
-            level = logging.WARNING
-        else:
             level = logging.INFO
+            format = '%(asctime)s %(funcName)20s %(message)s'
+        else:
+            level = logging.WARNING
+            format = '%(asctime)s %(message)s'
         if log.getEffectiveLevel() == 0 or log.getEffectiveLevel() > level:
             log.setLevel(level)
+        logging.basicConfig(format=format)
 
     @staticmethod
     def get_trimmed_argv(to_parser, args):
@@ -144,3 +147,15 @@ class Main(object):
     def hook_create_values(self):
         values = range(0, self.args.values_count)
         return dict(zip(values, values))
+
+    def convert_to_crushmap(self, crushmap):
+        c = Crush(verbose=self.args.debug,
+                  backward_compatibility=self.args.backward_compatibility)
+        c.parse(crushmap)
+        return c.get_crushmap()
+
+    def crushmap_to_file(self, crushmap):
+        c = Crush(verbose=self.args.debug,
+                  backward_compatibility=self.args.backward_compatibility)
+        c.parse(crushmap)
+        c.to_file(self.args.out_path)

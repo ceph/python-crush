@@ -18,10 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pytest  # noqa needed for capsys
-
-from crush import Crush
-from crush.ceph import Ceph
+from crush.ceph import CephCrush
 
 
 class TestConvert(object):
@@ -77,10 +74,10 @@ class TestConvert(object):
                 }
             ]
         }
-        c = Crush()
+        c = CephCrush()
         c.parse(crushmap)
-        convert = Ceph().constructor(['convert'])
-        compat = convert.ceph_version_compat(c)
+        c.ceph_version_compat()
+        compat = c.get_crushmap()
         assert 'choose_args' not in compat
         assert compat['trees'][1]['name'] == 'dc1-target-weight'
         bucket = compat['trees'][0]
@@ -88,5 +85,5 @@ class TestConvert(object):
         assert bucket['children'][1]['weight'] == second_weight
 
 # Local Variables:
-# compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_convert.py"
+# compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_ceph_convert.py"
 # End:

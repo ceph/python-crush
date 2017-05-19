@@ -321,7 +321,7 @@ class Analyze(object):
         root = c.find_bucket(take)
         worst = pd.DataFrame()
         for may_fail in c.collect_buckets_by_type([root], failure_domain):
-            f = Crush(verbose=self.args.verbose,
+            f = Crush(verbose=self.args.debug,
                       backward_compatibility=self.args.backward_compatibility)
             f.crushmap = copy.deepcopy(c.get_crushmap())
             root = f.find_bucket(take)
@@ -350,7 +350,7 @@ class Analyze(object):
 
     def analyze(self):
         c = Crush(backward_compatibility=self.args.backward_compatibility)
-        c.parse(self.args.crushmap)
+        c.parse(self.main.convert_to_crushmap(self.args.crushmap))
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
         d = self.run_simulation(c, take, failure_domain)
         worst = self.analyze_failures(c, take, failure_domain)

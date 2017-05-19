@@ -39,6 +39,27 @@ class TestOptimize(object):
         assert oo.main.argv == o.main.argv
         assert type(oo) == type(o)
 
+    def test_set_optimize_args(self):
+        a = Ceph().constructor([
+            'optimize',
+            '--pool', '3',
+        ])
+        a.args.replication_count = None
+        assert a.args.choose_args is None
+        assert a.args.rule is None
+        assert a.args.pg_num is None
+        assert a.args.pgp_num is None
+        assert a.args.out_version == 'luminous'
+        assert a.args.with_positions is True
+        a.main.convert_to_crushmap('tests/ceph/ceph-report-small.json')
+        assert a.args.replication_count == 3
+        assert a.args.choose_args == '3'
+        assert a.args.rule == 'data'
+        assert a.args.pg_num == 1
+        assert a.args.pgp_num == 1
+        assert a.args.out_version == 'j'
+        assert a.args.with_positions is False
+
     def test_get_choose_arg(self):
         a = Ceph().constructor([
             'optimize',

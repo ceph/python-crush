@@ -20,12 +20,72 @@
 
 import logging
 import os
+import json
 import pytest  # noqa needed for capsys
 
 from crush.ceph import Ceph
+from crush import ceph
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG)
+
+
+class TestCephReport(object):
+
+    def load(self):
+        with open('tests/ceph/ceph-report-small.json') as f:
+            return json.load(f)
+
+    def test_good_by_default(self):
+        ceph.CephReport().parse_report(self.load())
+
+    def test_fail_health(self):
+        report = self.load()
+        report['health']['overall_status'] = 'HEALTH_WARN'
+        with pytest.raises(ceph.HealthError):
+            ceph.CephReport().parse_report(report)
+
+    def test_fail_primary_affinity(self):
+        report = self.load()
+        report['osdmap']['osds'][0]['primary_affinity'] = 0.5
+        with pytest.raises(ceph.UnsupportedError) as e:
+            ceph.CephReport().parse_report(report)
+        assert 'affinity is !=' in str(e.value)
+
+    def test_fail_pool_type(self):
+        report = self.load()
+        report['osdmap']['pools'][0]['type'] = 2
+        with pytest.raises(ceph.UnsupportedError) as e:
+            ceph.CephReport().parse_report(report)
+        assert 'only type == 1' in str(e.value)
+
+    def test_fail_pool_object_hash(self):
+        report = self.load()
+        report['osdmap']['pools'][0]['object_hash'] = 5
+        with pytest.raises(ceph.UnsupportedError) as e:
+            ceph.CephReport().parse_report(report)
+        assert 'only object_hash == 2' in str(e.value)
+
+    def test_fail_pool_flags_names(self):
+        report = self.load()
+        report['osdmap']['pools'][0]['flags_names'] = 'somethingelse'
+        with pytest.raises(ceph.UnsupportedError) as e:
+            ceph.CephReport().parse_report(report)
+        assert 'only hashpspool' in str(e.value)
+
+    def test_fail_mapping_name(self, caplog):
+        report = self.load()
+        report['pgmap']['pg_stats'][0]['pgid'] = '5.1'
+        with pytest.raises(ceph.MappingError):
+            ceph.CephReport().parse_report(report)
+        assert 'is not in pgmap' in caplog.text()
+
+    def test_fail_mapping_osds(self, caplog):
+        report = self.load()
+        report['pgmap']['pg_stats'][0]['acting'] = [1, 2, 3]
+        with pytest.raises(ceph.MappingError):
+            ceph.CephReport().parse_report(report)
+        assert 'instead of [1, 2, 3]' in caplog.text()
 
 
 class TestCeph(object):
@@ -50,6 +110,19 @@ class TestCeph(object):
                     cmd = "diff -Bbu"
                 assert os.system(cmd + " " + expected_path + " " + out_path) == 0
                 os.unlink(out_path)
+
+    def test_report(self):
+        in_path = 'tests/ceph/ceph-report.json'
+        expected_path = 'tests/ceph/crushmap-from-ceph-report.json'
+        out_path = expected_path + ".err"
+        Ceph().main([
+            'convert',
+            '--in-path', in_path,
+            '--out-path', out_path,
+            '--out-format', 'python-json',
+        ])
+        assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+        os.unlink(out_path)
 
     def test_hook_create_values(self):
         c = Ceph()
