@@ -335,4 +335,4 @@ class Optimize(object):
         if not self.args.choose_args:
             raise Exception("missing --choose-args")
         (count, crushmap) = self.optimize(crushmap)
-        self.main.crushmap_to_file(crushmap, self.args)
+        self.main.crushmap_to_file(crushmap)
