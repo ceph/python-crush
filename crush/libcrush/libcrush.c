@@ -1073,6 +1073,8 @@ static void choose_args_destructor(PyObject *capsule)
 
 static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
 {
+  PyDict_Clear(self->choose_args);
+
   PyObject *choose_args = PyDict_GetItemString(map, "choose_args");
   if (choose_args == NULL)
     return 1;
@@ -1083,8 +1085,6 @@ static int parse_choose_args(LibCrush *self, PyObject *map, PyObject *trace)
     PyErr_Format(PyExc_RuntimeError, "must be a dict");
     return 0;
   }
-
-  PyDict_Clear(self->choose_args);
 
   PyObject *python_key;
   PyObject *python_value;
