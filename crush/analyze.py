@@ -321,7 +321,7 @@ class Analyze(object):
         root = c.find_bucket(take)
         worst = pd.DataFrame()
         for may_fail in c.collect_buckets_by_type([root], failure_domain):
-            f = Crush(verbose=self.args.verbose,
+            f = Crush(verbose=self.args.debug,
                       backward_compatibility=self.args.backward_compatibility)
             f.crushmap = copy.deepcopy(c.get_crushmap())
             root = f.find_bucket(take)
