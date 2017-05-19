@@ -27,8 +27,6 @@ from crush import analyze
 from crush import compare
 from crush import optimize
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
-
 log = logging.getLogger('crush')
 
 
@@ -85,12 +83,16 @@ class Main(object):
 
         if self.args.debug:
             level = logging.DEBUG
+            format = '%(asctime)s %(funcName)20s %(message)s'
         elif self.args.verbose:
-            level = logging.WARNING
-        else:
             level = logging.INFO
+            format = '%(asctime)s %(funcName)20s %(message)s'
+        else:
+            level = logging.WARNING
+            format = '%(asctime)s %(message)s'
         if log.getEffectiveLevel() == 0 or log.getEffectiveLevel() > level:
             log.setLevel(level)
+        logging.basicConfig(format=format)
 
     @staticmethod
     def get_trimmed_argv(to_parser, args):
