@@ -333,7 +333,8 @@ class CephCrush(Crush):
         self.crushmap['trees'].extend(shadow_trees)
 
     def transform_to_write(self, version):
-        if version == 'luminous':
+        version = ord(version[0]) - ord('a') + 1
+        if version >= 12:  # 12 == luminous
             self.choose_args_int_index(self.crushmap)
             return True
         if 'choose_args' not in self.crushmap:
