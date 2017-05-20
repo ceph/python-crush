@@ -123,7 +123,7 @@ namespace CrushTreeDumper {
   };
 
   inline void dump_item_fields(const CrushWrapper *crush,
-			       const Item &qi, ceph::Formatter *f) {
+			       const Item &qi, Formatter *f) {
     f->dump_int("id", qi.id);
     if (qi.is_bucket()) {
       int type = crush->get_bucket_type(qi.id);
@@ -140,7 +140,7 @@ namespace CrushTreeDumper {
   }
 
   inline void dump_bucket_children(const CrushWrapper *crush,
-				   const Item &qi, ceph::Formatter *f) {
+				   const Item &qi, Formatter *f) {
     if (!qi.is_bucket())
       return;
 
@@ -153,23 +153,23 @@ namespace CrushTreeDumper {
     f->close_section();
   }
 
-  class FormattingDumper : public Dumper<ceph::Formatter> {
+  class FormattingDumper : public Dumper<Formatter> {
   public:
-    explicit FormattingDumper(const CrushWrapper *crush) : Dumper<ceph::Formatter>(crush) {}
+    explicit FormattingDumper(const CrushWrapper *crush) : Dumper<Formatter>(crush) {}
 
   protected:
-    void dump_item(const Item &qi, ceph::Formatter *f) override {
+    void dump_item(const Item &qi, Formatter *f) override {
       f->open_object_section("item");
       dump_item_fields(qi, f);
       dump_bucket_children(qi, f);
       f->close_section();
     }
 
-    virtual void dump_item_fields(const Item &qi, ceph::Formatter *f) {
+    virtual void dump_item_fields(const Item &qi, Formatter *f) {
       CrushTreeDumper::dump_item_fields(crush, qi, f);
     }
 
-    virtual void dump_bucket_children(const Item &qi, ceph::Formatter *f) {
+    virtual void dump_bucket_children(const Item &qi, Formatter *f) {
       CrushTreeDumper::dump_bucket_children(crush, qi, f);
     }
   };

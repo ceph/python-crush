@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <linux/limits.h>
 
 #include "common/safe_io.h"
 #include "include/compat.h"
