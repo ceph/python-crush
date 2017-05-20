@@ -26,7 +26,6 @@
 #include "include/atomic.h"
 #include "common/RWLock.h"
 #include "include/types.h"
-#include "include/compat.h"
 #include "include/inline_memory.h"
 #include "include/scope_guard.h"
 #if defined(HAVE_XIO)
@@ -34,13 +33,10 @@
 #endif
 
 #include <errno.h>
-#include <fstream>
-#include <sstream>
 #include <sys/uio.h>
 #include <limits.h>
 
 #include <atomic>
-#include <ostream>
 
 #define CEPH_BUFFER_ALLOC_UNIT  (MIN(CEPH_PAGE_SIZE, 4096))
 #define CEPH_BUFFER_APPEND_SIZE (CEPH_BUFFER_ALLOC_UNIT - sizeof(raw_combined))
@@ -91,6 +87,7 @@ static std::atomic_flag buffer_debug_lock = ATOMIC_FLAG_INIT;
 
   static atomic_t buffer_cached_crc;
   static atomic_t buffer_cached_crc_adjusted;
+  static atomic_t buffer_missed_crc;
   static bool buffer_track_crc = get_env_bool("CEPH_BUFFER_TRACK");
 
   void buffer::track_cached_crc(bool b) {
@@ -101,6 +98,10 @@ static std::atomic_flag buffer_debug_lock = ATOMIC_FLAG_INIT;
   }
   int buffer::get_cached_crc_adjusted() {
     return buffer_cached_crc_adjusted.read();
+  }
+
+  int buffer::get_missed_crc() {
+    return buffer_missed_crc.read();
   }
 
   static atomic_t buffer_c_str_accesses;
@@ -2338,19 +2339,6 @@ int buffer::list::write_fd(int fd, uint64_t offset) const
   return 0;
 }
 
-void buffer::list::prepare_iov(std::vector<iovec> *piov) const
-{
-  assert(_buffers.size() <= IOV_MAX);
-  piov->resize(_buffers.size());
-  unsigned n = 0;
-  for (std::list<buffer::ptr>::const_iterator p = _buffers.begin();
-       p != _buffers.end();
-       ++p, ++n) {
-    (*piov)[n].iov_base = (void *)p->c_str();
-    (*piov)[n].iov_len = p->length();
-  }
-}
-
 int buffer::list::write_fd_zero_copy(int fd) const
 {
   if (!can_zero_copy())
@@ -2404,6 +2392,8 @@ __u32 buffer::list::crc32c(__u32 crc) const
 	    buffer_cached_crc_adjusted.inc();
 	}
       } else {
+	if (buffer_track_crc)
+	  buffer_missed_crc.inc();
 	uint32_t base = crc;
 	crc = ceph_crc32c(crc, (unsigned char*)it->c_str(), it->length());
 	r->set_crc(ofs, make_pair(base, crc));
@@ -2506,6 +2496,25 @@ void buffer::list::hexdump(std::ostream &out, bool trailing_newline) const
   }
 
   out.flags(original_flags);
+}
+
+
+buffer::list buffer::list::static_from_mem(char* c, size_t l) {
+  list bl;
+  bl.push_back(ptr(create_static(l, c)));
+  return bl;
+}
+
+buffer::list buffer::list::static_from_cstring(char* c) {
+  return static_from_mem(c, std::strlen(c));
+}
+
+buffer::list buffer::list::static_from_string(string& s) {
+  // C++14 just has string::data return a char* from a non-const
+  // string.
+  return static_from_mem(const_cast<char*>(s.data()), s.length());
+  // But the way buffer::list mostly doesn't work in a sane way with
+  // const makes me generally sad.
 }
 
 std::ostream& buffer::operator<<(std::ostream& out, const buffer::raw &r) {
