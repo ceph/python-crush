@@ -9,14 +9,15 @@ http://github.com/ceph/ceph and should be updated to get the latest
 changes with::
 
     git clone http://github.com/ceph/ceph /tmp/ceph
-    git revert 8eadcc0 # commit with change to make crush standalone
+    git revert 8f07936 # commit with change to make crush standalone
     cd crush/libcrush
     for file in {common,crush,include}/*.[ch] {common,crush}/*.cc ; do
        cp /tmp/ceph/src/$file $file
     done
-    git cherry-pick 8eadcc0
-    git commit --amend
-    update the hash above with the new hash
+    git commit -m 'libcrush: sync with Ceph'
+    git cherry-pick 8f07936
+    # update the hash above with the new hash
+    git commit -m 'doc: reference to the last sync with Ceph'
 
 The commit message should then be updated with the hash of the
 ceph repository from which the files were copied.
