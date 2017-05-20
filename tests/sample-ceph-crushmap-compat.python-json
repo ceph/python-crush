@@ -1,0 +1,170 @@
+{
+    "choose_args": {
+        "4": [
+            {
+                "bucket_id": -2, 
+                "weight_set": [
+                    [
+                        7.0
+                    ]
+                ]
+            }
+        ]
+    }, 
+    "private": {
+        "rules": [
+            {
+                "max_size": 2, 
+                "min_size": 2, 
+                "rule_id": 0, 
+                "rule_name": "data", 
+                "ruleset": 3, 
+                "steps": [
+                    {
+                        "item": -4, 
+                        "item_name": "root", 
+                        "op": "take"
+                    }, 
+                    {
+                        "num": 0, 
+                        "op": "chooseleaf_firstn", 
+                        "type": "rack"
+                    }, 
+                    {
+                        "op": "emit"
+                    }
+                ], 
+                "type": 1
+            }
+        ], 
+        "tunables": {
+            "allowed_bucket_algs": 22, 
+            "choose_local_fallback_tries": 5, 
+            "choose_local_tries": 2, 
+            "choose_total_tries": 19, 
+            "chooseleaf_descend_once": 0, 
+            "chooseleaf_stable": 0, 
+            "chooseleaf_vary_r": 0, 
+            "has_v2_rules": 0, 
+            "has_v3_rules": 0, 
+            "has_v4_buckets": 0, 
+            "has_v5_rules": 0, 
+            "legacy_tunables": 1, 
+            "minimum_required_version": "argonaut", 
+            "optimal_tunables": 0, 
+            "profile": "argonaut", 
+            "require_feature_tunables": 0, 
+            "require_feature_tunables2": 0, 
+            "require_feature_tunables3": 0, 
+            "require_feature_tunables5": 0, 
+            "straw_calc_version": 0
+        }
+    }, 
+    "rules": {
+        "data": [
+            [
+                "take", 
+                "root"
+            ], 
+            [
+                "chooseleaf", 
+                "firstn", 
+                0, 
+                "type", 
+                "rack"
+            ], 
+            [
+                "emit"
+            ]
+        ]
+    }, 
+    "trees": [
+        {
+            "algorithm": "straw", 
+            "children": [
+                {
+                    "algorithm": "straw", 
+                    "children": [
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 0, 
+                                    "name": "device0", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -1, 
+                            "name": "host0", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }, 
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 1, 
+                                    "name": "device1", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -2, 
+                            "name": "host1", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }, 
+                        {
+                            "algorithm": "straw", 
+                            "children": [
+                                {
+                                    "id": 2, 
+                                    "name": "device2", 
+                                    "weight": 1.0
+                                }
+                            ], 
+                            "id": -5, 
+                            "name": "host2", 
+                            "type": "host", 
+                            "weight": 1.0
+                        }
+                    ], 
+                    "id": -3, 
+                    "name": "rack0", 
+                    "type": "rack", 
+                    "weight": 4.0
+                }
+            ], 
+            "id": -4, 
+            "name": "root", 
+            "type": "root", 
+            "weight": 4.0
+        }
+    ], 
+    "tunables": {
+        "choose_local_fallback_tries": 5, 
+        "choose_local_tries": 2, 
+        "choose_total_tries": 19, 
+        "chooseleaf_descend_once": 0, 
+        "chooseleaf_stable": 0, 
+        "chooseleaf_vary_r": 0, 
+        "straw_calc_version": 0
+    }, 
+    "types": [
+        {
+            "name": "device", 
+            "type_id": 0
+        }, 
+        {
+            "name": "host", 
+            "type_id": 1
+        }, 
+        {
+            "name": "rack", 
+            "type_id": 2
+        }, 
+        {
+            "name": "root", 
+            "type_id": 3
+        }
+    ]
+}
