@@ -65,7 +65,7 @@ class TestConvert(object):
         first_weight = 123
         second_weight = 456
         crushmap['choose_args'] = {
-            '0': [
+            0: [
                 {
                     'bucket_id': -1,
                     'weight_set': [

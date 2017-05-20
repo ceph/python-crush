@@ -142,6 +142,32 @@ class TestCeph(object):
         expected = {u'2.0': -113899774, u'2.1': -1215435108, u'2.2': -832918304}
         assert expected == c.hook_create_values()
 
+    def test_out_version(self):
+        expected_path = 'tests/sample-ceph-crushmap-compat.txt'
+        out_path = expected_path + ".err"
+
+        in_path = 'tests/sample-ceph-crushmap-compat.python-json'
+        Ceph().main([
+            'convert',
+            '--in-path', in_path,
+            '--out-path', out_path,
+            '--out-format', 'txt',
+            '--out-version', 'jewel',
+        ])
+        assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+        os.unlink(out_path)
+
+        in_path = 'tests/sample-ceph-crushmap.python-json'
+        with pytest.raises(Exception) as e:
+            Ceph().main([
+                'convert',
+                '--in-path', in_path,
+                '--out-path', out_path,
+                '--out-format', 'txt',
+                '--out-version', 'jewel',
+            ])
+        assert 'version lower than luminous' in str(e.value)
+
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -vv -s tests/test_ceph.py"
 # End:

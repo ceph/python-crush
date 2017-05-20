@@ -25,11 +25,27 @@ static char *crush_to_json(CrushWrapper& crush)
   return strdup(sout.str().c_str());
 }
 
-int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *info)
+static int ceph_copy_choose_args(LibCrush *self, CrushWrapper &crush)
 {
-  CrushWrapper crush;
-  crush.crush = self->map;
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(self->choose_args, &pos, &key, &value)) {
+    int k = MyInt_AsInt(key);
+    if (PyErr_Occurred()) {
+      crush.choose_args.clear();
+      return -EINVAL;
+    }
+    struct crush_choose_arg_map choose_arg_map;
+    choose_arg_map.args = (struct crush_choose_arg *)PyCapsule_GetPointer(value, NULL);
+    choose_arg_map.size = crush.crush->max_buckets;
+    crush.choose_args[k] = choose_arg_map;
+  }
+  return 0;
+}
 
+static int _ceph_write(LibCrush *self, const char *path, const char *format, PyObject *info, CrushWrapper &crush)
+{
   PyObject *key;
   PyObject *value;
   Py_ssize_t pos;
@@ -70,17 +86,9 @@ int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *i
     crush.set_rule_name(v, k);
   }
 
-  // choose_args map
-  pos = 0;
-  while (PyDict_Next(self->choose_args, &pos, &key, &value)) {
-    int k = MyInt_AsInt(key);
-    if (PyErr_Occurred())
-      return -EINVAL;
-    struct crush_choose_arg_map choose_arg_map;
-    choose_arg_map.args = (struct crush_choose_arg *)PyCapsule_GetPointer(value, NULL);
-    choose_arg_map.size = crush.crush->max_buckets;
-    crush.choose_args[k] = choose_arg_map;
-  }
+  int r = ceph_copy_choose_args(self, crush);
+  if (r < 0)
+    return r;
 
   if (info != Py_None) {
     PyObject *rules = PyDict_GetItemString(info, "rules");
@@ -161,10 +169,40 @@ int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *i
   } else {
     return -EDOM;
   }
-  crush.crush = NULL;
-  crush.choose_args.clear();
 
   return 0;
+}
+
+int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *info)
+{
+  CrushWrapper crush;
+  crush.crush = self->map;
+  int r = _ceph_write(self, path, format, info, crush);
+  crush.crush = NULL;
+  crush.choose_args.clear();
+  return r;
+}
+
+static int _ceph_incompat(LibCrush *self, int *out, CrushWrapper &crush)
+{
+  int r = ceph_copy_choose_args(self, crush);
+  if (r < 0)
+    return r;
+  if (crush.has_choose_args() && crush.has_incompat_choose_args())
+    *out = 1;
+  else
+    *out = 0;
+  return 0;
+}
+
+int ceph_incompat(LibCrush *self, int *out)
+{
+  CrushWrapper crush;
+  crush.crush = self->map;
+  int r = _ceph_incompat(self, out, crush);
+  crush.crush = NULL;
+  crush.choose_args.clear();
+  return r;
 }
 
 int ceph_read_txt_to_json(const char *in, char **out)

@@ -402,10 +402,8 @@ class CephCrush(Crush):
         #
         # sanity checks
         #
-        if len(self.crushmap['choose_args']) > 1:
-            raise Exception("expected exactly one choose_args, got " +
-                            str(self.crushmap['choose_args'].keys()) + " instead")
-        # ... if c.c.crushwapper cannot encode raise
+        if self.c.ceph_incompat():
+            raise Exception("choose_args cannot be encoded for a version lower than luminous")
 
         self._merge_choose_args()
         #
@@ -448,21 +446,21 @@ class CephCrush(Crush):
         self.crushmap['trees'].extend(shadow_trees)
 
     def transform_to_write(self, version):
-        version = ord(version[0]) - ord('a') + 1
-        if version >= 12:  # 12 == luminous
-            self.choose_args_int_index(self.crushmap)
-            return True
         if 'choose_args' not in self.crushmap:
             return False
+        self.choose_args_int_index(self.crushmap)
+        self.parse(self.crushmap)
+        if version >= 'luminous':
+            return True
         self.ceph_version_compat()
+        self.parse(self.crushmap)
         return True
 
     def to_file(self, path, format, version):
         if format == 'python-json':
             super(CephCrush, self).to_file(path)
         else:
-            if self.transform_to_write(version):
-                self.parse(self.crushmap)
+            self.transform_to_write(version)
             self.c.ceph_write(path, format, self.crushmap.get('private'))
 
 
