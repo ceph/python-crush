@@ -402,10 +402,8 @@ class CephCrush(Crush):
         #
         # sanity checks
         #
-        if len(self.crushmap['choose_args']) > 1:
-            raise Exception("expected exactly one choose_args, got " +
-                            str(self.crushmap['choose_args'].keys()) + " instead")
-        # ... if c.c.crushwapper cannot encode raise
+        if self.c.ceph_incompat():
+            raise Exception("choose_args cannot be encoded for a version lower than luminous")
 
         self._merge_choose_args()
         #
