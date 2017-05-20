@@ -183,7 +183,26 @@ int ceph_write(LibCrush *self, const char *path, const char *format, PyObject *i
   return r;
 }
 
+static int _ceph_incompat(LibCrush *self, int *out, CrushWrapper &crush)
+{
+  int r = ceph_copy_choose_args(self, crush);
+  if (r < 0)
+    return r;
+  if (crush.has_choose_args() && crush.has_incompat_choose_args())
+    *out = 1;
+  else
+    *out = 0;
   return 0;
+}
+
+int ceph_incompat(LibCrush *self, int *out)
+{
+  CrushWrapper crush;
+  crush.crush = self->map;
+  int r = _ceph_incompat(self, out, crush);
+  crush.crush = NULL;
+  crush.choose_args.clear();
+  return r;
 }
 
 int ceph_read_txt_to_json(const char *in, char **out)

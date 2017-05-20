@@ -1384,6 +1384,26 @@ LibCrush_ceph_write(LibCrush *self, PyObject *args)
 }
 
 static PyObject *
+LibCrush_ceph_incompat(LibCrush *self)
+{
+  if (self->map == NULL)
+    Py_RETURN_FALSE;
+
+  int out;
+
+  int r = ceph_incompat(self, &out);
+  if (r < 0) {
+    PyErr_Format(PyExc_RuntimeError, "ceph_incompat returned %d %s", r, strerror(-r));
+    return 0;
+  }
+
+  if (out)
+    Py_RETURN_TRUE;
+  else
+    Py_RETURN_FALSE;
+}
+
+static PyObject *
 LibCrush_ceph_read(LibCrush *self, PyObject *args)
 {
   const char *path;
@@ -1458,6 +1478,8 @@ LibCrush_methods[] = {
             PyDoc_STR("parse the crush map") },
     { "map",      (PyCFunction) LibCrush_map,        METH_VARARGS|METH_KEYWORDS,
             PyDoc_STR("map a value to items") },
+    { "ceph_incompat",  (PyCFunction) LibCrush_ceph_incompat,    METH_NOARGS,
+            PyDoc_STR("TRUE if the crushmap requires >= luminous") },
     { "ceph_read",  (PyCFunction) LibCrush_ceph_read,    METH_VARARGS,
             PyDoc_STR("read from Ceph txt/bin crushmap") },
     { "ceph_write",  (PyCFunction) LibCrush_ceph_write,    METH_VARARGS,

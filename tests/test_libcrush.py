@@ -1086,6 +1086,32 @@ class TestLibCrush(object):
         pps_2_values = sorted(set(pps_2.values()))
         assert pps_1_values == pps_2_values
 
+    def test_ceph_incompat(self):
+        c = LibCrush(verbose=1)
+
+        assert c.ceph_incompat() is False
+
+        c.parse({})
+        assert c.ceph_incompat() is False
+
+        c.parse({'choose_args': {
+            1: [],
+            2: [],
+        }})
+        assert c.ceph_incompat() is True
+
+        c.parse({'choose_args': {
+            1: [],
+        }})
+        assert c.ceph_incompat() is False
+
+        with pytest.raises(RuntimeError) as e:
+            c.parse({'choose_args': {
+                "1": [],
+            }})
+            assert c.ceph_incompat() is False
+        assert 'Invalid argument' in str(e.value)
+
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_libcrush.py"
 # End:
