@@ -22,11 +22,16 @@ extern "C" {
 
 #include "include/err.h"
 #include "include/encoding.h"
+#ifndef __STANDALONE_CRUSH__
 
 
 #include "common/Mutex.h"
 
 #include "include/assert.h"
+#else // __STANDALONE_CRUSH__
+#include "include/buffer.h"
+#include "ceph_context.h"
+#endif // __STANDALONE_CRUSH__
 #define BUG_ON(x) assert(!(x))
 
 namespace ceph {
@@ -60,7 +65,9 @@ public:
   std::map<int32_t, map<int32_t, int32_t> > class_bucket; /* bucket[id][class] == id */
   std::map<uint64_t, crush_choose_arg_map> choose_args;
 
+#ifndef __STANDALONE_CRUSH__
 private:
+#endif // __STANDALONE_CRUSH__
   struct crush_map *crush;
   /* reverse maps */
   mutable bool have_rmaps;
@@ -1306,17 +1313,17 @@ public:
     return false;
   }
 
-  void encode(bufferlist &bl, uint64_t features) const;
-  void decode(bufferlist::iterator &blp);
-  void decode_crush_bucket(crush_bucket** bptr, bufferlist::iterator &blp);
-  void dump(Formatter *f) const;
-  void dump_rules(Formatter *f) const;
-  void dump_rule(int ruleset, Formatter *f) const;
-  void dump_tunables(Formatter *f) const;
-  void dump_choose_args(Formatter *f) const;
-  void list_rules(Formatter *f) const;
-  void dump_tree(ostream *out, Formatter *f) const;
-  void dump_tree(Formatter *f) const;
+  void encode(ceph::buffer::list &bl, uint64_t features) const;
+  void decode(ceph::buffer::list::iterator &blp);
+  void decode_crush_bucket(crush_bucket** bptr, ceph::buffer::list::iterator &blp);
+  void dump(ceph::Formatter *f) const;
+  void dump_rules(ceph::Formatter *f) const;
+  void dump_rule(int ruleset, ceph::Formatter *f) const;
+  void dump_tunables(ceph::Formatter *f) const;
+  void dump_choose_args(ceph::Formatter *f) const;
+  void list_rules(ceph::Formatter *f) const;
+  void dump_tree(ostream *out, ceph::Formatter *f) const;
+  void dump_tree(ceph::Formatter *f) const;
   static void generate_test_instances(list<CrushWrapper*>& o);
 
   int _get_osd_pool_default_crush_replicated_ruleset(CephContext *cct,
@@ -1327,6 +1334,8 @@ public:
   static bool is_valid_crush_loc(CephContext *cct,
 				 const map<string,string>& loc);
 };
+#ifndef __STANDALONE_CRUSH__
 WRITE_CLASS_ENCODER_FEATURES(CrushWrapper)
+#endif // __STANDALONE_CRUSH__
 
 #endif

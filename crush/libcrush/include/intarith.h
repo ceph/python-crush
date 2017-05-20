@@ -76,6 +76,7 @@
  */
 #define P2ROUNDUP(x, align)		(-(-(x) & -(align)))
 
+#ifdef __cplusplus
 // count trailing zeros.
 // NOTE: the builtin is nondeterministic on 0 input
 template<class T>
@@ -176,5 +177,12 @@ template<class T>
     return 0;
   return (sizeof(v) * 8) - __builtin_clzll(v);
 }
+#else // __cplusplus__
+static inline unsigned cbits(unsigned v) {
+  if (v == 0)
+    return 0;
+  return (sizeof(v) * 8) - __builtin_clz(v);
+}
+#endif // __cplusplus__
 
 #endif

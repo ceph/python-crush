@@ -47,7 +47,9 @@
 #include <type_traits>
 
 #include "page.h"
+#ifndef __STANDALONE_CRUSH__
 #include "crc32c.h"
+#endif // __STANDALONE_CRUSH__
 #include "buffer_fwd.h"
 
 #ifdef __CEPH__
