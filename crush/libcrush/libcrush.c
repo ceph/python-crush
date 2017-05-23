@@ -239,10 +239,14 @@ static int parse_weight(LibCrush *self, PyObject *item, int *weightout, PyObject
     *weightout = 0x10000;
   } else {
     append_trace(trace, PyUnicode_FromFormat("weight %S", weight));
-    double w = PyFloat_AsDouble(weight);
+    if (!MyInt_Check(weight)) {
+      PyErr_SetString(PyExc_RuntimeError, "weight must be an int");
+      return 0;
+    }
+    *weightout = MyInt_AsInt(weight);
+    append_trace(trace, PyUnicode_FromFormat("weight %d", *weightout));
     if (PyErr_Occurred())
       return 0;
-    *weightout = (int)(w * (double)0x10000);
   }
   return 1;
 }
@@ -964,10 +968,13 @@ static int parse_choose_args_bucket_weight_set(LibCrush *self, struct crush_choo
     Py_ssize_t i;
     for (i = 0; i < PyList_Size(python_weights); i++) {
       PyObject *python_weight = PyList_GetItem(python_weights, i);
-      double weight = PyFloat_AsDouble(python_weight);
+      if (!MyInt_Check(python_weight)) {
+        PyErr_SetString(PyExc_RuntimeError, "weight must be an int");
+        return 0;
+      }
+      choose_args->weight_set[pos].weights[i] = MyInt_AsInt(python_weight);
       if (PyErr_Occurred())
         return 0;
-      choose_args->weight_set[pos].weights[i] = (int)(weight * (double)0x10000);
     }
   }
 

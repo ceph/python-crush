@@ -142,26 +142,22 @@ class CephReport(object):
 
 class CephCrushmapConverter(object):
 
-    @staticmethod
-    def weight_as_float(i):
-        return i / 0x10000
-
     def convert_item(self, item, ceph):
         if item['id'] >= 0:
             return {
-                "weight": self.weight_as_float(item['weight']),
+                "weight": item['weight'],
                 "id": item['id'],
                 "name": ceph['id2name'][item['id']],
             }
         else:
             return {
-                "weight": self.weight_as_float(item['weight']),
+                "weight": item['weight'],
                 "reference_id": item['id'],
             }
 
     def convert_bucket(self, bucket, ceph):
         b = {
-            "weight": self.weight_as_float(bucket['weight']),
+            "weight": bucket['weight'],
             "id": bucket['id'],
             "name": bucket['name'],
             "algorithm": bucket['alg'],
@@ -221,14 +217,14 @@ class CephCrushmapConverter(object):
                 assert len(bucket['items']) == len(target_weights)
                 weight_set = []
                 for child in bucket['items']:
-                    weight_set.append(CephCrushmapConverter.weight_as_float(child['weight']))
+                    weight_set.append(child['weight'] / 0x10000)
                     child['weight'] = target_weights.pop(0)
                 choose_args.append({
                     'bucket_id': bucket['id'],
                     'weight_set': [weight_set],
                 })
         ceph['buckets'] = buckets
-        ceph['choose_args'] = {"compat": choose_args}
+        ceph['choose_args'] = {"0": choose_args}
 
     def convert_buckets(self, ceph):
         ceph['is_child'] = set()
@@ -302,6 +298,17 @@ class CephCrushmapConverter(object):
                 out[k] = v
         return out
 
+    def convert_choose_args(self, ceph):
+        choose_args_map = copy.deepcopy(ceph['choose_args'])
+        for (name, choose_args) in choose_args_map.items():
+            for choose_arg in choose_args:
+                if 'weight_set' in choose_arg:
+                    choose_arg['weight_set'] = [
+                        [int(x * 0x10000) for x in weights]
+                        for weights in choose_arg['weight_set']
+                    ]
+        return choose_args_map
+
     def parse_ceph(self, ceph):
         ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
@@ -325,7 +332,7 @@ class CephCrushmapConverter(object):
         j['private']['tunables'] = ceph['tunables']
 
         if 'choose_args' in ceph:
-            j['choose_args'] = ceph['choose_args']
+            j['choose_args'] = self.convert_choose_args(ceph)
 
         return j
 
@@ -602,7 +609,7 @@ class Ceph(main.Main):
         self.args.choose_args = str(self.args.pool)
         self.argv.append('--choose-args=' + self.args.choose_args)
 
-        log.info('argv = ' + " ".join(self.argv))
+        log.warning('argv = ' + " ".join(self.argv))
 
     def convert_to_crushmap(self, crushmap):
         c = CephCrush(verbose=self.args.debug,

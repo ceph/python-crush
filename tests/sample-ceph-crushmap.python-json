@@ -21,14 +21,14 @@
                 ], 
                 "weight_set": [
                     [
-                        1.0, 
-                        2.0, 
-                        5.0
+                        65536, 
+                        131072, 
+                        327680
                     ], 
                     [
-                        3.0, 
-                        2.0, 
-                        5.0
+                        196608, 
+                        131072, 
+                        327680
                     ]
                 ]
             }
@@ -38,10 +38,10 @@
                 "bucket_id": -2, 
                 "weight_set": [
                     [
-                        1.0
+                        65536
                     ], 
                     [
-                        3.0
+                        196608
                     ]
                 ]
             }
@@ -65,10 +65,10 @@
                 "bucket_id": -2, 
                 "weight_set": [
                     [
-                        1.0
+                        65536
                     ], 
                     [
-                        3.0
+                        196608
                     ]
                 ]
             }, 
@@ -81,14 +81,14 @@
                 ], 
                 "weight_set": [
                     [
-                        1.0, 
-                        2.0, 
-                        5.0
+                        65536, 
+                        131072, 
+                        327680
                     ], 
                     [
-                        3.0, 
-                        2.0, 
-                        5.0
+                        196608, 
+                        131072, 
+                        327680
                     ]
                 ]
             }
@@ -174,13 +174,13 @@
                                 {
                                     "id": 0, 
                                     "name": "device0", 
-                                    "weight": 1.0
+                                    "weight": 65536
                                 }
                             ], 
                             "id": -1, 
                             "name": "host0", 
                             "type": "host", 
-                            "weight": 1.0
+                            "weight": 65536
                         }, 
                         {
                             "algorithm": "straw", 
@@ -188,13 +188,13 @@
                                 {
                                     "id": 1, 
                                     "name": "device1", 
-                                    "weight": 1.0
+                                    "weight": 65536
                                 }
                             ], 
                             "id": -2, 
                             "name": "host1", 
                             "type": "host", 
-                            "weight": 1.0
+                            "weight": 65536
                         }, 
                         {
                             "algorithm": "straw", 
@@ -202,25 +202,25 @@
                                 {
                                     "id": 2, 
                                     "name": "device2", 
-                                    "weight": 1.0
+                                    "weight": 65536
                                 }
                             ], 
                             "id": -5, 
                             "name": "host2", 
                             "type": "host", 
-                            "weight": 1.0
+                            "weight": 65536
                         }
                     ], 
                     "id": -3, 
                     "name": "rack0", 
                     "type": "rack", 
-                    "weight": 4.0
+                    "weight": 262144
                 }
             ], 
             "id": -4, 
             "name": "root", 
             "type": "root", 
-            "weight": 4.0
+            "weight": 262144
         }
     ], 
     "tunables": {

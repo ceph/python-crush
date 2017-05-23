@@ -141,8 +141,8 @@ class TestOptimize(object):
         pg_num = 2048
 
         hosts_count = 5
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -172,6 +172,7 @@ class TestOptimize(object):
             } for i in range(0, hosts_count)
         ])
         a = Ceph().constructor([
+            '--verbose',
             'optimize',
             '--no-multithread',
             '--replication-count', str(size),
@@ -191,8 +192,8 @@ class TestOptimize(object):
         size = 2
         pg_num = 51200
         hosts_count = 10
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -237,8 +238,8 @@ class TestOptimize(object):
         size = 2
         pg_num = 512
         hosts_count = 10
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -283,7 +284,7 @@ class TestOptimize(object):
         size = 2
         hosts_count = 100
         pg_num = hosts_count * 200
-        host_weight = [i for i in range(1, hosts_count + 1)]
+        host_weight = [i * 0x10000 for i in range(1, hosts_count + 1)]
         crushmap = {
             "trees": [
                 {
@@ -328,7 +329,7 @@ class TestOptimize(object):
         size = 2
         pg_num = 512
         hosts_count = 10
-        host_weight = [i % 3 + 1 for i in range(hosts_count)]
+        host_weight = [(i % 3 + 1) * 0x10000 for i in range(hosts_count)]
         crushmap = {
             "trees": [
                 {
@@ -367,35 +368,20 @@ class TestOptimize(object):
         self.run_optimize(p, crushmap, 10)
 
     @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_5(self):
-        # few samples
-        pg_num = 2048
+    def test_optimize_small_cluster(self):
+        pg_num = 4096
         size = 3
         p = [
             '--replication-count', str(size),
-            '--pool', '2',
+            '--pool', '3',
             '--pg-num', str(pg_num),
             '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
+            '--rule', 'data',
         ]
-        self.run_optimize(p, 'tests/test_optimize_5.json', 10)
+        self.run_optimize(p, 'tests/test_optimize_small_cluster.json', 10)
 
     @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_6(self):
-        # few samples
-        pg_num = 2048
-        size = 3
-        p = [
-            '--replication-count', str(size),
-            '--pool', '2',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
-        ]
-        self.run_optimize(p, 'tests/test_optimize_6.json', 10)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_7(self):
+    def test_optimize_big_cluster(self):
         # few samples
         pg_num = 2048
         size = 3
@@ -406,29 +392,28 @@ class TestOptimize(object):
             '--pgp-num', str(pg_num),
             '--rule', 'data',
         ]
-        self.run_optimize(p, 'tests/test_optimize_7.json', 4)
+        self.run_optimize(p, 'tests/test_optimize_big_cluster.json', 4)
 
     def test_optimize_step(self):
-        # few samples
         pg_num = 2048
         size = 3
         a = Ceph().constructor([
-            '--verbose',
+#            '--verbose',
             'optimize',
             '--no-multithread',
             '--replication-count', str(size),
-            '--pool', '2',
+            '--pool', '3',
             '--pg-num', str(pg_num),
             '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
+            '--rule', 'data',
             '--choose-args', 'optimize',
             '--step', '64',
         ])
         c = Crush(backward_compatibility=True)
-        c.parse('tests/test_optimize_5.json')
+        c.parse('tests/test_optimize_small_cluster.json')
         crushmap = c.get_crushmap()
         converged = False
-        for i in range(10):
+        for i in range(20):
             (count, crushmap) = a.optimize(crushmap)
             if count <= 0:
                 converged = True
