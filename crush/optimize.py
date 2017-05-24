@@ -29,7 +29,6 @@ from crush import Crush
 from crush import analyze
 from crush import compare
 from crush.analyze import Analyze, BadMapping
-from multiprocessing import Pool
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +59,11 @@ class Optimize(object):
             help='optimization steps (default infinite)',
             type=int,
         )
+        parser.add_argument(
+            '--no-forecast',
+            dest='with_forecast',
+            action='store_false', default=True,
+            help='how many steps to completion (default: true)')
         parser.add_argument(
             '--no-positions',
             dest='with_positions',
@@ -174,6 +178,9 @@ class Optimize(object):
     def optimize_bucket(self, p, origin_crushmap, bucket):
         if len(bucket.get('children', [])) == 0:
             return None
+        if bucket.get('algorithm', 'straw2') != 'straw2':
+            raise ValueError(bucket['name'] + ' algorithm is ' + bucket['algorithm'] +
+                             ', only straw2 can be optimized')
         log.warning(bucket['name'] + " optimizing")
         crushmap = copy.deepcopy(origin_crushmap)
         if self.args.with_positions:
@@ -186,6 +193,10 @@ class Optimize(object):
             count = self.optimize_replica(p, origin_crushmap,
                                           crushmap, bucket,
                                           self.args.replication_count, 0)
+        if count > 0:
+            log.warning(bucket['name'] + " wants to swap " + str(count) + " objects")
+        else:
+            log.warning(bucket['name'] + " already optimized")
         return (count, self.get_choose_arg(crushmap, bucket))
 
     def optimize_replica(self, p, origin_crushmap,
@@ -210,6 +221,8 @@ class Optimize(object):
 
         log.info(bucket['name'] + " optimizing replica " + str(replication_count) + " " +
                  str(list(id2weight.values())))
+        log.debug(bucket['name'] + " optimizing replica " + str(replication_count) + " " +
+                  str(dict(id2weight)))
         c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(crushmap)
 
@@ -228,15 +241,14 @@ class Optimize(object):
         no_improvement = 0
         max_iterations = 1000
         from_to_count = 0
+        best_weights = list(id2weight.values())
         for iterations in range(max_iterations):
-            previous_weights = choose_arg['weight_set'][choose_arg_position]
             choose_arg['weight_set'][choose_arg_position] = list(id2weight.values())
             c.parse(crushmap)
             try:
                 z = a.run_simulation(c, take, failure_domain)
             except BadMapping:
                 log.error("stop, got one bad mapping with " + str(id2weight.values()))
-                choose_arg['weight_set'][choose_arg_position] = previous_weights
                 break
             z = z.reset_index()
             d = z[s].copy()
@@ -251,16 +263,15 @@ class Optimize(object):
                     best_weights = list(id2weight.values())
                     no_improvement = 0
                 if no_improvement >= improve_tolerance:
-                    choose_arg['weight_set'][choose_arg_position] = best_weights
+                    log.info("stop because " + str(no_improvement) + " tries")
                     break
             else:
                 best_weights = list(id2weight.values())
                 previous_delta = delta
-            log.debug(bucket['name'] + " delta " + str(delta) +
-                      " no_improvement " + str(no_improvement))
-            d = d.sort_values('~delta~', ascending=False)
-            if d.iloc[0]['~delta~'] <= 0 or d.iloc[-1]['~delta~'] >= 0:
+            if delta == 0:
+                log.info("stop because the distribution is perfect")
                 break
+            log.info(bucket['name'] + " delta " + str(delta))
             if self.args.step and no_improvement == 0:
                 compare_instance.set_destination(c)
                 (from_to, in_out) = compare_instance.compare_bucket(bucket)
@@ -269,23 +280,38 @@ class Optimize(object):
                 log.debug("moved from_to " + str(from_to_count) +
                           " in_out " + str(in_out_count))
                 if from_to_count > self.args.step:
-                    log.debug("stopped because moved " + str(from_to_count) +
-                              " --step " + str(self.args.step))
+                    log.info("stopped because moved " + str(from_to_count) +
+                             " --step " + str(self.args.step))
                     break
+            d = d.sort_values('~delta~', ascending=False)
+            if d.iloc[0]['~delta~'] <= 0 or d.iloc[-1]['~delta~'] >= 0:
+                log.info("stop because [" + str(d.iloc[0]['~delta~']) + "," +
+                         str(d.iloc[-1]['~delta~']) + "]")
+                break
             # there should not be a need to keep the sum of the weights to the same value, they
             # are only used locally for placement and have no impact on the upper weights
             # nor are they derived from the weights from below *HOWEVER* in case of a failure
             # the weights need to be as close as possible from the target weight to limit
             # the negative impact
-            shift = id2weight[d.iloc[0]['~id~']] * min(0.01, d.iloc[0]['~delta%~'])
-            if id2weight[d.iloc[-1]['~id~']] < shift:
+            shift = int(id2weight[d.iloc[0]['~id~']] * min(0.01, abs(d.iloc[0]['~delta%~'])))
+            if shift <= 0:
+                log.info("stop because shift is zero")
                 break
+            log.debug("shift from " + str(d.iloc[0]['~id~']) +
+                      " to " + str(d.iloc[-1]['~id~']))
             id2weight[d.iloc[0]['~id~']] -= shift
             id2weight[d.iloc[-1]['~id~']] += shift
+
+        choose_arg['weight_set'][choose_arg_position] = best_weights
+        c.parse(crushmap)
+        compare_instance.set_destination(c)
+        (from_to, in_out) = compare_instance.compare_bucket(bucket)
+        from_to_count = sum(map(lambda x: sum(x.values()), from_to.values()))
+
         if iterations >= max_iterations - 1:
-            log.debug("stopped after " + str(iterations))
-        log.warning(bucket['name'] + " replica " + str(replication_count) + " optimized")
-        log.info(bucket['name'] + " weights " + str(list(id2weight.values())))
+            log.info("stopped after " + str(iterations))
+        log.info(bucket['name'] + " replica " + str(replication_count) + " optimized")
+        log.info(bucket['name'] + " weights " + str(choose_arg['weight_set'][choose_arg_position]))
         return from_to_count
 
     def optimize(self, crushmap):
@@ -306,20 +332,29 @@ class Optimize(object):
         a = self.main.clone().constructor(['analyze'] + p)
 
         if self.args.multithread:
+            from multiprocessing import Pool
             pool = Pool()
         children = [c.find_bucket(take)]
         total_count = 0
-        while len(children) > 0:
+        over_step = False
+        while not over_step and len(children) > 0:
             a = [(self, p, c.get_crushmap(), item) for item in children]
             if self.args.multithread:
-                r = list(filter(None, pool.map(top_optimize, a)))
+                r = list(pool.map(top_optimize, a))
             else:
-                r = list(filter(None, map(top_optimize, a)))
-            if r:
-                total_count += sum([x[0] for x in r])
-                choose_args = [x[1] for x in r]
-                c.update_choose_args(self.args.choose_args, choose_args)
-                if self.args.step and total_count > self.args.step:
+                r = list(map(top_optimize, a))
+            for i in range(len(children)):
+                if r[i] is None:
+                    continue
+                (count, choose_arg) = r[i]
+                total_count += count
+                c.update_choose_args(self.args.choose_args, [choose_arg])
+                log.info(children[i]['name'] + " weights updated with " + str(choose_arg))
+                if self.args.step and count > 0:
+                    log.warning(children[i]['name'] + " will swap " +
+                                str(count) + " objects")
+                over_step = self.args.step and total_count > self.args.step
+                if over_step:
                     break
             nc = []
             for item in children:
@@ -336,3 +371,9 @@ class Optimize(object):
             raise Exception("missing --choose-args")
         (count, crushmap) = self.optimize(crushmap)
         self.main.crushmap_to_file(crushmap)
+        if self.args.step and self.args.with_forecast:
+            step = 2
+            while count > 0:
+                (count, crushmap) = self.optimize(crushmap)
+                log.warning("step " + str(step) + " moves " + str(count) + " objects")
+                step += 1

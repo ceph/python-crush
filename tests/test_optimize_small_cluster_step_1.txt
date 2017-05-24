@@ -1,0 +1,470 @@
+# begin crush map
+tunable choose_local_tries 0
+tunable choose_local_fallback_tries 0
+tunable choose_total_tries 50
+tunable chooseleaf_descend_once 1
+tunable chooseleaf_vary_r 1
+tunable chooseleaf_stable 1
+tunable straw_calc_version 2
+tunable allowed_bucket_algs 54
+
+# devices
+device 0 osd.0
+device 1 osd.1
+device 2 osd.2
+device 3 osd.3
+device 4 osd.4
+device 5 osd.5
+device 6 osd.6
+device 7 osd.7
+device 8 osd.8
+device 9 osd.9
+device 10 osd.10
+device 11 osd.11
+device 12 osd.12
+device 13 osd.13
+device 14 osd.14
+device 15 osd.15
+device 16 osd.16
+device 17 osd.17
+device 18 osd.18
+device 19 osd.19
+device 20 osd.20
+device 21 osd.21
+device 22 osd.22
+device 23 osd.23
+device 24 osd.24
+device 25 osd.25
+device 26 osd.26
+device 27 osd.27
+device 28 osd.28
+device 29 osd.29
+device 30 osd.30
+device 31 osd.31
+device 32 osd.32
+device 33 osd.33
+device 34 osd.34
+device 35 osd.35
+device 36 osd.36
+device 37 osd.37
+device 38 osd.38
+device 39 device39
+device 40 osd.40
+device 41 osd.41
+device 42 osd.42
+device 43 osd.43
+device 44 osd.44
+device 45 osd.45
+device 46 osd.46
+device 47 osd.47
+device 48 osd.48
+device 49 osd.49
+device 50 osd.50
+device 51 osd.51
+device 52 osd.52
+device 53 osd.53
+device 54 osd.54
+device 55 osd.55
+device 56 osd.56
+device 57 osd.57
+device 58 osd.58
+device 59 osd.59
+device 60 osd.60
+device 61 osd.61
+device 62 osd.62
+device 63 osd.63
+device 64 osd.64
+device 65 osd.65
+device 66 osd.66
+device 67 osd.67
+device 68 osd.68
+device 69 osd.69
+device 70 osd.70
+device 71 osd.71
+device 72 osd.72
+device 73 osd.73
+device 74 osd.74
+device 75 osd.75
+device 76 osd.76
+device 77 osd.77
+device 78 osd.78
+device 79 osd.79
+device 80 osd.80
+device 81 osd.81
+device 82 osd.82
+device 83 osd.83
+device 84 osd.84
+device 85 osd.85
+device 86 osd.86
+device 87 osd.87
+device 88 osd.88
+
+# types
+type 0 osd
+type 1 host
+type 2 rack
+type 3 row
+type 4 room
+type 5 datacenter
+type 6 root
+
+# buckets
+host cloud3-1359 {
+	id -2		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.24 weight 0.800
+	item osd.25 weight 0.800
+	item osd.27 weight 0.800
+	item osd.72 weight 0.800
+	item osd.0 weight 0.800
+	item osd.1 weight 0.800
+	item osd.2 weight 0.800
+	item osd.3 weight 0.800
+}
+host cloud3-1360 {
+	id -3		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.4 weight 0.800
+	item osd.5 weight 0.800
+	item osd.6 weight 0.800
+	item osd.7 weight 0.800
+	item osd.28 weight 0.800
+	item osd.33 weight 0.800
+	item osd.38 weight 0.800
+	item osd.43 weight 0.800
+}
+host cloud3-1361 {
+	id -4		# do not change unnecessarily
+	# weight 6.480
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.8 weight 0.800
+	item osd.9 weight 0.800
+	item osd.10 weight 0.800
+	item osd.11 weight 0.800
+	item osd.29 weight 0.800
+	item osd.44 weight 0.800
+	item osd.34 weight 0.840
+	item osd.88 weight 0.840
+}
+host cloud3-1362 {
+	id -5		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.12 weight 0.800
+	item osd.13 weight 0.800
+	item osd.14 weight 0.800
+	item osd.15 weight 0.800
+	item osd.30 weight 0.800
+	item osd.35 weight 0.800
+	item osd.40 weight 0.800
+	item osd.45 weight 0.800
+}
+host cloud3-1363 {
+	id -6		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.16 weight 0.800
+	item osd.17 weight 0.800
+	item osd.18 weight 0.800
+	item osd.19 weight 0.800
+	item osd.31 weight 0.800
+	item osd.36 weight 0.800
+	item osd.41 weight 0.800
+	item osd.46 weight 0.800
+}
+host cloud3-1364 {
+	id -7		# do not change unnecessarily
+	# weight 6.520
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.20 weight 0.800
+	item osd.21 weight 0.840
+	item osd.22 weight 0.840
+	item osd.37 weight 0.800
+	item osd.42 weight 0.800
+	item osd.47 weight 0.800
+	item osd.26 weight 0.800
+	item osd.78 weight 0.840
+}
+host cloud3-1396 {
+	id -8		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.48 weight 0.800
+	item osd.51 weight 0.800
+	item osd.54 weight 0.800
+	item osd.57 weight 0.800
+	item osd.60 weight 0.800
+	item osd.63 weight 0.800
+	item osd.66 weight 0.800
+	item osd.69 weight 0.800
+	item osd.32 weight 1.720
+	item osd.75 weight 1.720
+}
+host cloud3-1397 {
+	id -9		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.49 weight 0.800
+	item osd.52 weight 0.800
+	item osd.55 weight 0.800
+	item osd.58 weight 0.800
+	item osd.61 weight 0.800
+	item osd.64 weight 0.800
+	item osd.67 weight 0.800
+	item osd.70 weight 0.800
+	item osd.73 weight 1.720
+	item osd.76 weight 1.720
+}
+host cloud3-1398 {
+	id -10		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.50 weight 0.800
+	item osd.53 weight 0.800
+	item osd.56 weight 0.800
+	item osd.59 weight 0.800
+	item osd.62 weight 0.800
+	item osd.65 weight 0.800
+	item osd.68 weight 0.800
+	item osd.71 weight 0.800
+	item osd.74 weight 1.720
+	item osd.77 weight 1.720
+}
+host cloud3-1456 {
+	id -11		# do not change unnecessarily
+	# weight 10.160
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.23 weight 0.840
+	item osd.79 weight 0.840
+	item osd.80 weight 0.840
+	item osd.81 weight 0.840
+	item osd.82 weight 0.840
+	item osd.83 weight 0.840
+	item osd.84 weight 0.840
+	item osd.85 weight 0.840
+	item osd.86 weight 1.720
+	item osd.87 weight 1.720
+}
+root default {
+	id -1		# do not change unnecessarily
+	# weight 78.279
+	alg straw2
+	hash 0	# rjenkins1
+	item cloud3-1359 weight 6.400
+	item cloud3-1360 weight 6.400
+	item cloud3-1361 weight 6.225
+	item cloud3-1362 weight 6.336
+	item cloud3-1363 weight 6.400
+	item cloud3-1364 weight 6.390
+	item cloud3-1396 weight 9.840
+	item cloud3-1397 weight 9.968
+	item cloud3-1398 weight 9.840
+	item cloud3-1456 weight 10.481
+}
+host cloud3-1359-target-weight {
+	id -13		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.24 weight 0.800
+	item osd.25 weight 0.800
+	item osd.27 weight 0.800
+	item osd.72 weight 0.800
+	item osd.0 weight 0.800
+	item osd.1 weight 0.800
+	item osd.2 weight 0.800
+	item osd.3 weight 0.800
+}
+host cloud3-1360-target-weight {
+	id -14		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.4 weight 0.800
+	item osd.5 weight 0.800
+	item osd.6 weight 0.800
+	item osd.7 weight 0.800
+	item osd.28 weight 0.800
+	item osd.33 weight 0.800
+	item osd.38 weight 0.800
+	item osd.43 weight 0.800
+}
+host cloud3-1361-target-weight {
+	id -15		# do not change unnecessarily
+	# weight 6.480
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.8 weight 0.800
+	item osd.9 weight 0.800
+	item osd.10 weight 0.800
+	item osd.11 weight 0.800
+	item osd.29 weight 0.800
+	item osd.44 weight 0.800
+	item osd.34 weight 0.840
+	item osd.88 weight 0.840
+}
+host cloud3-1362-target-weight {
+	id -16		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.12 weight 0.800
+	item osd.13 weight 0.800
+	item osd.14 weight 0.800
+	item osd.15 weight 0.800
+	item osd.30 weight 0.800
+	item osd.35 weight 0.800
+	item osd.40 weight 0.800
+	item osd.45 weight 0.800
+}
+host cloud3-1363-target-weight {
+	id -17		# do not change unnecessarily
+	# weight 6.400
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.16 weight 0.800
+	item osd.17 weight 0.800
+	item osd.18 weight 0.800
+	item osd.19 weight 0.800
+	item osd.31 weight 0.800
+	item osd.36 weight 0.800
+	item osd.41 weight 0.800
+	item osd.46 weight 0.800
+}
+host cloud3-1364-target-weight {
+	id -18		# do not change unnecessarily
+	# weight 6.520
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.20 weight 0.800
+	item osd.21 weight 0.840
+	item osd.22 weight 0.840
+	item osd.37 weight 0.800
+	item osd.42 weight 0.800
+	item osd.47 weight 0.800
+	item osd.26 weight 0.800
+	item osd.78 weight 0.840
+}
+host cloud3-1396-target-weight {
+	id -19		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.48 weight 0.800
+	item osd.51 weight 0.800
+	item osd.54 weight 0.800
+	item osd.57 weight 0.800
+	item osd.60 weight 0.800
+	item osd.63 weight 0.800
+	item osd.66 weight 0.800
+	item osd.69 weight 0.800
+	item osd.32 weight 1.720
+	item osd.75 weight 1.720
+}
+host cloud3-1397-target-weight {
+	id -20		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.49 weight 0.800
+	item osd.52 weight 0.800
+	item osd.55 weight 0.800
+	item osd.58 weight 0.800
+	item osd.61 weight 0.800
+	item osd.64 weight 0.800
+	item osd.67 weight 0.800
+	item osd.70 weight 0.800
+	item osd.73 weight 1.720
+	item osd.76 weight 1.720
+}
+host cloud3-1398-target-weight {
+	id -21		# do not change unnecessarily
+	# weight 9.840
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.50 weight 0.800
+	item osd.53 weight 0.800
+	item osd.56 weight 0.800
+	item osd.59 weight 0.800
+	item osd.62 weight 0.800
+	item osd.65 weight 0.800
+	item osd.68 weight 0.800
+	item osd.71 weight 0.800
+	item osd.74 weight 1.720
+	item osd.77 weight 1.720
+}
+host cloud3-1456-target-weight {
+	id -22		# do not change unnecessarily
+	# weight 10.160
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.23 weight 0.840
+	item osd.79 weight 0.840
+	item osd.80 weight 0.840
+	item osd.81 weight 0.840
+	item osd.82 weight 0.840
+	item osd.83 weight 0.840
+	item osd.84 weight 0.840
+	item osd.85 weight 0.840
+	item osd.86 weight 1.720
+	item osd.87 weight 1.720
+}
+root default-target-weight {
+	id -12		# do not change unnecessarily
+	# weight 78.279
+	alg straw2
+	hash 0	# rjenkins1
+	item cloud3-1359-target-weight weight 6.400
+	item cloud3-1360-target-weight weight 6.400
+	item cloud3-1361-target-weight weight 6.480
+	item cloud3-1362-target-weight weight 6.400
+	item cloud3-1363-target-weight weight 6.400
+	item cloud3-1364-target-weight weight 6.520
+	item cloud3-1396-target-weight weight 9.840
+	item cloud3-1397-target-weight weight 9.840
+	item cloud3-1398-target-weight weight 9.840
+	item cloud3-1456-target-weight weight 10.160
+}
+
+# rules
+rule rbd {
+	ruleset 2
+	type replicated
+	min_size 1
+	max_size 10
+	step take default
+	step chooseleaf firstn 0 type host
+	step emit
+}
+rule metadata {
+	ruleset 1
+	type replicated
+	min_size 1
+	max_size 10
+	step take default
+	step chooseleaf firstn 0 type host
+	step emit
+}
+rule data {
+	ruleset 0
+	type replicated
+	min_size 1
+	max_size 10
+	step take default
+	step chooseleaf firstn 0 type host
+	step emit
+}
+
+# end crush map

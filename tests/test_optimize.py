@@ -398,7 +398,6 @@ class TestOptimize(object):
         pg_num = 2048
         size = 3
         a = Ceph().constructor([
-#            '--verbose',
             'optimize',
             '--no-multithread',
             '--replication-count', str(size),
@@ -420,6 +419,45 @@ class TestOptimize(object):
                 break
             print("moved " + str(count) + " values")
         assert converged
+
+    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    def test_optimize_step_forecast(self, caplog):
+        expected_path = 'tests/test_optimize_small_cluster_step_1.txt'
+        out_path = expected_path + ".err"
+        # few samples
+        pg_num = 2048
+        size = 3
+        Ceph().main([
+            '--verbose',
+            'optimize',
+            '--no-multithread',
+            '--crushmap', 'tests/test_optimize_small_cluster.json',
+            '--out-path', out_path,
+            '--out-format', 'txt',
+            '--replication-count', str(size),
+            '--pool', '2',
+            '--pg-num', str(pg_num),
+            '--pgp-num', str(pg_num),
+            '--rule', 'data',
+            '--choose-args', '0',
+            '--step', '64',
+        ])
+
+        assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+        os.unlink(out_path)
+        assert 'step 2 moves 77 objects' in caplog.text()
+        assert 'step 3 moves 69 objects' in caplog.text()
+        assert 'step 4 moves 66 objects' in caplog.text()
+        assert 'step 5 moves 127 objects' in caplog.text()
+        assert 'step 6 moves 136 objects' in caplog.text()
+        assert 'step 7 moves 85 objects' in caplog.text()
+        assert 'step 8 moves 89 objects' in caplog.text()
+        assert 'step 9 moves 95 objects' in caplog.text()
+        assert 'step 10 moves 94 objects' in caplog.text()
+        assert 'step 11 moves 65 objects' in caplog.text()
+        assert 'step 12 moves 97 objects' in caplog.text()
+        assert 'step 13 moves 35 objects' in caplog.text()
+        assert 'step 14 moves 0 objects' in caplog.text()
 
 # Local Variables:
 # compile-command: "cd .. ; ALL=yes tox -e py27 -- -s -vv tests/test_optimize.py"
