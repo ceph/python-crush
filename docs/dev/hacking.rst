@@ -82,7 +82,7 @@ Debugging readthedocs
 ---------------------
 
 - https://readthedocs.org/dashboard/crush/versions/
-- click "Active" for the debian branch from http://libcrush.org/main/python-crush/
+- click "Active" for the desired branch from http://libcrush.org/main/python-crush/
 - https://readthedocs.org/projects/crush/builds/
 - explicitly ask a build for the designated branch, does not happen automatically
 - in https://readthedocs.org/projects/crush/builds/\*/ check all lines from the bottom
