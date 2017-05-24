@@ -10,22 +10,22 @@ crushmap = """
         {
          "type": "host", "name": "host0", "id": -2,
          "children": [
-          { "id": 0, "name": "device0", "weight": 1.0 },
-          { "id": 1, "name": "device1", "weight": 2.0 }
+          { "id": 0, "name": "device0", "weight": 65536 },
+          { "id": 1, "name": "device1", "weight": 131072 }
          ]
         },
         {
          "type": "host", "name": "host1", "id": -3,
          "children": [
-          { "id": 2, "name": "device2", "weight": 1.0 },
-          { "id": 3, "name": "device3", "weight": 2.0 }
+          { "id": 2, "name": "device2", "weight": 65536 },
+          { "id": 3, "name": "device3", "weight": 131072 }
          ]
         },
         {
          "type": "host", "name": "host2", "id": -4,
          "children": [
-          { "id": 4, "name": "device4", "weight": 1.0 },
-          { "id": 5, "name": "device5", "weight": 2.0 }
+          { "id": 4, "name": "device4", "weight": 65536 },
+          { "id": 5, "name": "device5", "weight": 131072 }
          ]
         }
       ]
@@ -44,5 +44,5 @@ crushmap = """
 
 c = Crush()
 c.parse(json.loads(crushmap))
-print c.map(rule="data", value=1234, replication_count=1)
-print c.map(rule="data", value=1234, replication_count=2)
+print(c.map(rule="data", value=1234, replication_count=1))
+print(c.map(rule="data", value=1234, replication_count=2))

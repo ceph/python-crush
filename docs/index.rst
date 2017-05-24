@@ -99,14 +99,14 @@ Given a Ceph crushmap, show which hosts will be overused or underused::
 Rebalance a Ceph pool::
 
     $ ceph report > report.json
-    $ crush optimize --in-path report.json --out-path crushmap.crush --pool 3
+    $ crush optimize --crushmap report.json --out-path optimized.crush --pool 3
     default optimizing
     default wants to swap 10 objects
     default will swap 10 objects
     cloud3-1359 optimizing
     cloud3-1360 optimizing
     ...
-    $ ceph osd setcrushmap crushmap.crush
+    $ ceph osd setcrushmap -i optimized.crush
 
 CLI
 ---
@@ -135,6 +135,15 @@ crushmaps. Each subcommand is fully documented with `crush subcommand -h`::
         compare             Compare crushmaps
         optimize            Optimize crushmaps
         convert             Convert crushmaps
+
+Cookbook
+--------
+
+.. toctree::
+   :maxdepth: 1
+
+   ceph/optimize
+
 
 Contributor Guide
 -----------------
