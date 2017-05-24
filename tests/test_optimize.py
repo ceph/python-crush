@@ -135,6 +135,7 @@ class TestOptimize(object):
                   str(b_span) + " after " + str(a_span))
             assert a_span <= b_span / gain
 
+    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
     def test_overweighted(self):
         # [ 5 1 1 1 1]
         size = 2
@@ -231,7 +232,6 @@ class TestOptimize(object):
         ]
         self.run_optimize(p, crushmap, 10)
 
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
     def test_optimize_1(self):
         # [ 5 1 1 1 1 1 1 1 1 1 ]
         # few samples
@@ -394,6 +394,7 @@ class TestOptimize(object):
         ]
         self.run_optimize(p, 'tests/test_optimize_big_cluster.json', 4)
 
+    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
     def test_optimize_step(self):
         pg_num = 2048
         size = 3
@@ -445,19 +446,14 @@ class TestOptimize(object):
 
         assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
         os.unlink(out_path)
-        assert 'step 2 moves 77 objects' in caplog.text()
-        assert 'step 3 moves 69 objects' in caplog.text()
-        assert 'step 4 moves 66 objects' in caplog.text()
-        assert 'step 5 moves 127 objects' in caplog.text()
-        assert 'step 6 moves 136 objects' in caplog.text()
-        assert 'step 7 moves 85 objects' in caplog.text()
-        assert 'step 8 moves 89 objects' in caplog.text()
-        assert 'step 9 moves 95 objects' in caplog.text()
-        assert 'step 10 moves 94 objects' in caplog.text()
-        assert 'step 11 moves 65 objects' in caplog.text()
-        assert 'step 12 moves 97 objects' in caplog.text()
-        assert 'step 13 moves 35 objects' in caplog.text()
-        assert 'step 14 moves 0 objects' in caplog.text()
+        assert 'step 2 moves 73 objects' in caplog.text()
+        assert 'step 3 moves 76 objects' in caplog.text()
+        assert 'step 4 moves 93 objects' in caplog.text()
+        assert 'step 5 moves 80 objects' in caplog.text()
+        assert 'step 6 moves 100 objects' in caplog.text()
+        assert 'step 7 moves 80 objects' in caplog.text()
+        assert 'step 8 moves 53 objects' in caplog.text()
+        assert 'step 9 moves 0 objects' in caplog.text()
 
 # Local Variables:
 # compile-command: "cd .. ; ALL=yes tox -e py27 -- -s -vv tests/test_optimize.py"

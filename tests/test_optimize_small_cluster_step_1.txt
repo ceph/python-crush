@@ -448,8 +448,8 @@ rule rbd {
 	step chooseleaf firstn 0 type host
 	step emit
 }
-rule metadata {
-	ruleset 1
+rule data {
+	ruleset 0
 	type replicated
 	min_size 1
 	max_size 10
@@ -457,8 +457,8 @@ rule metadata {
 	step chooseleaf firstn 0 type host
 	step emit
 }
-rule data {
-	ruleset 0
+rule metadata {
+	ruleset 1
 	type replicated
 	min_size 1
 	max_size 10
