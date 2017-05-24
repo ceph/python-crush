@@ -127,6 +127,11 @@ class Optimize(object):
             stops after the optimization step that moves one value or
             more.
 
+            When --step is specified, the crushmap for the first step
+            is written to --out-path and the optimization process
+            continues to show how many steps remain before the rule
+            cannot be optimized any more. The --no-forecast flag
+            forces optimization to stop right after the first step.
             """),
             epilog=textwrap.dedent("""
             Examples:
@@ -372,6 +377,9 @@ class Optimize(object):
         (count, crushmap) = self.optimize(crushmap)
         self.main.crushmap_to_file(crushmap)
         if self.args.step and self.args.with_forecast:
+            log.warning("the optimized crushmap was written to " + self.args.out_path)
+            log.warning("now running simulation of the next steps")
+            log.warning("this can be disabled with --no-forecast")
             step = 2
             while count > 0:
                 (count, crushmap) = self.optimize(crushmap)
