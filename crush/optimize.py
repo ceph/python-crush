@@ -118,12 +118,12 @@ class Optimize(object):
             cannot handle multiple weights per item.
 
             Optimization is an iterative process that can be stopped
-            at any time and resumed later. If the --step flag is not
-            specified, the optimization runs until it cannot get
-            closer to the desired distribution. If specified, --step
-            stops optimization if it moves more than the specified
-            number of values. It is useful to optimize a crushmap
-            while controling data movement. For instance --step 1
+            and resumed later. If the --step flag is not specified,
+            the optimization runs until it cannot get closer to the
+            desired distribution. If specified, the value of the
+            --step flag is the number of items that are moved by
+            changing the bucket weights. The optimization will stop if
+            more than --step items are moved. For instance --step 1
             stops after the optimization step that moves one value or
             more.
 
@@ -135,11 +135,11 @@ class Optimize(object):
                   --choose-args optimize --rule replicated_ruleset \\
                   --replication-count 3 --crushmap map.json \\
                   --out-path optimized.json
-            2017-05-15 11:15:01,256 INFO default done, replica 1
-            2017-05-15 11:15:13,363 INFO default done, replica 2
-            2017-05-15 11:15:16,488 INFO default done, replica 3
-            2017-05-15 11:15:18,959 INFO cloud6-1433 done, replica 1
-            2017-05-15 11:15:19,977 INFO cloud6-1429 done, replica 1
+            2017-05-24 11:12:34,752 default optimizing
+            2017-05-24 11:12:39,361 default wants to swap 10 objects
+            2017-05-24 11:12:39,362 default will swap 10 objects
+            2017-05-24 11:12:39,369 cloud3-1359 optimizing
+            2017-05-24 11:12:39,370 cloud3-1360 optimizing
             ...
             """),
             help='Optimize crushmaps',
