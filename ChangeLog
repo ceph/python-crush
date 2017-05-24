@@ -1,6 +1,54 @@
 CHANGES
 =======
 
+1.0.27
+------
+
+* version 1.0.27
+* ceph: add optimization cookbook
+* optimize: reduce the number of tests run by default
+* optimize: update index.rst
+* ceph: default output format is crush
+* optimize: clarify --step documentation
+* optimize: display all steps when --step and keep the first
+* weights must be represented as Q16.16 internally
+* ceph: use CrushWrapper::has\_incompat\_choose\_args
+* ceph: fix writing pre-jewel & choose\_args
+* libcrush: implement ceph\_incompat
+* libcrush: split ceph\_write
+* doc: reference to the last sync with Ceph
+* libcrush: extract from Ceph
+* libcrush: sync with Ceph
+* Revert "libcrush: extract from Ceph"
+* crush: Crush parsing messages only for debug
+* main: rework debug/warning/info
+* libcrush: clear previous choose\_args, always
+* optimize: remove spurious args
+* ceph: extract crushmap from ceph reports
+* ceph: version based on the first letter
+* crush: discard osd weights that are the default
+* split Ceph specific out of Crush
+* ceph: s/hook/main/
+* ceph: make sure divisions are always float
+* convert: convert to Ceph pre-luminous format
+* tests: crush do not enable logging DEBUG
+* main: implement --debug
+* compare: implement choose\_args
+* compare: flake8 fixes
+* analyze: split the analyze function
+* crush: filter/merge must keep empty choose\_args
+* compare: get values from main
+* optimize: reduce uneven distribution in a pool
+* crush: implement update\_choose\_args
+* main: implement clone
+* main: implement pickle
+* analyze: handle BadMapping when analyzing failure
+* main: implement get\_trimmed\_argv
+* analyze: s/hooks/main/
+* analyze: implement --choose-args
+* move to python-crush after clone
+* bump 1.0.27
+
 1.0.26
 ------
 
