@@ -90,13 +90,23 @@ Given a Ceph crushmap, show which hosts will be overused or underused::
     $ ceph osd crush dump > crushmap-ceph.json
     $ crush analyze --rule replicated --crushmap crushmap-ceph.json
 
-Output::
-
             ~id~  ~weight~  ~objects~  ~over/under used %~
     ~name~
     host2     -4       1.0         70                  5.0
     host0     -2       1.0         65                 -2.5
     host1     -3       1.0         65                 -2.5
+
+Rebalance a Ceph pool::
+
+    $ ceph report > report.json
+    $ crush optimize --crushmap report.json --out-path optimized.crush --pool 3
+    default optimizing
+    default wants to swap 10 objects
+    default will swap 10 objects
+    cloud3-1359 optimizing
+    cloud3-1360 optimizing
+    ...
+    $ ceph osd setcrushmap -i optimized.crush
 
 CLI
 ---
@@ -105,24 +115,35 @@ The `crush` command has a set of subcommands to manipulate and analyze
 crushmaps. Each subcommand is fully documented with `crush subcommand -h`::
 
     $ crush --help
-    usage: crush [-h] [-v] [--no-backward-compatibility] {analyze,compare,convert} ...
+    usage: crush [-h] [-v] [--debug] [--no-backward-compatibility] {analyze,compare,optimize,convert} ...
 
     Ceph crush compare and analyze
 
     optional arguments:
       -h, --help            show this help message and exit
       -v, --verbose         be more verbose
+      --debug               debugging output, very verbose
       --no-backward-compatibility
                             do not allow backward compatibility tunables (default: allowed)
 
     subcommands:
       valid subcommands
 
-      {analyze,compare,convert}
+      {analyze,compare,optimize,convert}
                             sub-command -h
         analyze             Analyze crushmaps
         compare             Compare crushmaps
+        optimize            Optimize crushmaps
         convert             Convert crushmaps
+
+Cookbook
+--------
+
+.. toctree::
+   :maxdepth: 1
+
+   ceph/optimize
+
 
 Contributor Guide
 -----------------

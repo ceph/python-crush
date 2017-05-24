@@ -528,7 +528,7 @@ class Ceph(main.Main):
         parser.add_argument(
             '--out-format',
             choices=Ceph.formats,
-            default='txt',
+            default='crush',
             help='format of the output file')
         versions = ('h', 'hammer',
                     'j', 'jewel',
