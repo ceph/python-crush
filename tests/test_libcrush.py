@@ -361,7 +361,7 @@ class TestLibCrush(object):
                 'id': -1,
                 'children': [
                     {
-                        'weight': 1.0,
+                        'weight': 1 * 0x10000,
                         'reference_id': -2,
                     },
                     {
@@ -382,7 +382,7 @@ class TestLibCrush(object):
                 'id': -1,
                 'children': [
                     {
-                        'weight': 1.0,
+                        'weight': 1 * 0x10000,
                         'reference_id': 'bad',
                     }
                 ],
@@ -398,7 +398,7 @@ class TestLibCrush(object):
                 'id': -1,
                 'children': [
                     {
-                        'weight': 1.0,
+                        'weight': 1 * 0x10000,
                         'reference_id': 1,
                         'INVALID': 'foo',
                     }
@@ -417,8 +417,9 @@ class TestLibCrush(object):
                 'weight': "some",
             }]
         }
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
+        assert 'must be an int' in str(e.value)
 
     def test_parse_rules_type_wrong(self):
         wrong = {
@@ -791,7 +792,7 @@ class TestLibCrush(object):
                 "1": [
                     {
                         "bucket_id": -1,
-                        "weight_set": [[10]]
+                        "weight_set": [[10 * 0x10000]]
                     },
                 ]
             }
@@ -841,8 +842,9 @@ class TestLibCrush(object):
                 ]
             }
         }
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(RuntimeError) as e:
             LibCrush().parse(wrong)
+        assert "must be an int" in str(e.value)
 
     def test_map_ok_choose_args(self):
         crushmap = {
@@ -873,8 +875,8 @@ class TestLibCrush(object):
                 "id": -(i + 2),
                 "name": "host%d" % i,
                 "children": [
-                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
-                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1 * 0x10000},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2 * 0x10000},
                 ],
             } for i in range(0, 10)
         ])
@@ -882,7 +884,7 @@ class TestLibCrush(object):
             "1": [
                 {
                     "bucket_name": "host9",
-                    "weight_set": [[2.0, 1.0]]  # invert the weights
+                    "weight_set": [[2 * 0x10000, 1 * 0x10000]]  # invert the weights
                 },
             ]
         }
@@ -929,8 +931,8 @@ class TestLibCrush(object):
                 "id": -(i + 2),
                 "name": "host%d" % i,
                 "children": [
-                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
-                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1 * 0x10000},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2 * 0x10000},
                 ],
             } for i in range(0, 10)
         ])
@@ -956,8 +958,8 @@ class TestLibCrush(object):
                             "name": "host0",
                             "type": "host",
                             "children": [
-                                {"id": 0, "name": "device0", "weight": 1.0},
-                                {"id": 1, "name": "device1", "weight": 2.0},
+                                {"id": 0, "name": "device0", "weight": 1 * 0x10000},
+                                {"id": 1, "name": "device1", "weight": 2 * 0x10000},
                             ]
                         }
                     ],
@@ -1019,7 +1021,7 @@ class TestLibCrush(object):
             c.map(rule="data",
                   value=1234,
                   replication_count=1,
-                  weights={"unknowndevice": 1.0})
+                  weights={"unknowndevice": 1 * 0x10000})
         assert 'unknowndevice is not a known device' in str(e.value)
 
         assert c.parse({

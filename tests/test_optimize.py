@@ -141,8 +141,8 @@ class TestOptimize(object):
         pg_num = 2048
 
         hosts_count = 5
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -172,6 +172,7 @@ class TestOptimize(object):
             } for i in range(0, hosts_count)
         ])
         a = Ceph().constructor([
+            '--verbose',
             'optimize',
             '--no-multithread',
             '--replication-count', str(size),
@@ -191,8 +192,8 @@ class TestOptimize(object):
         size = 2
         pg_num = 51200
         hosts_count = 10
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -237,8 +238,8 @@ class TestOptimize(object):
         size = 2
         pg_num = 512
         hosts_count = 10
-        host_weight = [1] * hosts_count
-        host_weight[0] = 5
+        host_weight = [1 * 0x10000] * hosts_count
+        host_weight[0] = 5 * 0x10000
         crushmap = {
             "trees": [
                 {
@@ -283,7 +284,7 @@ class TestOptimize(object):
         size = 2
         hosts_count = 100
         pg_num = hosts_count * 200
-        host_weight = [i for i in range(1, hosts_count + 1)]
+        host_weight = [i * 0x10000 for i in range(1, hosts_count + 1)]
         crushmap = {
             "trees": [
                 {
@@ -328,7 +329,7 @@ class TestOptimize(object):
         size = 2
         pg_num = 512
         hosts_count = 10
-        host_weight = [i % 3 + 1 for i in range(hosts_count)]
+        host_weight = [(i % 3 + 1) * 0x10000 for i in range(hosts_count)]
         crushmap = {
             "trees": [
                 {
@@ -367,35 +368,20 @@ class TestOptimize(object):
         self.run_optimize(p, crushmap, 10)
 
     @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_5(self):
-        # few samples
-        pg_num = 2048
+    def test_optimize_small_cluster(self):
+        pg_num = 4096
         size = 3
         p = [
             '--replication-count', str(size),
-            '--pool', '2',
+            '--pool', '3',
             '--pg-num', str(pg_num),
             '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
+            '--rule', 'data',
         ]
-        self.run_optimize(p, 'tests/test_optimize_5.json', 10)
+        self.run_optimize(p, 'tests/test_optimize_small_cluster.json', 10)
 
     @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_6(self):
-        # few samples
-        pg_num = 2048
-        size = 3
-        p = [
-            '--replication-count', str(size),
-            '--pool', '2',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
-        ]
-        self.run_optimize(p, 'tests/test_optimize_6.json', 10)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_7(self):
+    def test_optimize_big_cluster(self):
         # few samples
         pg_num = 2048
         size = 3
@@ -406,35 +392,72 @@ class TestOptimize(object):
             '--pgp-num', str(pg_num),
             '--rule', 'data',
         ]
-        self.run_optimize(p, 'tests/test_optimize_7.json', 4)
+        self.run_optimize(p, 'tests/test_optimize_big_cluster.json', 4)
 
     def test_optimize_step(self):
-        # few samples
         pg_num = 2048
         size = 3
         a = Ceph().constructor([
-            '--verbose',
             'optimize',
             '--no-multithread',
             '--replication-count', str(size),
-            '--pool', '2',
+            '--pool', '3',
             '--pg-num', str(pg_num),
             '--pgp-num', str(pg_num),
-            '--rule', 'replicated_ruleset',
+            '--rule', 'data',
             '--choose-args', 'optimize',
             '--step', '64',
         ])
         c = Crush(backward_compatibility=True)
-        c.parse('tests/test_optimize_5.json')
+        c.parse('tests/test_optimize_small_cluster.json')
         crushmap = c.get_crushmap()
         converged = False
-        for i in range(10):
+        for i in range(20):
             (count, crushmap) = a.optimize(crushmap)
             if count <= 0:
                 converged = True
                 break
             print("moved " + str(count) + " values")
         assert converged
+
+    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    def test_optimize_step_forecast(self, caplog):
+        expected_path = 'tests/test_optimize_small_cluster_step_1.txt'
+        out_path = expected_path + ".err"
+        # few samples
+        pg_num = 2048
+        size = 3
+        Ceph().main([
+            '--verbose',
+            'optimize',
+            '--no-multithread',
+            '--crushmap', 'tests/test_optimize_small_cluster.json',
+            '--out-path', out_path,
+            '--out-format', 'txt',
+            '--replication-count', str(size),
+            '--pool', '2',
+            '--pg-num', str(pg_num),
+            '--pgp-num', str(pg_num),
+            '--rule', 'data',
+            '--choose-args', '0',
+            '--step', '64',
+        ])
+
+        assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+        os.unlink(out_path)
+        assert 'step 2 moves 77 objects' in caplog.text()
+        assert 'step 3 moves 69 objects' in caplog.text()
+        assert 'step 4 moves 66 objects' in caplog.text()
+        assert 'step 5 moves 127 objects' in caplog.text()
+        assert 'step 6 moves 136 objects' in caplog.text()
+        assert 'step 7 moves 85 objects' in caplog.text()
+        assert 'step 8 moves 89 objects' in caplog.text()
+        assert 'step 9 moves 95 objects' in caplog.text()
+        assert 'step 10 moves 94 objects' in caplog.text()
+        assert 'step 11 moves 65 objects' in caplog.text()
+        assert 'step 12 moves 97 objects' in caplog.text()
+        assert 'step 13 moves 35 objects' in caplog.text()
+        assert 'step 14 moves 0 objects' in caplog.text()
 
 # Local Variables:
 # compile-command: "cd .. ; ALL=yes tox -e py27 -- -s -vv tests/test_optimize.py"

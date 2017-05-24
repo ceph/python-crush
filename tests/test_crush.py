@@ -49,8 +49,8 @@ class TestCrush(object):
                 "id": -(i + 2),
                 "name": "host%d" % i,
                 "children": [
-                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1.0},
-                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2.0},
+                    {"id": (2 * i), "name": "device%02d" % (2 * i), "weight": 1},
+                    {"id": (2 * i + 1), "name": "device%02d" % (2 * i + 1), "weight": 2},
                 ],
             } for i in range(0, 10)
         ])

@@ -189,7 +189,7 @@ class Crush(object):
               "algorithm": "uniform" or "list" or "straw2",
 
               # optional (default: cumulated children weights or none)
-              "weight": <postive float>,
+              "weight": <postive Q16.16>,
 
               # optional (default: none)
               "children": children
@@ -304,13 +304,13 @@ class Crush(object):
               "reference_id": <int>,
 
               # optional (default: 1.0)
-              "weight": <postive float>,
+              "weight": <postive Q16.16>,
             }
 
         The **reference_id** must be equal to the **id** of a bucket or
         device defined in the hierarchy.
 
-        If the **weight** is omitted, it default to 1.0. The
+        If the **weight** is omitted, it default to 0x10000. The
         **weight** must either be set for all references or not at
         all.
         ::
@@ -322,8 +322,8 @@ class Crush(object):
               # mandatory
               "name": <str>,
 
-              # optional (default: 1.0)
-              "weight": <postive float>,
+              # optional (default: 0x10000)
+              "weight": <postive Q16.16>,
             }
 
         The **id** must be a unique positive number.
@@ -333,8 +333,8 @@ class Crush(object):
 
         If the **weight** of a device A is lower than the
         **weight** of a device B, it will be less likely to be used.
-        A common pattern is to set the **weight** to 2.0 for 2TB
-        devices, 1.0 for 1TB devices, 0.5 for 500GB devices, etc.
+        A common pattern is to set the **weight** to 0x20000 for 2TB
+        devices, 0x10000 for 1TB devices, 0x08000 for 500GB devices, etc.
         ::
 
             rules = {
@@ -488,8 +488,8 @@ class Crush(object):
         ::
 
             choose_args_weight_set = [
-               [ <positive float>, <positive float>, ... ], # position 0
-               [ <positive float>, <positive float>, ... ], # position 1
+               [ <positive Q16.16>, <positive Q16.16>, ... ], # position 0
+               [ <positive Q16.16>, <positive Q16.16>, ... ], # position 1
                ...
             ]
 
@@ -568,8 +568,8 @@ class Crush(object):
             {
                "name": "bucket1":
                "children": [
-                   { "name": "device1", "id": 1, "weight": 1.0 },
-                   { "name": "device2", "id": 2, "weight": 2.0 },
+                   { "name": "device1", "id": 1, "weight": 1 * 0x10000 },
+                   { "name": "device2", "id": 2, "weight": 2 * 0x10000 },
                ]
             }
 
@@ -578,7 +578,7 @@ class Crush(object):
 
             map(85, choose_args=[
               { "bucket_name": "bucket1",
-                "weight_set": [ [ 2.0, 1.0 ] ]
+                "weight_set": [ [ 2 * 0x10000, 1 * 0x10000 ] ]
               }]) == [ 'device1' ]
 
         Similarly the result can be influenced by providing
