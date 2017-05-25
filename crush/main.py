@@ -75,7 +75,7 @@ class Main(object):
         self.parse(state[0])
 
     def clone(self):
-        raise Exception('not implemented')
+        return Main()
 
     def parse(self, argv):
         self.argv = argv
