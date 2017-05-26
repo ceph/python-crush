@@ -218,11 +218,13 @@ class TestOptimize(object):
         self.analyze_optimization(p, origin_crushmap, optimized, gain)
 
     def analyze_optimization(self, p, crushmap, optimized, gain):
-        a = Ceph().constructor(['analyze', '--choose-args', 'optimize'] + p)
+        a = Ceph().constructor(['analyze'] + p)
         before = a.analyze_crushmap(crushmap)
-        after = a.analyze_crushmap(optimized)
         print("============= before")
         print(str(before))
+
+        a = Ceph().constructor(['analyze', '--choose-args', 'optimize'] + p)
+        after = a.analyze_crushmap(optimized)
         print("============= after")
         print(str(after))
 
