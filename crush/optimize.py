@@ -28,7 +28,7 @@ import textwrap
 from crush import Crush
 from crush import analyze
 from crush import compare
-from crush.analyze import Analyze, BadMapping
+from crush.analyze import Analyze
 
 log = logging.getLogger(__name__)
 
@@ -250,11 +250,7 @@ class Optimize(object):
         for iterations in range(max_iterations):
             choose_arg['weight_set'][choose_arg_position] = list(id2weight.values())
             c.parse(crushmap)
-            try:
-                z = a.run_simulation(c, take, failure_domain)
-            except BadMapping:
-                log.error("stop, got one bad mapping with " + str(id2weight.values()))
-                break
+            z = a.run_simulation(c, take, failure_domain)
             z = z.reset_index()
             d = z[s].copy()
             d['~delta~'] = d['~objects~'] - d['~expected~']

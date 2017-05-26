@@ -55,53 +55,53 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
-    def test_analyze_out_of_bounds(self):
+    def make_analyze(self, size, host_weight):
+        p = [
+            '--replication-count', str(size),
+            '--values-count', '2048',
+        ]
 
-        def make(size, host_weight):
-            p = [
-                '--replication-count', str(size),
-                '--values-count', '2048',
-            ]
-
-            hosts_count = len(host_weight)
-            crushmap = {
-                "trees": [
-                    {
-                        "type": "root",
-                        "id": -1,
-                        "name": "dc1",
-                        "weight": sum(host_weight),
-                        "children": [],
-                    }
-                ],
-                "rules": {
-                    "firstn": [
-                        ["take", "dc1"],
-                        ["set_choose_tries", 100],
-                        ["choose", "firstn", 0, "type", "host"],
-                        ["emit"]
-                    ],
-                }
-            }
-            crushmap['trees'][0]['children'].extend([
+        hosts_count = len(host_weight)
+        crushmap = {
+            "trees": [
                 {
-                    "type": "host",
-                    "id": -(i + 2),
-                    "name": "host%d" % i,
-                    "weight": host_weight[i],
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "weight": sum(host_weight),
                     "children": [],
-                } for i in range(0, hosts_count)
-            ])
-            a = Main().constructor([
-                'analyze',
-                '--rule', 'firstn',
-            ] + p)
-            a.args.crushmap = crushmap
-            return a
+                }
+            ],
+            "rules": {
+                "firstn": [
+                    ["take", "dc1"],
+                    ["set_choose_tries", 100],
+                    ["choose", "firstn", 0, "type", "host"],
+                    ["emit"]
+                ],
+            }
+        }
+        crushmap['trees'][0]['children'].extend([
+            {
+                "type": "host",
+                "id": -(i + 2),
+                "name": "host%d" % i,
+                "weight": host_weight[i],
+                "children": [],
+            } for i in range(0, hosts_count)
+        ])
+        a = Main().constructor([
+            'analyze',
+            '--rule', 'firstn',
+        ] + p)
+        a.args.crushmap = crushmap
+        return a
+
+    def test_analyze_out_of_bounds(self):
 
         weights = [7, 7, 7, 3, 3]
         print("==== weights " + str(weights))
-        a = make(4, weights)
+        a = self.make_analyze(4, weights)
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
@@ -132,7 +132,7 @@ host2     -4         7               6.0        14.29\
 
         weights = [5, 1, 1, 1, 1]
         print("==== weights " + str(weights))
-        a = make(2, weights)
+        a = self.make_analyze(2, weights)
         d = a.analyze_report(*a.analyze())
         print(str(d))
 
@@ -162,7 +162,7 @@ host0     -2         5               4.0         20.0\
 
         weights = [7, 7, 3, 1, 1, 1]
         print("==== weights " + str(weights))
-        a = make(3, weights)
+        a = self.make_analyze(3, weights)
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
@@ -193,7 +193,7 @@ host1     -3         7               6.0        14.29\
 
         weights = [5, 5, 3, 3, 3]
         print("==== weights " + str(weights))
-        a = make(4, weights)
+        a = self.make_analyze(4, weights)
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\

@@ -17,14 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import copy
 import logging
 import pytest # noqa needed for capsys
 import os
-import pprint
 import pickle
 
 from crush import Crush
 from crush.ceph import Ceph
+from crush.main import Main
+from crush.analyze import BadMapping
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.INFO)
@@ -111,13 +113,113 @@ class TestOptimize(object):
         a.set_choose_arg_position(choose_arg, bucket, 1)
         assert expected == choose_arg
 
+    def make_bucket(self, weights):
+        crushmap = {
+            "choose_args": {"optimize": []},
+            "trees": [
+                {
+                    "type": "root",
+                    "id": -1,
+                    "name": "dc1",
+                    "weight": sum(weights),
+                    "children": [],
+                }
+            ],
+            "rules": {
+                "firstn": [
+                    ["take", "dc1"],
+                    ["set_choose_tries", 100],
+                    ["choose", "firstn", 0, "type", 0],
+                    ["emit"]
+                ],
+            }
+        }
+        crushmap['trees'][0]['children'].extend([
+            {
+                "id": i,
+                "name": "device%d" % i,
+                "weight": weights[i] * 0x10000,
+            } for i in range(len(weights))
+        ])
+        return crushmap
+
+    def verify_optimize(self, weights, expected_delta,
+                        values_count, replication_count):
+        crushmap = self.make_bucket(weights)
+        rule = 'firstn'
+        p = [
+            '--values-count', str(values_count),
+            '--replication-count', str(replication_count),
+            '--rule', rule,
+            '--choose-args', 'optimize',
+        ]
+        o = Main().constructor(['--verbose', 'optimize'] + p)
+        origin_crushmap = copy.deepcopy(crushmap)
+        bucket = crushmap['trees'][0]
+        previous_weight_set = []
+        for position in range(replication_count):
+            o.optimize_replica(
+                p, origin_crushmap, crushmap, bucket, replication_count, position)
+            assert 1 == len(crushmap['choose_args']['optimize'])
+            weight_set = copy.deepcopy(crushmap['choose_args']['optimize'][0]['weight_set'])
+            assert weight_set[:len(previous_weight_set)] == previous_weight_set
+
+        a = Main().constructor(['analyze', '--choose-args', 'optimize'] + p)
+        r = a.analyze_crushmap(crushmap)
+        delta = (r['~objects~'] - r['~expected~']).tolist()
+        print("delta = " + str(delta))
+        assert expected_delta == delta
+
+    def test_simple(self):
+        # values_count=100 is not enough samples
+        self.verify_optimize([1, 1, 1], [0, 0, 0, 0],
+                             values_count=100, replication_count=2)
+
+        self.verify_optimize([5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                             [0, -3, 0, 1, 0, 0, 0, 0, 0, 1, 1],
+                             values_count=100, replication_count=6)
+
+        self.verify_optimize([1, 2, 3, 1, 2, 3, 1, 2, 3, 1],
+                             [0, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0],
+                             values_count=100, replication_count=6)
+
+    def test_very_different_weights(self):
+        # values_count=10000 is not enough samples
+        delta = [0, -1, -1, -1, -1, 1, -1, -1, -1, 0, -1, 1, 0, -1, -1, 1, 2, 1, 2, 1, 0, 0, 1,
+                 -1, -1, -1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 1, -1, -1, -1, -1, 0, 0, 1, 1, -1, 0,
+                 0, 1, 0, -1, -1, 0, 2, 1, 0, -1, 1, 0, 0, -1, 0, 0, 2, -1, 1, 1, 1, -1, 0, 1,
+                 0, -1, 0, 0, 1, -1, 1, -1, 0, 1, 0, 0, 1, -1, 1, -1, 1, -1, -1, 1, -1, 1, 0,
+                 -1, 0, 0, 0, 0, 0, -1, 0]
+        self.verify_optimize(range(1, 101), delta,
+                             values_count=10000, replication_count=1)
+
+    def test_overweighted(self):
+        # 5 is overweighted for replica > 1 because
+        self.verify_optimize([5, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0],
+                             values_count=100, replication_count=1)
+        self.verify_optimize([5, 1, 1, 1, 1], [0, -3, 0, 0, 1, 2],
+                             values_count=100, replication_count=2)
+
+    def test_probability_bias(self):
+        self.verify_optimize([5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                             [0, 0, 0, 0, 0, 0, -1, -1, 1, 0, 1],
+                             replication_count=2,
+                             values_count=100000)
+
+    def test_bad_mapping(self):
+        with pytest.raises(BadMapping):
+            self.verify_optimize([1000, 1, 1, 1, 1], [],
+                                 replication_count=2, values_count=100)
+
     def run_optimize(self, p, crushmap, gain):
         o = Ceph().constructor(['optimize', '--choose-args', 'optimize'] + p)
-        a = Ceph().constructor(['analyze'] + p)
-        before = a.analyze_crushmap(crushmap)
+        origin_crushmap = copy.deepcopy(crushmap)
         (count, optimized) = o.optimize(crushmap)
-        pprint.pprint(optimized)
+        self.analyze_optimization(p, origin_crushmap, optimized, gain)
+
+    def analyze_optimization(self, p, crushmap, optimized, gain):
         a = Ceph().constructor(['analyze', '--choose-args', 'optimize'] + p)
+        before = a.analyze_crushmap(crushmap)
         after = a.analyze_crushmap(optimized)
         print("============= before")
         print(str(before))
@@ -135,239 +237,7 @@ class TestOptimize(object):
                   str(b_span) + " after " + str(a_span))
             assert a_span <= b_span / gain
 
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_overweighted(self):
-        # [ 5 1 1 1 1]
-        size = 2
-        pg_num = 2048
-
-        hosts_count = 5
-        host_weight = [1 * 0x10000] * hosts_count
-        host_weight[0] = 5 * 0x10000
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["set_choose_tries", 100],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
-                ],
-            }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        a = Ceph().constructor([
-            '--verbose',
-            'optimize',
-            '--no-multithread',
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'firstn',
-            '--choose-args', 'optimize',
-        ])
-        a.optimize(crushmap)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_probability_bias(self):
-        # [ 5 1 1 1 1 1 1 1 1 1 ]
-        # there are enough samples an the uneven distribution only comes
-        # from the bias introduced by conditional probabilities
-        size = 2
-        pg_num = 51200
-        hosts_count = 10
-        host_weight = [1 * 0x10000] * hosts_count
-        host_weight[0] = 5 * 0x10000
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["set_choose_tries", 100],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
-                ],
-            }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        p = [
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'firstn',
-        ]
-        self.run_optimize(p, crushmap, 10)
-
-    def test_optimize_1(self):
-        # [ 5 1 1 1 1 1 1 1 1 1 ]
-        # few samples
-        size = 2
-        pg_num = 512
-        hosts_count = 10
-        host_weight = [1 * 0x10000] * hosts_count
-        host_weight[0] = 5 * 0x10000
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["set_choose_tries", 100],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
-                ],
-            }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        p = [
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'firstn',
-        ]
-        self.run_optimize(p, crushmap, 10)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_2(self):
-        # [ 1 2 3 4 5 6 7 8 9 10 ... 100 ]
-        # few samples
-        size = 2
-        hosts_count = 100
-        pg_num = hosts_count * 200
-        host_weight = [i * 0x10000 for i in range(1, hosts_count + 1)]
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["set_choose_tries", 100],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
-                ],
-            }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        p = [
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'firstn',
-        ]
-        self.run_optimize(p, crushmap, 10)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
-    def test_optimize_3(self):
-        # [ 1 2 3 1 2 3 1 2 3 1 ]
-        # few samples
-        size = 2
-        pg_num = 512
-        hosts_count = 10
-        host_weight = [(i % 3 + 1) * 0x10000 for i in range(hosts_count)]
-        crushmap = {
-            "trees": [
-                {
-                    "type": "root",
-                    "id": -1,
-                    "name": "dc1",
-                    "weight": sum(host_weight),
-                    "children": [],
-                }
-            ],
-            "rules": {
-                "firstn": [
-                    ["take", "dc1"],
-                    ["set_choose_tries", 100],
-                    ["choose", "firstn", 0, "type", "host"],
-                    ["emit"]
-                ],
-            }
-        }
-        crushmap['trees'][0]['children'].extend([
-            {
-                "type": "host",
-                "id": -(i + 2),
-                "name": "host%d" % i,
-                "weight": host_weight[i],
-                "children": [],
-            } for i in range(0, hosts_count)
-        ])
-        p = [
-            '--replication-count', str(size),
-            '--pool', '0',
-            '--pg-num', str(pg_num),
-            '--pgp-num', str(pg_num),
-            '--rule', 'firstn',
-        ]
-        self.run_optimize(p, crushmap, 10)
-
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_small_cluster(self):
         pg_num = 4096
         size = 3
@@ -380,7 +250,7 @@ class TestOptimize(object):
         ]
         self.run_optimize(p, 'tests/test_optimize_small_cluster.json', 10)
 
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_big_cluster(self):
         # few samples
         pg_num = 2048
@@ -394,7 +264,7 @@ class TestOptimize(object):
         ]
         self.run_optimize(p, 'tests/test_optimize_big_cluster.json', 4)
 
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_step(self):
         pg_num = 2048
         size = 3
@@ -421,7 +291,7 @@ class TestOptimize(object):
             print("moved " + str(count) + " values")
         assert converged
 
-    @pytest.mark.skipif(os.environ.get('ALL') is None, reason="ALL")
+    @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_step_forecast(self, caplog):
         expected_path = 'tests/test_optimize_small_cluster_step_1.txt'
         out_path = expected_path + ".err"
@@ -456,5 +326,5 @@ class TestOptimize(object):
         assert 'step 9 moves 0 objects' in caplog.text()
 
 # Local Variables:
-# compile-command: "cd .. ; ALL=yes tox -e py27 -- -s -vv tests/test_optimize.py"
+# compile-command: "cd .. ; LONG=yes tox -e py27 -- -s -vv tests/test_optimize.py"
 # End:
