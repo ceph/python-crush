@@ -199,7 +199,8 @@ class Optimize(object):
                                           crushmap, bucket,
                                           self.args.replication_count, 0)
         if count > 0:
-            log.warning(bucket['name'] + " wants to swap " + str(count) + " objects")
+            n = self.main.value_name()
+            log.warning(bucket['name'] + " wants to swap " + str(count) + " " + n)
         else:
             log.warning(bucket['name'] + " already optimized")
         return (count, self.get_choose_arg(crushmap, bucket))
@@ -247,13 +248,14 @@ class Optimize(object):
         max_iterations = 1000
         from_to_count = 0
         best_weights = list(id2weight.values())
+        n = self.main.value_name()
         for iterations in range(max_iterations):
             choose_arg['weight_set'][choose_arg_position] = list(id2weight.values())
             c.parse(crushmap)
             z = a.run_simulation(c, take, failure_domain)
             z = z.reset_index()
             d = z[s].copy()
-            d['~delta~'] = d['~objects~'] - d['~expected~']
+            d['~delta~'] = d['~' + n + '~'] - d['~expected~']
             d['~delta%~'] = d['~delta~'] / d['~expected~']
             delta = d['~delta~'].abs().sum()
             if previous_delta is not None:
@@ -338,6 +340,7 @@ class Optimize(object):
         children = [c.find_bucket(take)]
         total_count = 0
         over_step = False
+        n = self.main.value_name()
         while not over_step and len(children) > 0:
             a = [(self, p, c.get_crushmap(), item) for item in children]
             if self.args.multithread:
@@ -353,7 +356,7 @@ class Optimize(object):
                 log.info(children[i]['name'] + " weights updated with " + str(choose_arg))
                 if self.args.step and count > 0:
                     log.warning(children[i]['name'] + " will swap " +
-                                str(count) + " objects")
+                                str(count) + " " + n)
                 over_step = self.args.step and total_count > self.args.step
                 if over_step:
                     break
@@ -377,7 +380,8 @@ class Optimize(object):
             log.warning("now running simulation of the next steps")
             log.warning("this can be disabled with --no-forecast")
             step = 2
+            n = self.main.value_name()
             while count > 0:
                 (count, crushmap) = self.optimize(crushmap)
-                log.warning("step " + str(step) + " moves " + str(count) + " objects")
+                log.warning("step " + str(step) + " moves " + str(count) + " " + n)
                 step += 1

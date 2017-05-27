@@ -116,9 +116,9 @@ class Analyze(object):
             The first item in the report will be the first to become
             full. For instance if the report starts with:
 
-                    ~id~  ~weight~  ~objects~  ~over/under used %~
+                    ~id~  ~weight~  ~objects~  ~over/under filled %~
             ~name~
-            g9       -22  2.29             85                10.40
+            g9       -22  2.29             85                  10.40
 
             it means that the bucket g9 with id -22 and weight 2.29
             will be the first bucket of its type to become full. The
@@ -126,10 +126,10 @@ class Analyze(object):
             usage, i.e. if the g9 host is expected to be 70%
             full, it will actually be 80.40% full.
 
-            The ~over/under used %~ is the variation between the
+            The ~over/under filled %~ is the variation between the
             expected item usage and the actual item usage. If it is
-            positive the item is overused, if it is negative the item
-            is underused.
+            positive the item is overfilled, if it is negative the item
+            is underfilled.
 
             The second step shows the worst case scenario if a bucket
             in the failure domain is removed from the crushmap. The
@@ -148,10 +148,10 @@ class Analyze(object):
             The worst case scenario for each item type is when the
             overfull percentage is higher. It is displayed as follows:
 
-                     ~over used %~
+                     ~over filled %~
             ~type~
-            device          25.55
-            host            22.45
+            device             25.55
+            host               22.45
 
             If a host fail, the worst case scenario is that a device
             will be 25.55% overfull or a host will be 22.45% overfull.
@@ -164,25 +164,25 @@ class Analyze(object):
 
             $ crush analyze --values-count 100 --rule data \\
                             --crushmap tests/sample-crushmap.json
-                    ~id~  ~weight~  ~objects~  ~over/under used %~
+                    ~id~  ~weight~  ~objects~  ~over/under filled %~
             ~name~
-            host2     -4       1.0         70                  5.0
-            host0     -2       1.0         65                 -2.5
-            host1     -3       1.0         65                 -2.5
+            host2     -4       1.0         70                    5.0
+            host0     -2       1.0         65                   -2.5
+            host1     -3       1.0         65                   -2.5
 
             Display the first device that will become full.
 
             $ crush analyze --values-count 100 --rule data \\
                             --type device \\
                             --crushmap tests/sample-crushmap.json
-                     ~id~  ~weight~  ~objects~  ~over/under used %~
+                     ~id~  ~weight~  ~objects~  ~over/under filled %~
             ~name~
-            device0     0       1.0         28                26.00
-            device4     4       1.0         24                 8.00
-            device5     5       2.0         46                 3.50
-            device3     3       2.0         44                -1.00
-            device2     2       1.0         21                -5.50
-            device1     1       2.0         37               -16.75
+            device0     0       1.0         28                  26.00
+            device4     4       1.0         24                   8.00
+            device5     5       2.0         46                   3.50
+            device3     3       2.0         44                  -1.00
+            device2     2       1.0         21                  -5.50
+            device1     1       2.0         37                 -16.75
             """),
             help='Analyze crushmaps',
             parents=[parser],
@@ -229,7 +229,7 @@ class Analyze(object):
 
     @staticmethod
     def collect_cropped_weights(d, replication_count, failure_domain):
-        d['~overweight~'] = False
+        d['~overweighted~'] = False
         d['~cropped weight~'] = d['~weight~'].copy()
         d['~cropped %~'] = 0.0
         for type in (failure_domain, 'device'):
@@ -237,13 +237,13 @@ class Analyze(object):
                 continue
             w = d.loc[d['~type~'] == type].copy()
             tw = w['~weight~'].sum()
-            w['~overweight~'] = w['~weight~'].apply(lambda w: w > tw / replication_count)
-            overweight_count = len(w.loc[w['~overweight~']])
-            if overweight_count > 0:
-                tw_not_overweight = w.loc[~w['~overweight~'], ['~weight~']].sum()['~weight~']
-                assert replication_count > overweight_count
-                cropped_weight = tw_not_overweight / (replication_count - overweight_count)
-                w.loc[w['~overweight~'], ['~cropped weight~']] = cropped_weight
+            w['~overweighted~'] = w['~weight~'].apply(lambda w: w > tw / replication_count)
+            overweighted_count = len(w.loc[w['~overweighted~']])
+            if overweighted_count > 0:
+                tw_not_overweighted = w.loc[~w['~overweighted~'], ['~weight~']].sum()['~weight~']
+                assert replication_count > overweighted_count
+                cropped_weight = tw_not_overweighted / (replication_count - overweighted_count)
+                w.loc[w['~overweighted~'], ['~cropped weight~']] = cropped_weight
                 w['~cropped %~'] = (1.0 - w['~cropped weight~'] / w['~weight~']) * 100
             d.loc[d['~type~'] == type] = w
         return d
@@ -273,10 +273,10 @@ class Analyze(object):
             d.loc[d['~type~'] == type] = e
         return d
 
-    @staticmethod
-    def collect_usage(d, total_objects):
+    def collect_usage(self, d, total_objects):
         capacity = d['~nweight~'] * float(total_objects)
-        d['~over/under used %~'] = (d['~objects~'] / capacity - 1.0) * 100 - d['~cropped %~']
+        n = self.main.value_name()
+        d['~over/under filled %~'] = (d['~' + n + '~'] / capacity - 1.0) * 100 - d['~cropped %~']
         return d
 
     def run_simulation(self, c, root_name, failure_domain):
@@ -308,12 +308,12 @@ class Analyze(object):
 
         item2path = c.collect_item2path([root])
         log.debug("item2path = " + str(item2path))
-        d['~objects~'] = 0
+        d['~' + self.main.value_name() + '~'] = 0
         for (device, count) in device2count.items():
             for item in item2path[device]:
-                d.at[item, '~objects~'] += count
+                d.at[item, '~' + self.main.value_name() + '~'] += count
 
-        return Analyze.collect_usage(d, total_objects)
+        return self.collect_usage(d, total_objects)
 
     def analyze_failures(self, c, take, failure_domain):
         if failure_domain == 0:  # failure domain == device is a border case
@@ -329,8 +329,8 @@ class Analyze(object):
             f.parse(f.crushmap)
             try:
                 a = self.run_simulation(f, take, failure_domain)
-                a['~over used %~'] = a['~over/under used %~']
-                a = a[['~type~', '~over used %~']]
+                a['~over filled %~'] = a['~over/under filled %~']
+                a = a[['~type~', '~over filled %~']]
                 worst = pd.concat([worst, a]).groupby(['~type~']).max().reset_index()
             except BadMapping:
                 log.error("mapping failed when removing {}".format(may_fail))
@@ -339,8 +339,9 @@ class Analyze(object):
 
     def _format_report(self, d, type):
         s = (d['~type~'] == type) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
-        return str(a.sort_values(by='~over/under used %~', ascending=False))
+        n = self.main.value_name()
+        a = d.loc[s, ['~id~', '~weight~', '~' + n + '~', '~over/under filled %~']]
+        return str(a.sort_values(by='~over/under filled %~', ascending=False))
 
     def analyze_crushmap(self, crushmap):
         c = Crush(backward_compatibility=self.args.backward_compatibility)
@@ -367,9 +368,9 @@ class Analyze(object):
         if worst is not None:
             out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
             out += str(worst)
-        if d['~overweight~'].any():
-            out += "\n\nThe following are overweight and should be cropped:\n\n"
-            out += str(d.loc[d['~overweight~'],
+        if d['~overweighted~'].any():
+            out += "\n\nThe following are overweighted and should be cropped:\n\n"
+            out += str(d.loc[d['~overweighted~'],
                              ['~id~', '~weight~', '~cropped weight~', '~cropped %~']])
         return out
 

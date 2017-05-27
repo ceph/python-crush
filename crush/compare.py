@@ -304,9 +304,10 @@ class Compare(object):
         """.format(int(objects_moved), objects_moved_percent))
         from_to_percent = m.sum(axis=1) / objects_count
         to_from_percent = m.sum() / objects_count
-        m['objects%'] = from_to_percent.apply(lambda v: "{:.2%}".format(v))
+        n = self.main.value_name()
+        m[n + '%'] = from_to_percent.apply(lambda v: "{:.2%}".format(v))
         mt = m.T
-        mt['objects%'] = to_from_percent.apply(lambda v: "{:.2%}".format(v))
+        mt[n + '%'] = to_from_percent.apply(lambda v: "{:.2%}".format(v))
         m = mt.T.fillna("{:.2f}%".format(objects_moved_percent))
         out += textwrap.dedent("""
         The rows below show the number of objects moved from the given

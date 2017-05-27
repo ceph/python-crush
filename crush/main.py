@@ -148,6 +148,9 @@ class Main(object):
         values = range(0, self.args.values_count)
         return dict(zip(values, values))
 
+    def value_name(self):
+        return 'objects'
+
     def convert_to_crushmap(self, crushmap):
         c = Crush(verbose=self.args.debug,
                   backward_compatibility=self.args.backward_compatibility)
