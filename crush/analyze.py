@@ -229,7 +229,7 @@ class Analyze(object):
 
     @staticmethod
     def collect_cropped_weights(d, replication_count, failure_domain):
-        d['~overweight~'] = False
+        d['~overweighted~'] = False
         d['~cropped weight~'] = d['~weight~'].copy()
         d['~cropped %~'] = 0.0
         for type in (failure_domain, 'device'):
@@ -237,13 +237,13 @@ class Analyze(object):
                 continue
             w = d.loc[d['~type~'] == type].copy()
             tw = w['~weight~'].sum()
-            w['~overweight~'] = w['~weight~'].apply(lambda w: w > tw / replication_count)
-            overweight_count = len(w.loc[w['~overweight~']])
-            if overweight_count > 0:
-                tw_not_overweight = w.loc[~w['~overweight~'], ['~weight~']].sum()['~weight~']
-                assert replication_count > overweight_count
-                cropped_weight = tw_not_overweight / (replication_count - overweight_count)
-                w.loc[w['~overweight~'], ['~cropped weight~']] = cropped_weight
+            w['~overweighted~'] = w['~weight~'].apply(lambda w: w > tw / replication_count)
+            overweighted_count = len(w.loc[w['~overweighted~']])
+            if overweighted_count > 0:
+                tw_not_overweighted = w.loc[~w['~overweighted~'], ['~weight~']].sum()['~weight~']
+                assert replication_count > overweighted_count
+                cropped_weight = tw_not_overweighted / (replication_count - overweighted_count)
+                w.loc[w['~overweighted~'], ['~cropped weight~']] = cropped_weight
                 w['~cropped %~'] = (1.0 - w['~cropped weight~'] / w['~weight~']) * 100
             d.loc[d['~type~'] == type] = w
         return d
@@ -367,9 +367,9 @@ class Analyze(object):
         if worst is not None:
             out += "\n\nWorst case scenario if a " + str(failure_domain) + " fails:\n\n"
             out += str(worst)
-        if d['~overweight~'].any():
-            out += "\n\nThe following are overweight and should be cropped:\n\n"
-            out += str(d.loc[d['~overweight~'],
+        if d['~overweighted~'].any():
+            out += "\n\nThe following are overweighted and should be cropped:\n\n"
+            out += str(d.loc[d['~overweighted~'],
                              ['~id~', '~weight~', '~cropped weight~', '~cropped %~']])
         return out
 

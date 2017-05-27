@@ -120,7 +120,7 @@ Worst case scenario if a host fails:
 host              0.0
 root              0.0
 
-The following are overweight and should be cropped:
+The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
@@ -152,7 +152,7 @@ Worst case scenario if a host fails:
 host            17.19
 root             0.00
 
-The following are overweight and should be cropped:
+The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
@@ -182,7 +182,7 @@ Worst case scenario if a host fails:
 host            30.86
 root             0.00
 
-The following are overweight and should be cropped:
+The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
@@ -212,7 +212,7 @@ Worst case scenario if a host fails:
 host              0.0
 root              0.0
 
-The following are overweight and should be cropped:
+The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
