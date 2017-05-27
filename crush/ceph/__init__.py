@@ -373,7 +373,7 @@ class CephCrush(Crush):
 
     @staticmethod
     def _convert_to_dict(something):
-        if type(something) is dict:
+        if type(something) in (dict, collections.OrderedDict):
             if 'devices' in something:
                 return (something, 'ceph-json')
             elif 'cluster_fingerprint' in something:

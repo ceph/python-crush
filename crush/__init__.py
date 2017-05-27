@@ -618,11 +618,11 @@ class Crush(object):
         return self.c.map(**kwargs)
 
     def _convert_to_crushmap(self, something):
-        if type(something) is dict:
+        if type(something) in (dict, collections.OrderedDict):
             return something
         else:
             with open(something) as f_json:
-                return json.load(f_json)
+                return json.load(f_json, object_pairs_hook=collections.OrderedDict)
 
     def to_file(self, out_path):
         open(out_path, "w").write(json.dumps(self.crushmap, indent=4, sort_keys=True))
