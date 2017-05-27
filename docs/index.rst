@@ -85,16 +85,16 @@ crushmap ?
     osd.7       14       19       3.30%
     objects%   10.20%   12.70%   22.90%
 
-Given a Ceph crushmap, show which hosts will be overused or underused::
+Given a Ceph crushmap, show which hosts will be overfilled or underfilled::
 
     $ ceph osd crush dump > crushmap-ceph.json
     $ crush analyze --rule replicated --crushmap crushmap-ceph.json
 
-            ~id~  ~weight~  ~objects~  ~over/under used %~
+            ~id~  ~weight~  ~objects~  ~over/under filled %~
     ~name~
-    host2     -4       1.0         70                  5.0
-    host0     -2       1.0         65                 -2.5
-    host1     -3       1.0         65                 -2.5
+    host2     -4       1.0         70                    5.0
+    host0     -2       1.0         65                   -2.5
+    host1     -3       1.0         65                   -2.5
 
 Rebalance a Ceph pool::
 

@@ -105,20 +105,20 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
-        ~id~  ~weight~  ~objects~  ~over/under used %~
-~name~                                                
-host4     -6         3       1329                29.79
-host3     -5         3       1325                29.39
-host1     -3         7       1857               -23.61
-host0     -2         7       1848               -24.05
-host2     -4         7       1833               -24.78
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+host4     -6         3       1329                  29.79
+host3     -5         3       1325                  29.39
+host1     -3         7       1857                 -23.61
+host0     -2         7       1848                 -24.05
+host2     -4         7       1833                 -24.78
 
 Worst case scenario if a host fails:
 
-        ~over used %~
-~type~               
-host              0.0
-root              0.0
+        ~over filled %~
+~type~                 
+host                0.0
+root                0.0
 
 The following are overweighted and should be cropped:
 
@@ -137,20 +137,20 @@ host2     -4         7               6.0        14.29\
         print(str(d))
 
         expected = """\
-        ~id~  ~weight~  ~objects~  ~over/under used %~
-~name~                                                
-host4     -6         1        617                20.51
-host3     -5         1        612                19.53
-host2     -4         1        593                15.82
-host1     -3         1        584                14.06
-host0     -2         5       1690               -37.48
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+host4     -6         1        617                  20.51
+host3     -5         1        612                  19.53
+host2     -4         1        593                  15.82
+host1     -3         1        584                  14.06
+host0     -2         5       1690                 -37.48
 
 Worst case scenario if a host fails:
 
-        ~over used %~
-~type~               
-host            17.19
-root             0.00
+        ~over filled %~
+~type~                 
+host              17.19
+root               0.00
 
 The following are overweighted and should be cropped:
 
@@ -166,21 +166,21 @@ host0     -2         5               4.0         20.0\
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
-        ~id~  ~weight~  ~objects~  ~over/under used %~
-~name~                                                
-host3     -5         1        468                37.11
-host4     -6         1        461                35.06
-host5     -7         1        451                32.13
-host2     -4         3       1215                18.65
-host0     -2         7       1791               -26.83
-host1     -3         7       1758               -28.45
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+host3     -5         1        468                  37.11
+host4     -6         1        461                  35.06
+host5     -7         1        451                  32.13
+host2     -4         3       1215                  18.65
+host0     -2         7       1791                 -26.83
+host1     -3         7       1758                 -28.45
 
 Worst case scenario if a host fails:
 
-        ~over used %~
-~type~               
-host            30.86
-root             0.00
+        ~over filled %~
+~type~                 
+host              30.86
+root               0.00
 
 The following are overweighted and should be cropped:
 
@@ -197,20 +197,20 @@ host1     -3         7               6.0        14.29\
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
-        ~id~  ~weight~  ~objects~  ~over/under used %~
-~name~                                                
-host3     -5         3       1535                12.43
-host4     -6         3       1504                10.16
-host2     -4         3       1484                 8.69
-host0     -2         5       1835               -20.40
-host1     -3         5       1834               -20.45
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+host3     -5         3       1535                  12.43
+host4     -6         3       1504                  10.16
+host2     -4         3       1484                   8.69
+host0     -2         5       1835                 -20.40
+host1     -3         5       1834                 -20.45
 
 Worst case scenario if a host fails:
 
-        ~over used %~
-~type~               
-host              0.0
-root              0.0
+        ~over filled %~
+~type~                 
+host                0.0
+root                0.0
 
 The following are overweighted and should be cropped:
 
@@ -267,21 +267,21 @@ host1     -3         5               4.5         10.0\
         d = a.analyze_report(*a.analyze())
         print(str(d))
         expected = """\
-        ~id~  ~weight~  ~objects~  ~over/under used %~
-~name~                                                
-host4     -7      10.0        541                10.91
-host3     -6     100.0       4930                 1.07
-host2     -5     100.0       4860                -0.37
-host1     -4     100.0       4836                -0.86
-host0     -3     100.0       4833                -0.92
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+host4     -7      10.0        541                  10.91
+host3     -6     100.0       4930                   1.07
+host2     -5     100.0       4860                  -0.37
+host1     -4     100.0       4836                  -0.86
+host0     -3     100.0       4833                  -0.92
 
 Worst case scenario if a host fails:
 
-        ~over used %~
-~type~               
-device          25.55
-host            22.45
-root             0.00\
+        ~over filled %~
+~type~                 
+device            25.55
+host              22.45
+root               0.00\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 

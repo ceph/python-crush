@@ -230,11 +230,11 @@ class TestOptimize(object):
 
         for type in before['~type~'].unique():
             b = before.loc[before['~type~'] == type]
-            b = b.sort_values(by='~over/under used %~', ascending=False)
-            b_span = b.iloc[0]['~over/under used %~'] - b.iloc[-1]['~over/under used %~']
+            b = b.sort_values(by='~over/under filled %~', ascending=False)
+            b_span = b.iloc[0]['~over/under filled %~'] - b.iloc[-1]['~over/under filled %~']
             a = after.loc[after['~type~'] == type]
-            a = a.sort_values(by='~over/under used %~', ascending=False)
-            a_span = a.iloc[0]['~over/under used %~'] - a.iloc[-1]['~over/under used %~']
+            a = a.sort_values(by='~over/under filled %~', ascending=False)
+            a_span = a.iloc[0]['~over/under filled %~'] - a.iloc[-1]['~over/under filled %~']
             print("============= span " + str(type) + " before " +
                   str(b_span) + " after " + str(a_span))
             assert a_span <= b_span / gain
