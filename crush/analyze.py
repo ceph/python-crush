@@ -273,10 +273,10 @@ class Analyze(object):
             d.loc[d['~type~'] == type] = e
         return d
 
-    @staticmethod
-    def collect_usage(d, total_objects):
+    def collect_usage(self, d, total_objects):
         capacity = d['~nweight~'] * float(total_objects)
-        d['~over/under used %~'] = (d['~objects~'] / capacity - 1.0) * 100 - d['~cropped %~']
+        n = self.main.value_name()
+        d['~over/under used %~'] = (d['~' + n + '~'] / capacity - 1.0) * 100 - d['~cropped %~']
         return d
 
     def run_simulation(self, c, root_name, failure_domain):
@@ -308,12 +308,12 @@ class Analyze(object):
 
         item2path = c.collect_item2path([root])
         log.debug("item2path = " + str(item2path))
-        d['~objects~'] = 0
+        d['~' + self.main.value_name() + '~'] = 0
         for (device, count) in device2count.items():
             for item in item2path[device]:
-                d.at[item, '~objects~'] += count
+                d.at[item, '~' + self.main.value_name() + '~'] += count
 
-        return Analyze.collect_usage(d, total_objects)
+        return self.collect_usage(d, total_objects)
 
     def analyze_failures(self, c, take, failure_domain):
         if failure_domain == 0:  # failure domain == device is a border case
@@ -339,7 +339,8 @@ class Analyze(object):
 
     def _format_report(self, d, type):
         s = (d['~type~'] == type) & (d['~weight~'] > 0)
-        a = d.loc[s, ['~id~', '~weight~', '~objects~', '~over/under used %~']]
+        n = self.main.value_name()
+        a = d.loc[s, ['~id~', '~weight~', '~' + n + '~', '~over/under used %~']]
         return str(a.sort_values(by='~over/under used %~', ascending=False))
 
     def analyze_crushmap(self, crushmap):

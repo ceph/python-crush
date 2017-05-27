@@ -562,6 +562,9 @@ class Ceph(main.Main):
         else:
             return super(Ceph, self).hook_create_values()
 
+    def value_name(self):
+        return 'PGs'
+
     def set_analyze_args(self, crushmap):
         if not hasattr(self.args, 'pool'):
             return
