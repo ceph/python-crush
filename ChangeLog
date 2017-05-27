@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.0.29
+------
+
+* version 1.0.29
+* s/used/filled/
+* values are PGs for Ceph, not objects
+* s/overweight/overweighted/
+* bump 1.0.29
+
 1.0.28
 ------
 
