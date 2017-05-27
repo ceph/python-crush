@@ -1,6 +1,20 @@
 CHANGES
 =======
 
+1.0.28
+------
+
+* version 1.0.28
+* crush: use OrderedDict when decoding JSON
+* tests: ALL changed to LONG
+* optimize: before optimization choose\_args is not set
+* optimize: re-organize tests
+* analyze: reorganize tests
+* optimize: bad mapping is fatal
+* main: can clone for test purpose
+* doc: fix typo
+* bump 1.0.28
+
 1.0.27
 ------
 
