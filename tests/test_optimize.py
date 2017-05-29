@@ -200,6 +200,7 @@ class TestOptimize(object):
         self.verify_optimize([5, 1, 1, 1, 1], [0, -3, 0, 0, 1, 2],
                              values_count=100, replication_count=2)
 
+    @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_probability_bias(self):
         self.verify_optimize([5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                              [0, 0, 0, 0, 0, 0, -1, -1, 1, 0, 1],
