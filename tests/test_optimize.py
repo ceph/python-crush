@@ -239,6 +239,48 @@ class TestOptimize(object):
                   str(b_span) + " after " + str(a_span))
             assert a_span <= b_span / gain
 
+    def test_optimize_one_step(self):
+        pg_num = 2048
+        size = 3
+        a = Ceph().constructor([
+            'optimize',
+            '--no-multithread',
+            '--replication-count', str(size),
+            '--pool', '3',
+            '--pg-num', str(pg_num),
+            '--pgp-num', str(pg_num),
+            '--rule', 'data',
+            '--choose-args', 'optimize',
+            '--step', '64',
+        ])
+        c = Crush(backward_compatibility=True)
+        c.parse('tests/test_optimize_small_cluster.json')
+        crushmap = c.get_crushmap()
+        (count, crushmap) = a.optimize(crushmap)
+        assert 240 == count
+
+    def test_optimize_report_compat(self):
+        #
+        # verify --choose-args is set to --pool when the crushmap contains
+        # *-target-weights buckets.
+        #
+        expected_path = 'tests/ceph/ceph-report-compat-optimized.txt'
+        out_path = expected_path + ".err"
+        for p in ([],
+                  ['--choose-args=3'],
+                  ['--pool=3'],
+                  ['--choose-args=3', '--pool=3']):
+            Ceph().main([
+                '--verbose',
+                'optimize',
+                '--no-multithread',
+                '--crushmap', 'tests/ceph/ceph-report-compat.json',
+                '--out-path', out_path,
+                '--out-format', 'txt',
+            ] + p)
+            assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+            os.unlink(out_path)
+
     @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_small_cluster(self):
         pg_num = 4096

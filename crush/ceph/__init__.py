@@ -197,6 +197,11 @@ class CephCrushmapConverter(object):
 
     @staticmethod
     def recover_choose_args(ceph):
+        name2id = {}
+        id2bucket = {}
+        for bucket in ceph['buckets']:
+            name2id[bucket['name']] = bucket['id']
+            id2bucket[bucket['id']] = bucket
         buckets = []
         name2target_weights = {}
         has_target_weight = False
@@ -205,7 +210,17 @@ class CephCrushmapConverter(object):
             if bucket['name'].endswith('-target-weight'):
                 has_target_weight = True
                 name = bucket['name'][:-14]
-                name2target_weights[name] = [c['weight'] for c in bucket['items']]
+                target_weights = {}
+                for i in bucket['items']:
+                    if i['id'] < 0:
+                        c = id2bucket[i['id']]
+                        assert c['name'].endswith('-target-weight')
+                        child_name = c['name'][:-14]
+                        id = name2id[child_name]
+                    else:
+                        id = i['id']
+                    target_weights[id] = i['weight']
+                name2target_weights[name] = target_weights
             else:
                 buckets.append(bucket)
         if not has_target_weight:
@@ -214,17 +229,19 @@ class CephCrushmapConverter(object):
         for bucket in buckets:
             if bucket['name'] in name2target_weights:
                 target_weights = name2target_weights[bucket['name']]
-                assert len(bucket['items']) == len(target_weights)
                 weight_set = []
                 for child in bucket['items']:
-                    weight_set.append(child['weight'] / 0x10000)
-                    child['weight'] = target_weights.pop(0)
+                    if child['id'] in target_weights:
+                        weight_set.append(child['weight'] / 0x10000)
+                        child['weight'] = target_weights[child['id']]
+                    else:
+                        weight_set.append(0)
                 choose_args.append({
                     'bucket_id': bucket['id'],
                     'weight_set': [weight_set],
                 })
         ceph['buckets'] = buckets
-        ceph['choose_args'] = {"0": choose_args}
+        ceph['choose_args'] = {" placeholder ": choose_args}
 
     def convert_buckets(self, ceph):
         ceph['is_child'] = set()
@@ -565,13 +582,40 @@ class Ceph(main.Main):
     def value_name(self):
         return 'PGs'
 
+    def get_ceph_version(self, crushmap):
+        if 'version' in crushmap['private']:
+            return chr(crushmap['private']['version'] - 1 + ord('a'))
+        return 'l'
+
+    def has_compat_crushmap(self, crushmap):
+        return crushmap.get('choose_args', {}).get(" placeholder ") is not None
+
+    def get_compat_choose_args(self, crushmap):
+        #
+        # if converting from a pre-Luminous encoded crushmap
+        #
+        if not self.has_compat_crushmap(crushmap):
+            return None
+        else:
+            assert 'private' in crushmap
+            assert 'pools' in crushmap['private']
+            assert 1 == len(crushmap['private']['pools'])
+            pool = crushmap['private']['pools'][0]
+            return str(pool['pool'])
+
     def set_analyze_args(self, crushmap):
-        if not hasattr(self.args, 'pool'):
-            return
         if 'private' not in crushmap:
-            return
+            return None
         if 'pools' not in crushmap['private']:
-            return
+            return None
+
+        compat_pool = self.get_compat_choose_args(crushmap)
+        if (compat_pool is not None and
+                (self.args.pool is None or self.args.pool == int(compat_pool))):
+            self.args.pool = int(compat_pool)
+            self.argv.append('--pool=' + str(self.args.pool))
+            self.args.choose_args = str(self.args.pool)
+            self.argv.append('--choose-args=' + self.args.choose_args)
 
         for pool in crushmap['private']['pools']:
             if pool['pool'] == self.args.pool:
@@ -585,17 +629,19 @@ class Ceph(main.Main):
                     if rule['ruleset'] == pool['crush_ruleset']:
                         self.args.rule = str(rule['rule_name'])
                         self.argv.append('--rule=' + str(rule['rule_name']))
+
         if crushmap.get('choose_args', {}).get(str(self.args.pool)):
             self.args.choose_args = str(self.args.pool)
             self.argv.append('--choose-args=' + self.args.choose_args)
+
         log.info('argv = ' + " ".join(self.argv))
 
+        return self.args.choose_args
+
     def set_optimize_args(self, crushmap):
-        if not hasattr(self.args, 'out_version'):
-            return
         if 'version' not in crushmap['private']:
-            return
-        self.args.out_version = chr(crushmap['private']['version'] - 1 + ord('a'))
+            return self.args.choose_args
+        self.args.out_version = self.get_ceph_version(crushmap)
         self.argv.append('--out-version=' + self.args.out_version)
 
         if self.args.out_version < 'luminous':
@@ -603,24 +649,50 @@ class Ceph(main.Main):
             self.argv.append('--no-positions')
 
         if not hasattr(self.args, 'pool'):
-            return
+            return self.args.choose_args
         if 'private' not in crushmap:
-            return
+            return self.args.choose_args
         if 'pools' not in crushmap['private']:
-            return
+            return self.args.choose_args
 
-        self.args.choose_args = str(self.args.pool)
-        self.argv.append('--choose-args=' + self.args.choose_args)
+        if self.args.choose_args is None:
+            self.args.choose_args = str(self.args.pool)
+            self.argv.append('--choose-args=' + self.args.choose_args)
 
         log.warning('argv = ' + " ".join(self.argv))
+
+        return self.args.choose_args
+
+    def set_compat_choose_args(self, c, crushmap, choose_args_name):
+
+        if not self.has_compat_crushmap(crushmap):
+            return
+
+        assert choose_args_name
+
+        choose_args = crushmap['choose_args']
+        choose_args[choose_args_name] = choose_args[' placeholder ']
+        del choose_args[' placeholder ']
+        c.parse(crushmap)
 
     def convert_to_crushmap(self, crushmap):
         c = CephCrush(verbose=self.args.debug,
                       backward_compatibility=self.args.backward_compatibility)
         c.parse(crushmap)
         crushmap = c.get_crushmap()
-        self.set_analyze_args(crushmap)
-        self.set_optimize_args(crushmap)
+        if self.args.func.__name__ == 'Analyze':
+            choose_args_name = self.set_analyze_args(crushmap)
+        elif self.args.func.__name__ == 'Optimize':
+            self.set_analyze_args(crushmap)
+            choose_args_name = self.set_optimize_args(crushmap)
+        elif self.args.func.__name__ == 'Convert':
+            choose_args_name = self.get_compat_choose_args(crushmap)
+        elif self.args.func.__name__ == 'Compare':
+            choose_args_name = None
+        else:
+            raise Exception('Unexpected func=' + str(self.args.func.__name__))
+        self.set_compat_choose_args(c, crushmap, choose_args_name)
+
         return crushmap
 
     def crushmap_to_file(self, crushmap):

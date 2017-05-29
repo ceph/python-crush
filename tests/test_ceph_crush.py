@@ -50,30 +50,101 @@ class TestCephCrushmapConverter(object):
                     'name': 'SELF-target-weight',
                     'id': -10,
                     'items': [
-                        {'weight': 1 * 0x10000, },
-                        {'weight': 2 * 0x10000, }
+                        {'weight': 1 * 0x10000, 'id': 1},
+                        {'weight': 2 * 0x10000, 'id': 2}
                     ]
                 },
                 {
                     'name': 'SELF',
                     'id': -1,
                     'items': [
-                        {'weight': 10 * 0x10000, },
-                        {'weight': 20 * 0x10000, }
+                        {'weight': 10 * 0x10000, 'id': 1},
+                        {'weight': 20 * 0x10000, 'id': 2}
                     ]
                 },
             ]
         }
         CephCrushmapConverter.recover_choose_args(ceph)
         expected = {
-            'choose_args': {'0': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
+            'choose_args': {' placeholder ': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
             'buckets': [
                 {
                     'name': 'SELF',
                     'id': -1,
                     'items': [
-                        {'weight': 1 * 0x10000, },
-                        {'weight': 2 * 0x10000, }
+                        {'weight': 1 * 0x10000, 'id': 1},
+                        {'weight': 2 * 0x10000, 'id': 2}
+                    ]
+                },
+            ]
+        }
+        assert expected == ceph
+
+    def test_recover_choose_args_added(self):
+        ceph = {
+            'buckets': [
+                {
+                    'name': 'SELF-target-weight',
+                    'id': -10,
+                    'items': [
+                        {'weight': 1 * 0x10000, 'id': 1},
+                    ]
+                },
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'items': [
+                        {'weight': 10 * 0x10000, 'id': 1},
+                        {'weight': 2 * 0x10000, 'id': 2}
+                    ]
+                },
+            ]
+        }
+        CephCrushmapConverter.recover_choose_args(ceph)
+        expected = {
+            'choose_args': {' placeholder ': [{'bucket_id': -1, 'weight_set': [[10, 0]]}]},
+            'buckets': [
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'items': [
+                        {'weight': 1 * 0x10000, 'id': 1},
+                        {'weight': 2 * 0x10000, 'id': 2}
+                    ]
+                },
+            ]
+        }
+        assert expected == ceph
+
+    def test_recover_choose_args_removed(self):
+        ceph = {
+            'buckets': [
+                {
+                    'name': 'SELF-target-weight',
+                    'id': -10,
+                    'items': [
+                        {'weight': 1 * 0x10000, 'id': 1},
+                        {'weight': 2 * 0x10000, 'id': 2}
+                    ]
+                },
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'items': [
+                        {'weight': 20 * 0x10000, 'id': 2}
+                    ]
+                },
+            ]
+        }
+        CephCrushmapConverter.recover_choose_args(ceph)
+        expected = {
+            'choose_args': {' placeholder ': [{'bucket_id': -1, 'weight_set': [[20]]}]},
+            'buckets': [
+                {
+                    'name': 'SELF',
+                    'id': -1,
+                    'items': [
+                        {'weight': 2 * 0x10000, 'id': 2}
                     ]
                 },
             ]
