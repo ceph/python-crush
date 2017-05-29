@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.30
+------
+
+* version 1.0.30
+* optimize: testing the probability bias is long
+* ceph: document add/remove OSD in the cookbook
+* ceph: handle pre-Luminous item add/remove
+* ceph: fix consistency of choose\_args in pre-Luminous
+* optimize: test a single step
+* bump 1.0.30
+
 1.0.29
 ------
 
