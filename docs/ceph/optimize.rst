@@ -57,14 +57,17 @@ command can be used::
                     --destination optimized.crush \
                     --pool 3
 
-Adding and removing OSDs
-------------------------
+Adding and removing OSDs in Luminous (or above) clusters
+--------------------------------------------------------
 
-When an OSD is added to the crushmap, its weight set should be set to
-zero so that `crush optimize` can increase it step by step.
+When an OSD is added and the `osd_crush_update_on_start` option is
+true (which is the default), its value in the weight set will be the
+same as its target weight. For instance if an OSD with weight 4 is
+added, its weight set will also be 4. It is unlikely to be the desired
+value in the weight set and it is recommended to run `crush optimize`
+to rebalance the cluster.
 
-When an OSD is removed, it's target weight should be set to zero so
-that `crush optimize` can decrease it step by step.
+Alternatively the crushmap can be manually edited and uploaded.
 
 Requirements
 ------------
@@ -120,3 +123,33 @@ The difference is that the shadow tree (`-target-weight`) does not
 exist the first time and the `--choose-args` flag only makes sense for
 the destination crushmap, not the original ceph report. Also note that
 the `--choose-args` must be set to zero instead of the pool number.
+
+Adding and removing OSDs in pre-Luminous clusters
+-------------------------------------------------
+
+When an OSD is added and the `osd_crush_update_on_start` option is
+true (which is the default), it will be inserted in the crushmap, as
+an item of the host. The cluster knows nothing about the
+`-target-weight` shadow tree and will not update it. It also knows
+nothing about the modified weights and part of the rebalancing benefit
+will be lost. The same happens when an OSD (or a bucket) is removed or
+moved.
+
+It is recommended to run `crush optimize` again as soon as OSDs are
+added or removed. The weights of the new OSDs will be copied over to
+the `-target-weight` hierarchy and optimized with the existing ones.
+
+Upgrading to Luminous
+---------------------
+
+After the cluster is upgraded from a pre-Luminous version to Luminous
+or above, the crushmap can be converted to remove the `-target-weight`
+shadow tree meant for backward compatibility only. It can be done with
+`crush convert`::
+
+    $ ceph report > report.json
+    $ crush convert --in-path report.json --out-path crushmap.crush
+    $ ceph osd setcrushmap -i optimized.crush
+
+It cannot be done with the pre-Luminous crushmap alone because it does
+not contain enough information.
