@@ -197,6 +197,11 @@ class CephCrushmapConverter(object):
 
     @staticmethod
     def recover_choose_args(ceph):
+        name2id = {}
+        id2bucket = {}
+        for bucket in ceph['buckets']:
+            name2id[bucket['name']] = bucket['id']
+            id2bucket[bucket['id']] = bucket
         buckets = []
         name2target_weights = {}
         has_target_weight = False
@@ -205,7 +210,17 @@ class CephCrushmapConverter(object):
             if bucket['name'].endswith('-target-weight'):
                 has_target_weight = True
                 name = bucket['name'][:-14]
-                name2target_weights[name] = [c['weight'] for c in bucket['items']]
+                target_weights = {}
+                for i in bucket['items']:
+                    if i['id'] < 0:
+                        c = id2bucket[i['id']]
+                        assert c['name'].endswith('-target-weight')
+                        child_name = c['name'][:-14]
+                        id = name2id[child_name]
+                    else:
+                        id = i['id']
+                    target_weights[id] = i['weight']
+                name2target_weights[name] = target_weights
             else:
                 buckets.append(bucket)
         if not has_target_weight:
@@ -214,11 +229,13 @@ class CephCrushmapConverter(object):
         for bucket in buckets:
             if bucket['name'] in name2target_weights:
                 target_weights = name2target_weights[bucket['name']]
-                assert len(bucket['items']) == len(target_weights)
                 weight_set = []
                 for child in bucket['items']:
-                    weight_set.append(child['weight'] / 0x10000)
-                    child['weight'] = target_weights.pop(0)
+                    if child['id'] in target_weights:
+                        weight_set.append(child['weight'] / 0x10000)
+                        child['weight'] = target_weights[child['id']]
+                    else:
+                        weight_set.append(0)
                 choose_args.append({
                     'bucket_id': bucket['id'],
                     'weight_set': [weight_set],
@@ -593,7 +610,8 @@ class Ceph(main.Main):
             return None
 
         compat_pool = self.get_compat_choose_args(crushmap)
-        if compat_pool is not None and (self.args.pool is None or self.args.pool == int(compat_pool)):
+        if (compat_pool is not None and
+                (self.args.pool is None or self.args.pool == int(compat_pool))):
             self.args.pool = int(compat_pool)
             self.argv.append('--pool=' + str(self.args.pool))
             self.args.choose_args = str(self.args.pool)

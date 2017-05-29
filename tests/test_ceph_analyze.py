@@ -17,12 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import logging
-import pytest # noqa needed for capsys
-
-from crush import Crush
 from crush.ceph import Ceph
-from crush.analyze import Analyze
 
 
 class TestAnalyze(object):
