@@ -124,6 +124,23 @@ class TestCeph(object):
         assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
         os.unlink(out_path)
 
+    def test_report_compat(self):
+        #
+        # verify --choose-args is set to the pool when the crushmap contains
+        # *-target-weights buckets.
+        #
+        expected_path = 'tests/ceph/ceph-report-compat-converted.txt'
+        out_path = expected_path + ".err"
+        Ceph().main([
+            '--verbose',
+            'convert',
+            '--in-path', 'tests/ceph/ceph-report-compat.json',
+            '--out-path', out_path,
+            '--out-format', 'txt',
+        ])
+        assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+        os.unlink(out_path)
+
     def test_hook_create_values(self):
         c = Ceph()
         c.parse([

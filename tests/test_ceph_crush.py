@@ -66,7 +66,7 @@ class TestCephCrushmapConverter(object):
         }
         CephCrushmapConverter.recover_choose_args(ceph)
         expected = {
-            'choose_args': {'0': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
+            'choose_args': {' placeholder ': [{'bucket_id': -1, 'weight_set': [[10, 20]]}]},
             'buckets': [
                 {
                     'name': 'SELF',

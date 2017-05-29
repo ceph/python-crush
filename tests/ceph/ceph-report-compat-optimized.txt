@@ -1,0 +1,101 @@
+# begin crush map
+
+# devices
+device 0 device0
+device 1 device1
+device 2 device2
+
+# types
+type 0 device
+type 1 host
+type 2 rack
+type 3 root
+
+# buckets
+host host0 {
+	id -1		# do not change unnecessarily
+	# weight 1.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device0 weight 1.000
+}
+host host1 {
+	id -2		# do not change unnecessarily
+	# weight 7.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device1 weight 7.000
+}
+host host2 {
+	id -5		# do not change unnecessarily
+	# weight 1.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device2 weight 1.000
+}
+rack rack0 {
+	id -3		# do not change unnecessarily
+	# weight 3.000
+	alg straw2
+	hash 0	# rjenkins1
+	item host0 weight 1.000
+	item host1 weight 1.000
+	item host2 weight 1.000
+}
+root root {
+	id -4		# do not change unnecessarily
+	# weight 4.000
+	alg straw2
+	hash 0	# rjenkins1
+	item rack0 weight 4.000
+}
+host host0-target-weight {
+	id -8		# do not change unnecessarily
+	# weight 1.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device0 weight 1.000
+}
+host host1-target-weight {
+	id -9		# do not change unnecessarily
+	# weight 1.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device1 weight 1.000
+}
+host host2-target-weight {
+	id -10		# do not change unnecessarily
+	# weight 1.000
+	alg straw2
+	hash 0	# rjenkins1
+	item device2 weight 1.000
+}
+rack rack0-target-weight {
+	id -7		# do not change unnecessarily
+	# weight 3.000
+	alg straw2
+	hash 0	# rjenkins1
+	item host0-target-weight weight 1.000
+	item host1-target-weight weight 1.000
+	item host2-target-weight weight 1.000
+}
+root root-target-weight {
+	id -6		# do not change unnecessarily
+	# weight 4.000
+	alg straw2
+	hash 0	# rjenkins1
+	item rack0-target-weight weight 4.000
+}
+
+# rules
+rule data {
+	ruleset 0
+	type replicated
+	min_size 2
+	max_size 2
+	step take root
+	step chooseleaf firstn 0 type host
+	step emit
+}
+
+# end crush map
