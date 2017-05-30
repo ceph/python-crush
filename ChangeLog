@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+1.0.31
+------
+
+* version 1.0.31
+* ceph: preserve rules ordering
+* ceph: checking bad mapping needs original weights
+* bump 1.0.31
+
 1.0.30
 ------
 
