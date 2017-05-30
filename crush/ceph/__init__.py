@@ -53,7 +53,8 @@ class CephReport(object):
         if report['health']['overall_status'] != 'HEALTH_OK':
             raise HealthError("expected health overall_status == HEALTH_OK but got " +
                               report['health']['overall_status'] + "instead")
-        crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'])
+        crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      recover_choose_args=False)
         mappings = collections.defaultdict(lambda: {})
         for pg_stat in report['pgmap']['pg_stats']:
             mappings[pg_stat['pgid']] = pg_stat['acting']
@@ -132,6 +133,9 @@ class CephReport(object):
         if failed_mapping:
             raise MappingError("some mapping failed, please file a bug at "
                                "http://libcrush.org/main/python-crush/issues/new")
+
+        crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      recover_choose_args=True)
         crushmap['private']['pools'] = report['osdmap']['pools']
 
         (version, rest) = report['version'].split('.', 1)
@@ -243,10 +247,11 @@ class CephCrushmapConverter(object):
         ceph['buckets'] = buckets
         ceph['choose_args'] = {" placeholder ": choose_args}
 
-    def convert_buckets(self, ceph):
+    def convert_buckets(self, ceph, recover_choose_args):
         ceph['is_child'] = set()
         ceph['id2item'] = {}
-        self.recover_choose_args(ceph)
+        if recover_choose_args:
+            self.recover_choose_args(ceph)
         converted = [self.convert_bucket(r, ceph) for r in ceph['buckets']]
         self.collect_items(converted, ceph)
         self.dereference(converted, ceph)
@@ -326,7 +331,7 @@ class CephCrushmapConverter(object):
                     ]
         return choose_args_map
 
-    def parse_ceph(self, ceph):
+    def parse_ceph(self, ceph, recover_choose_args):
         ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
 
@@ -336,7 +341,7 @@ class CephCrushmapConverter(object):
 
         j['types'] = ceph['types']
 
-        j['trees'] = self.convert_buckets(ceph)
+        j['trees'] = self.convert_buckets(ceph, recover_choose_args)
 
         j['rules'] = {}
         for ceph_rule in ceph['rules']:
@@ -402,7 +407,8 @@ class CephCrush(Crush):
     def _convert_to_crushmap(self, something):
         (something, format) = CephCrush._convert_to_dict(something)
         if format == 'ceph-json':
-            crushmap = CephCrushmapConverter().parse_ceph(something)
+            crushmap = CephCrushmapConverter().parse_ceph(something,
+                                                          recover_choose_args=True)
         elif format == 'ceph-report':
             crushmap = CephReport().parse_report(something)
         else:
