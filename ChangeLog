@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+1.0.32
+------
+
+* version 1.0.32
+* analyze: Q16.16 are difficult to read
+* bump 1.0.32
+
 1.0.31
 ------
 
