@@ -358,6 +358,7 @@ class Analyze(object):
         return (d, worst, failure_domain)
 
     def analyze_report(self, d, worst, failure_domain):
+        d['~weight~'] /= 0x10000
         if self.args.type:
             type = self.args.type
         else:
