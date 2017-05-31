@@ -41,9 +41,9 @@ class TestAnalyze(object):
             expected = """\
         ~id~  ~weight~  ~PGs~  ~over/under filled %~
 ~name~                                              
-host0     -1     65536      1                    0.0
-host1     -2     65536      1                    0.0
-host2     -5     65536      1                    0.0
+host0     -1       1.0      1                    0.0
+host1     -2       1.0      1                    0.0
+host2     -5       1.0      1                    0.0
 
 Worst case scenario if a host fails:
 

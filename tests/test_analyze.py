@@ -56,6 +56,7 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         assert expected == str(d)
 
     def make_analyze(self, size, host_weight):
+        host_weight = [w * 0x10000 for w in host_weight]
         p = [
             '--replication-count', str(size),
             '--values-count', '2048',
@@ -107,11 +108,11 @@ osd.4      4       1.0  device  rack0  host1  osd.4\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under filled %~
 ~name~                                                  
-host4     -6         3       1329                  29.79
-host3     -5         3       1325                  29.39
-host1     -3         7       1857                 -23.61
-host0     -2         7       1848                 -24.05
-host2     -4         7       1833                 -24.78
+host4     -6       3.0       1329                  29.79
+host3     -5       3.0       1325                  29.39
+host1     -3       7.0       1857                 -23.61
+host0     -2       7.0       1848                 -24.05
+host2     -4       7.0       1833                 -24.78
 
 Worst case scenario if a host fails:
 
@@ -124,9 +125,9 @@ The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
-host0     -2         7               6.0        14.29
-host1     -3         7               6.0        14.29
-host2     -4         7               6.0        14.29\
+host0     -2       7.0          393216.0        14.29
+host1     -3       7.0          393216.0        14.29
+host2     -4       7.0          393216.0        14.29\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
@@ -139,11 +140,11 @@ host2     -4         7               6.0        14.29\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under filled %~
 ~name~                                                  
-host4     -6         1        617                  20.51
-host3     -5         1        612                  19.53
-host2     -4         1        593                  15.82
-host1     -3         1        584                  14.06
-host0     -2         5       1690                 -37.48
+host4     -6       1.0        617                  20.51
+host3     -5       1.0        612                  19.53
+host2     -4       1.0        593                  15.82
+host1     -3       1.0        584                  14.06
+host0     -2       5.0       1690                 -37.48
 
 Worst case scenario if a host fails:
 
@@ -156,7 +157,7 @@ The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
-host0     -2         5               4.0         20.0\
+host0     -2       5.0          262144.0         20.0\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
@@ -168,12 +169,12 @@ host0     -2         5               4.0         20.0\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under filled %~
 ~name~                                                  
-host3     -5         1        468                  37.11
-host4     -6         1        461                  35.06
-host5     -7         1        451                  32.13
-host2     -4         3       1215                  18.65
-host0     -2         7       1791                 -26.83
-host1     -3         7       1758                 -28.45
+host3     -5       1.0        468                  37.11
+host4     -6       1.0        461                  35.06
+host5     -7       1.0        451                  32.13
+host2     -4       3.0       1215                  18.65
+host0     -2       7.0       1791                 -26.83
+host1     -3       7.0       1758                 -28.45
 
 Worst case scenario if a host fails:
 
@@ -186,8 +187,8 @@ The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
-host0     -2         7               6.0        14.29
-host1     -3         7               6.0        14.29\
+host0     -2       7.0          393216.0        14.29
+host1     -3       7.0          393216.0        14.29\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
@@ -199,11 +200,11 @@ host1     -3         7               6.0        14.29\
         expected = """\
         ~id~  ~weight~  ~objects~  ~over/under filled %~
 ~name~                                                  
-host3     -5         3       1535                  12.43
-host4     -6         3       1504                  10.16
-host2     -4         3       1484                   8.69
-host0     -2         5       1835                 -20.40
-host1     -3         5       1834                 -20.45
+host3     -5       3.0       1535                  12.43
+host4     -6       3.0       1504                  10.16
+host2     -4       3.0       1484                   8.69
+host0     -2       5.0       1835                 -20.40
+host1     -3       5.0       1834                 -20.45
 
 Worst case scenario if a host fails:
 
@@ -216,8 +217,8 @@ The following are overweighted and should be cropped:
 
         ~id~  ~weight~  ~cropped weight~  ~cropped %~
 ~name~                                               
-host0     -2         5               4.5         10.0
-host1     -3         5               4.5         10.0\
+host0     -2       5.0          294912.0         10.0
+host1     -3       5.0          294912.0         10.0\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
 
@@ -226,11 +227,11 @@ host1     -3         5               4.5         10.0\
             {"name": "dc1", "type": "root", "id": -1, 'children': []},
         ]
         weights = (
-            (100, 10, 50, 40),
-            (100, 10, 50, 40),
-            (100, 10, 50, 40),
-            (100, 10, 50, 40),
-            (10, 1, 5, 4),
+            (100 * 0x10000, 10 * 0x10000, 50 * 0x10000, 40 * 0x10000),
+            (100 * 0x10000, 10 * 0x10000, 50 * 0x10000, 40 * 0x10000),
+            (100 * 0x10000, 10 * 0x10000, 50 * 0x10000, 40 * 0x10000),
+            (100 * 0x10000, 10 * 0x10000, 50 * 0x10000, 40 * 0x10000),
+            (10 * 0x10000, 1 * 0x10000, 5 * 0x10000, 4 * 0x10000),
         )
         trees[0]['children'].extend([
             {
