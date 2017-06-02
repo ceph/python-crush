@@ -623,9 +623,9 @@ class Ceph(main.Main):
 
     def set_analyze_args(self, crushmap):
         if 'private' not in crushmap:
-            return None
+            return self.args.choose_args
         if 'pools' not in crushmap['private']:
-            return None
+            return self.args.choose_args
 
         compat_pool = self.get_compat_choose_args(crushmap)
         if (compat_pool is not None and
