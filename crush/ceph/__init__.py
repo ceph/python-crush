@@ -192,6 +192,7 @@ class CephTunablesConverter(object):
                 lines.insert(0, 'tunable ' + k + ' ' + str(tunables[k]) + '\n')
         open(path, 'w').write("".join(lines))
 
+
 class CephCrushmapConverter(object):
 
     def convert_item(self, item, ceph):

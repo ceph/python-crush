@@ -56,6 +56,39 @@ root               0.00\
 """ # noqa trailing whitespaces are expected
             assert expected == str(d)
 
+    def test_report_compat_hammer(self):
+        #
+        # hammer does not know about the stable tunable, verify this
+        # is handled properly. It must be set to zero otherwise the
+        # ceph report below will have unexpected mappings.
+        #
+        a = Ceph().constructor([
+            '--verbose',
+            'analyze',
+            '--crushmap', 'tests/ceph/ceph-report-compat-hammer.json',
+            '--pool', '42',
+        ])
+        d = a.analyze_report(*a.analyze())
+        print(str(d))
+        expected = """\
+         ~id~  ~weight~  ~PGs~  ~over/under filled %~
+~name~                                               
+node-8v    -6      1.08      5                  56.25
+node-5v    -3      1.08      4                  25.00
+node-6v    -4      1.08      3                  -6.25
+node-7v    -5      1.08      3                  -6.25
+node-4     -2      1.08      1                 -68.75
+
+Worst case scenario if a host fails:
+
+        ~over filled %~
+~type~                 
+device            150.0
+host               75.0
+root                0.0\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+
 # Local Variables:
 # compile-command: "cd .. ; tox -e py27 -- -s -vv tests/test_ceph_analyze.py"
 # End:
