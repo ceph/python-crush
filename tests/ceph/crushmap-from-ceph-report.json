@@ -147,7 +147,7 @@
             "require_feature_tunables5": 1, 
             "straw_calc_version": 2
         }, 
-        "version": 10
+        "version": "j"
     }, 
     "rules": {
         "data": [

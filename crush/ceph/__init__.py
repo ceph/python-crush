@@ -53,6 +53,18 @@ class CephReport(object):
         if report['health']['overall_status'] != 'HEALTH_OK':
             raise HealthError("expected health overall_status == HEALTH_OK but got " +
                               report['health']['overall_status'] + "instead")
+
+        v = report['version'].split('.')
+        if v[0] == "0":
+            if v[1] == '94':
+                version = 'h'
+            elif v[1] == '87':
+                version = 'g'
+            elif v[1] == '80':
+                version = 'f'
+        else:
+            version = chr(ord('a') + int(v[0]) - 1)
+
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
                                                       recover_choose_args=False)
         mappings = collections.defaultdict(lambda: {})
@@ -137,9 +149,7 @@ class CephReport(object):
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
                                                       recover_choose_args=True)
         crushmap['private']['pools'] = report['osdmap']['pools']
-
-        (version, rest) = report['version'].split('.', 1)
-        crushmap['private']['version'] = int(version)
+        crushmap['private']['version'] = version
 
         return crushmap
 
@@ -553,7 +563,10 @@ class Ceph(main.Main):
             choices=Ceph.formats,
             default='crush',
             help='format of the output file')
-        versions = ('h', 'hammer',
+        versions = ('f', 'firefly',
+                    'g', 'giant',
+                    'h', 'hammer',
+                    'i', 'infernalis',
                     'j', 'jewel',
                     'k', 'kraken',
                     'l', 'luminous',
@@ -590,7 +603,7 @@ class Ceph(main.Main):
 
     def get_ceph_version(self, crushmap):
         if 'version' in crushmap['private']:
-            return chr(crushmap['private']['version'] - 1 + ord('a'))
+            return crushmap['private']['version']
         return 'l'
 
     def has_compat_crushmap(self, crushmap):
