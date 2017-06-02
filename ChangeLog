@@ -1,6 +1,18 @@
 CHANGES
 =======
 
+1.0.33
+------
+
+* version 1.0.33
+* ceph: verify hammer compatibility
+* ceph: always write all tunables
+* ceph: --choose-args defaults to "0" if not a report
+* ceph: support analyze --choose-args when not a report
+* ceph: keep children = [] in buckets
+* ceph: store version as a letter
+* bump 1.0.33
+
 1.0.32
 ------
 
