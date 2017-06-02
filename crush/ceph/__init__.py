@@ -614,12 +614,12 @@ class Ceph(main.Main):
         #
         if not self.has_compat_crushmap(crushmap):
             return None
-        else:
-            assert 'private' in crushmap
-            assert 'pools' in crushmap['private']
+        elif crushmap.get('private', {}).get('pools', []):
             assert 1 == len(crushmap['private']['pools'])
             pool = crushmap['private']['pools'][0]
             return str(pool['pool'])
+        else:
+            return "0"
 
     def set_analyze_args(self, crushmap):
         if 'private' not in crushmap:
