@@ -66,6 +66,7 @@ class CephReport(object):
             version = chr(ord('a') + int(v[0]) - 1)
 
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      version=version,
                                                       recover_choose_args=False)
         mappings = collections.defaultdict(lambda: {})
         for pg_stat in report['pgmap']['pg_stats']:
@@ -147,12 +148,49 @@ class CephReport(object):
                                "http://libcrush.org/main/python-crush/issues/new")
 
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      version=version,
                                                       recover_choose_args=True)
         crushmap['private']['pools'] = report['osdmap']['pools']
         crushmap['private']['version'] = version
 
         return crushmap
 
+
+class CephTunablesConverter(object):
+
+    known = set([
+        'choose_local_tries',
+        'choose_local_fallback_tries',
+        'chooseleaf_vary_r',
+        'chooseleaf_descend_once',
+        'straw_calc_version',
+
+        'choose_total_tries',
+    ])
+
+    @staticmethod
+    def read_tunables(tunables, version):
+        known = copy.copy(CephTunablesConverter.known)
+        out = {}
+        if version >= 'j':
+            known.add('chooseleaf_stable')
+        else:
+            out['chooseleaf_stable'] = 0
+        for (k, v) in tunables.items():
+            if k in known:
+                out[k] = v
+        return out
+
+    @staticmethod
+    def rewrite_tunables_txt(tunables, path, version):
+        known = copy.copy(CephTunablesConverter.known)
+        if version >= 'j':
+            known.add('chooseleaf_stable')
+        lines = list(filter(lambda l: not re.match('^tunable ', l), open(path).readlines()))
+        for k in sorted(tunables.keys()):
+            if k in known:
+                lines.insert(0, 'tunable ' + k + ' ' + str(tunables[k]) + '\n')
+        open(path, 'w').write("".join(lines))
 
 class CephCrushmapConverter(object):
 
@@ -312,23 +350,6 @@ class CephCrushmapConverter(object):
             rule.append(step)
         return (name, rule)
 
-    def convert_tunables(self, tunables):
-        known = set([
-            'choose_local_tries',
-            'choose_local_fallback_tries',
-            'chooseleaf_vary_r',
-            'chooseleaf_stable',
-            'chooseleaf_descend_once',
-            'straw_calc_version',
-
-            'choose_total_tries',
-        ])
-        out = {}
-        for (k, v) in tunables.items():
-            if k in known:
-                out[k] = v
-        return out
-
     def convert_choose_args(self, ceph):
         choose_args_map = copy.deepcopy(ceph['choose_args'])
         for (name, choose_args) in choose_args_map.items():
@@ -340,7 +361,7 @@ class CephCrushmapConverter(object):
                     ]
         return choose_args_map
 
-    def parse_ceph(self, ceph, recover_choose_args):
+    def parse_ceph(self, ceph, version, recover_choose_args):
         ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
 
@@ -358,7 +379,7 @@ class CephCrushmapConverter(object):
             j['rules'][name] = rule
         j['private']['rules'] = ceph['rules']
 
-        j['tunables'] = self.convert_tunables(ceph['tunables'])
+        j['tunables'] = CephTunablesConverter.read_tunables(ceph['tunables'], version)
 
         j['private']['tunables'] = ceph['tunables']
 
@@ -416,7 +437,9 @@ class CephCrush(Crush):
     def _convert_to_crushmap(self, something):
         (something, format) = CephCrush._convert_to_dict(something)
         if format == 'ceph-json':
+            version = something.get('private', {}).get('version', 'l')
             crushmap = CephCrushmapConverter().parse_ceph(something,
+                                                          version=version,
                                                           recover_choose_args=True)
         elif format == 'ceph-report':
             crushmap = CephReport().parse_report(something)
@@ -500,7 +523,10 @@ class CephCrush(Crush):
             super(CephCrush, self).to_file(path)
         else:
             self.transform_to_write(version)
-            self.c.ceph_write(path, format, self.crushmap.get('private'))
+            info = self.crushmap.get('private')
+            self.c.ceph_write(path, format, info)
+            if info and info.get('tunables') and format == 'txt':
+                CephTunablesConverter.rewrite_tunables_txt(info['tunables'], path, version)
 
 
 class Ceph(main.Main):
