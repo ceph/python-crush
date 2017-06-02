@@ -1,3 +1,10 @@
+tunable straw_calc_version 0
+tunable chooseleaf_vary_r 0
+tunable chooseleaf_stable 0
+tunable chooseleaf_descend_once 0
+tunable choose_total_tries 19
+tunable choose_local_tries 2
+tunable choose_local_fallback_tries 5
 # begin crush map
 
 # devices

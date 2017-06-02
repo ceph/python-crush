@@ -292,8 +292,7 @@
         "has_v4_buckets": 0,
         "require_feature_tunables5": 0,
         "has_v5_rules": 0
-    },
-    "choose_args": {}
+    }
 },
     "pgmap": {
         "pg_stats": [

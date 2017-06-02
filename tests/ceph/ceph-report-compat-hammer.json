@@ -1,0 +1,858 @@
+{
+    "cluster_fingerprint": "0beadd30-e4b8-4cff-93d5-4ed80b6e3720",
+    "version": "0.94.10",
+    "health": {
+        "health": {},
+        "timechecks": {},
+        "summary": [],
+        "overall_status": "HEALTH_OK",
+        "detail": []
+    },
+    "osdmap": {
+        "pools": [
+            {
+                "pool": 42,
+                "pool_name": "cephstor3",
+                "flags": 1,
+                "flags_names": "hashpspool",
+                "type": 1,
+                "size": 2,
+                "crush_ruleset": 0,
+                "object_hash": 2,
+                "pg_num": 8,
+                "pg_placement_num": 8
+            }
+        ],
+        "osds": [
+            {
+                "osd": 0,
+                "weight": 1.000000,
+                "primary_affinity": 1.000000
+            }
+        ]
+    },
+    "crushmap": {
+        "devices": [
+            {
+                "id": 0,
+                "name": "osd.0"
+            },
+            {
+                "id": 1,
+                "name": "osd.1"
+            },
+            {
+                "id": 2,
+                "name": "osd.2"
+            },
+            {
+                "id": 3,
+                "name": "osd.3"
+            },
+            {
+                "id": 4,
+                "name": "osd.4"
+            },
+            {
+                "id": 5,
+                "name": "osd.5"
+            },
+            {
+                "id": 6,
+                "name": "osd.6"
+            },
+            {
+                "id": 7,
+                "name": "osd.7"
+            },
+            {
+                "id": 8,
+                "name": "osd.8"
+            },
+            {
+                "id": 9,
+                "name": "osd.9"
+            }
+        ],
+        "types": [
+            {
+                "type_id": 0,
+                "name": "osd"
+            },
+            {
+                "type_id": 1,
+                "name": "host"
+            },
+            {
+                "type_id": 2,
+                "name": "chassis"
+            },
+            {
+                "type_id": 3,
+                "name": "rack"
+            },
+            {
+                "type_id": 4,
+                "name": "row"
+            },
+            {
+                "type_id": 5,
+                "name": "pdu"
+            },
+            {
+                "type_id": 6,
+                "name": "pod"
+            },
+            {
+                "type_id": 7,
+                "name": "room"
+            },
+            {
+                "type_id": 8,
+                "name": "datacenter"
+            },
+            {
+                "type_id": 9,
+                "name": "region"
+            },
+            {
+                "type_id": 10,
+                "name": "root"
+            }
+        ],
+        "buckets": [
+            {
+                "id": -1,
+                "name": "default",
+                "type_id": 10,
+                "type_name": "root",
+                "weight": 353890,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": -2,
+                        "weight": 70778,
+                        "pos": 0
+                    },
+                    {
+                        "id": -3,
+                        "weight": 70778,
+                        "pos": 1
+                    },
+                    {
+                        "id": -4,
+                        "weight": 70778,
+                        "pos": 2
+                    },
+                    {
+                        "id": -5,
+                        "weight": 70778,
+                        "pos": 3
+                    },
+                    {
+                        "id": -6,
+                        "weight": 70778,
+                        "pos": 4
+                    }
+                ]
+            },
+            {
+                "id": -2,
+                "name": "node-4",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 70778,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 0,
+                        "weight": 35389,
+                        "pos": 0
+                    },
+                    {
+                        "id": 1,
+                        "weight": 35389,
+                        "pos": 1
+                    }
+                ]
+            },
+            {
+                "id": -3,
+                "name": "node-5v",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 70778,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 2,
+                        "weight": 35389,
+                        "pos": 0
+                    },
+                    {
+                        "id": 3,
+                        "weight": 35389,
+                        "pos": 1
+                    }
+                ]
+            },
+            {
+                "id": -4,
+                "name": "node-6v",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 70778,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 4,
+                        "weight": 35389,
+                        "pos": 0
+                    },
+                    {
+                        "id": 5,
+                        "weight": 35389,
+                        "pos": 1
+                    }
+                ]
+            },
+            {
+                "id": -5,
+                "name": "node-7v",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 70778,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 6,
+                        "weight": 35389,
+                        "pos": 0
+                    },
+                    {
+                        "id": 7,
+                        "weight": 35389,
+                        "pos": 1
+                    }
+                ]
+            },
+            {
+                "id": -6,
+                "name": "node-8v",
+                "type_id": 1,
+                "type_name": "host",
+                "weight": 70778,
+                "alg": "straw2",
+                "hash": "rjenkins1",
+                "items": [
+                    {
+                        "id": 8,
+                        "weight": 35389,
+                        "pos": 0
+                    },
+                    {
+                        "id": 9,
+                        "weight": 35389,
+                        "pos": 1
+                    }
+                ]
+            }
+        ],
+        "rules": [
+            {
+                "rule_id": 0,
+                "rule_name": "replicated_ruleset",
+                "ruleset": 0,
+                "type": 1,
+                "min_size": 1,
+                "max_size": 10,
+                "steps": [
+                    {
+                        "op": "take",
+                        "item": -1,
+                        "item_name": "default"
+                    },
+                    {
+                        "op": "chooseleaf_firstn",
+                        "num": 0,
+                        "type": "host"
+                    },
+                    {
+                        "op": "emit"
+                    }
+                ]
+            }
+        ],
+        "tunables": {
+            "choose_local_tries": 0,
+            "choose_local_fallback_tries": 0,
+            "choose_total_tries": 50,
+            "chooseleaf_descend_once": 1,
+            "chooseleaf_vary_r": 1,
+            "straw_calc_version": 1,
+            "allowed_bucket_algs": 54,
+            "profile": "hammer",
+            "optimal_tunables": 0,
+            "legacy_tunables": 0,
+            "require_feature_tunables": 1,
+            "require_feature_tunables2": 1,
+            "require_feature_tunables3": 1,
+            "has_v2_rules": 0,
+            "has_v3_rules": 0,
+            "has_v4_buckets": 1
+        }
+    },
+    "pgmap": {
+        "pg_stats": [
+            {
+                "pgid": "42.0",
+                "version": "255'2",
+                "reported_seq": "58",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.961660",
+                "last_change": "2017-05-31 07:44:28.579902",
+                "last_active": "2017-05-31 14:09:23.961660",
+                "last_peered": "2017-05-31 14:09:23.961660",
+                "last_clean": "2017-05-31 14:09:23.961660",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.961660",
+                "last_undegraded": "2017-05-31 14:09:23.961660",
+                "last_fullsized": "2017-05-31 14:09:23.961660",
+                "mapping_epoch": 378,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 448,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "255'2",
+                "last_scrub_stamp": "2017-05-31 07:44:28.579757",
+                "last_deep_scrub": "255'2",
+                "last_deep_scrub_stamp": "2017-05-31 07:44:28.579757",
+                "last_clean_scrub_stamp": "2017-05-31 07:44:28.579757",
+                "log_size": 2,
+                "ondisk_log_size": 2,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 170,
+                    "num_objects": 2,
+                    "num_object_clones": 0,
+                    "num_object_copies": 4,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 2,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 2,
+                    "num_write_kb": 2,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 24,
+                    "num_bytes_recovered": 2040,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    8,
+                    7
+                ],
+                "acting": [
+                    8,
+                    7
+                ],
+                "blocked_by": [],
+                "up_primary": 8,
+                "acting_primary": 8
+            },
+            {
+                "pgid": "42.1",
+                "version": "0'0",
+                "reported_seq": "52",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.958115",
+                "last_change": "2017-05-31 08:57:05.434201",
+                "last_active": "2017-05-31 14:09:23.958115",
+                "last_peered": "2017-05-31 14:09:23.958115",
+                "last_clean": "2017-05-31 14:09:23.958115",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.958115",
+                "last_undegraded": "2017-05-31 14:09:23.958115",
+                "last_fullsized": "2017-05-31 14:09:23.958115",
+                "mapping_epoch": 372,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 449,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-31 08:57:05.434076",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-31 08:57:05.434076",
+                "last_clean_scrub_stamp": "2017-05-31 08:57:05.434076",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    4,
+                    8
+                ],
+                "acting": [
+                    4,
+                    8
+                ],
+                "blocked_by": [],
+                "up_primary": 4,
+                "acting_primary": 4
+            },
+            {
+                "pgid": "42.2",
+                "version": "0'0",
+                "reported_seq": "52",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.957764",
+                "last_change": "2017-05-30 13:08:01.521159",
+                "last_active": "2017-05-31 14:09:23.957764",
+                "last_peered": "2017-05-31 14:09:23.957764",
+                "last_clean": "2017-05-31 14:09:23.957764",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.957764",
+                "last_undegraded": "2017-05-31 14:09:23.957764",
+                "last_fullsized": "2017-05-31 14:09:23.957764",
+                "mapping_epoch": 372,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 448,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-30 13:08:01.520525",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-30 13:08:01.520525",
+                "last_clean_scrub_stamp": "2017-05-30 13:08:01.520525",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    2,
+                    8
+                ],
+                "acting": [
+                    2,
+                    8
+                ],
+                "blocked_by": [],
+                "up_primary": 2,
+                "acting_primary": 2
+            },
+            {
+                "pgid": "42.3",
+                "version": "0'0",
+                "reported_seq": "52",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.957775",
+                "last_change": "2017-05-31 05:12:06.743842",
+                "last_active": "2017-05-31 14:09:23.957775",
+                "last_peered": "2017-05-31 14:09:23.957775",
+                "last_clean": "2017-05-31 14:09:23.957775",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.957775",
+                "last_undegraded": "2017-05-31 14:09:23.957775",
+                "last_fullsized": "2017-05-31 14:09:23.957775",
+                "mapping_epoch": 367,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 449,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-31 05:12:06.743678",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-31 05:12:06.743678",
+                "last_clean_scrub_stamp": "2017-05-31 05:12:06.743678",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    4,
+                    2
+                ],
+                "acting": [
+                    4,
+                    2
+                ],
+                "blocked_by": [],
+                "up_primary": 4,
+                "acting_primary": 4
+            },
+            {
+                "pgid": "42.4",
+                "version": "0'0",
+                "reported_seq": "49",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.958482",
+                "last_change": "2017-05-31 10:55:51.817554",
+                "last_active": "2017-05-31 14:09:23.958482",
+                "last_peered": "2017-05-31 14:09:23.958482",
+                "last_clean": "2017-05-31 14:09:23.958482",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.958482",
+                "last_undegraded": "2017-05-31 14:09:23.958482",
+                "last_fullsized": "2017-05-31 14:09:23.958482",
+                "mapping_epoch": 383,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 449,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-31 10:55:51.817206",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-31 10:55:51.817206",
+                "last_clean_scrub_stamp": "2017-05-31 10:55:51.817206",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    4,
+                    6
+                ],
+                "acting": [
+                    4,
+                    6
+                ],
+                "blocked_by": [],
+                "up_primary": 4,
+                "acting_primary": 4
+            },
+            {
+                "pgid": "42.5",
+                "version": "0'0",
+                "reported_seq": "51",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.921275",
+                "last_change": "2017-05-31 06:26:32.421316",
+                "last_active": "2017-05-31 14:09:23.921275",
+                "last_peered": "2017-05-31 14:09:23.921275",
+                "last_clean": "2017-05-31 14:09:23.921275",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.921275",
+                "last_undegraded": "2017-05-31 14:09:23.921275",
+                "last_fullsized": "2017-05-31 14:09:23.921275",
+                "mapping_epoch": 374,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 449,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-31 06:26:32.421173",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-31 06:26:32.421173",
+                "last_clean_scrub_stamp": "2017-05-31 06:26:32.421173",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    6,
+                    2
+                ],
+                "acting": [
+                    6,
+                    2
+                ],
+                "blocked_by": [],
+                "up_primary": 6,
+                "acting_primary": 6
+            },
+            {
+                "pgid": "42.6",
+                "version": "255'1",
+                "reported_seq": "54",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.958616",
+                "last_change": "2017-05-31 00:53:29.761778",
+                "last_active": "2017-05-31 14:09:23.958616",
+                "last_peered": "2017-05-31 14:09:23.958616",
+                "last_clean": "2017-05-31 14:09:23.958616",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.958616",
+                "last_undegraded": "2017-05-31 14:09:23.958616",
+                "last_fullsized": "2017-05-31 14:09:23.958616",
+                "mapping_epoch": 383,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 449,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "255'1",
+                "last_scrub_stamp": "2017-05-31 00:53:29.761110",
+                "last_deep_scrub": "255'1",
+                "last_deep_scrub_stamp": "2017-05-31 00:53:29.761110",
+                "last_clean_scrub_stamp": "2017-05-31 00:53:29.761110",
+                "log_size": 1,
+                "ondisk_log_size": 1,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 678,
+                    "num_objects": 1,
+                    "num_object_clones": 0,
+                    "num_object_copies": 2,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 1,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 1,
+                    "num_write_kb": 1,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 5,
+                    "num_bytes_recovered": 3390,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    9,
+                    3
+                ],
+                "acting": [
+                    9,
+                    3
+                ],
+                "blocked_by": [],
+                "up_primary": 9,
+                "acting_primary": 9
+            },
+            {
+                "pgid": "42.7",
+                "version": "0'0",
+                "reported_seq": "50",
+                "reported_epoch": "2185",
+                "state": "active+clean",
+                "last_fresh": "2017-05-31 14:09:23.962259",
+                "last_change": "2017-05-30 18:51:37.239300",
+                "last_active": "2017-05-31 14:09:23.962259",
+                "last_peered": "2017-05-31 14:09:23.962259",
+                "last_clean": "2017-05-31 14:09:23.962259",
+                "last_became_active": "0.000000",
+                "last_became_peered": "0.000000",
+                "last_unstale": "2017-05-31 14:09:23.962259",
+                "last_undegraded": "2017-05-31 14:09:23.962259",
+                "last_fullsized": "2017-05-31 14:09:23.962259",
+                "mapping_epoch": 378,
+                "log_start": "0'0",
+                "ondisk_log_start": "0'0",
+                "created": 254,
+                "last_epoch_clean": 448,
+                "parent": "0.0",
+                "parent_split_bits": 0,
+                "last_scrub": "0'0",
+                "last_scrub_stamp": "2017-05-30 18:51:37.238998",
+                "last_deep_scrub": "0'0",
+                "last_deep_scrub_stamp": "2017-05-30 18:51:37.238998",
+                "last_clean_scrub_stamp": "2017-05-30 18:51:37.238998",
+                "log_size": 0,
+                "ondisk_log_size": 0,
+                "stats_invalid": "0",
+                "stat_sum": {
+                    "num_bytes": 0,
+                    "num_objects": 0,
+                    "num_object_clones": 0,
+                    "num_object_copies": 0,
+                    "num_objects_missing_on_primary": 0,
+                    "num_objects_degraded": 0,
+                    "num_objects_misplaced": 0,
+                    "num_objects_unfound": 0,
+                    "num_objects_dirty": 0,
+                    "num_whiteouts": 0,
+                    "num_read": 0,
+                    "num_read_kb": 0,
+                    "num_write": 0,
+                    "num_write_kb": 0,
+                    "num_scrub_errors": 0,
+                    "num_shallow_scrub_errors": 0,
+                    "num_deep_scrub_errors": 0,
+                    "num_objects_recovered": 0,
+                    "num_bytes_recovered": 0,
+                    "num_keys_recovered": 0,
+                    "num_objects_omap": 0,
+                    "num_objects_hit_set_archive": 0,
+                    "num_bytes_hit_set_archive": 0
+                },
+                "up": [
+                    8,
+                    1
+                ],
+                "acting": [
+                    8,
+                    1
+                ],
+                "blocked_by": [],
+                "up_primary": 8,
+                "acting_primary": 8
+            }
+        ]
+    }
+}

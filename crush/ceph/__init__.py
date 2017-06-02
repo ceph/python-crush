@@ -53,7 +53,20 @@ class CephReport(object):
         if report['health']['overall_status'] != 'HEALTH_OK':
             raise HealthError("expected health overall_status == HEALTH_OK but got " +
                               report['health']['overall_status'] + "instead")
+
+        v = report['version'].split('.')
+        if v[0] == "0":
+            if v[1] == '94':
+                version = 'h'
+            elif v[1] == '87':
+                version = 'g'
+            elif v[1] == '80':
+                version = 'f'
+        else:
+            version = chr(ord('a') + int(v[0]) - 1)
+
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      version=version,
                                                       recover_choose_args=False)
         mappings = collections.defaultdict(lambda: {})
         for pg_stat in report['pgmap']['pg_stats']:
@@ -135,13 +148,49 @@ class CephReport(object):
                                "http://libcrush.org/main/python-crush/issues/new")
 
         crushmap = CephCrushmapConverter().parse_ceph(report['crushmap'],
+                                                      version=version,
                                                       recover_choose_args=True)
         crushmap['private']['pools'] = report['osdmap']['pools']
-
-        (version, rest) = report['version'].split('.', 1)
-        crushmap['private']['version'] = int(version)
+        crushmap['private']['version'] = version
 
         return crushmap
+
+
+class CephTunablesConverter(object):
+
+    known = set([
+        'choose_local_tries',
+        'choose_local_fallback_tries',
+        'chooseleaf_vary_r',
+        'chooseleaf_descend_once',
+        'straw_calc_version',
+
+        'choose_total_tries',
+    ])
+
+    @staticmethod
+    def read_tunables(tunables, version):
+        known = copy.copy(CephTunablesConverter.known)
+        out = {}
+        if version >= 'j':
+            known.add('chooseleaf_stable')
+        else:
+            out['chooseleaf_stable'] = 0
+        for (k, v) in tunables.items():
+            if k in known:
+                out[k] = v
+        return out
+
+    @staticmethod
+    def rewrite_tunables_txt(tunables, path, version):
+        known = copy.copy(CephTunablesConverter.known)
+        if version >= 'j':
+            known.add('chooseleaf_stable')
+        lines = list(filter(lambda l: not re.match('^tunable ', l), open(path).readlines()))
+        for k in sorted(tunables.keys()):
+            if k in known:
+                lines.insert(0, 'tunable ' + k + ' ' + str(tunables[k]) + '\n')
+        open(path, 'w').write("".join(lines))
 
 
 class CephCrushmapConverter(object):
@@ -168,18 +217,17 @@ class CephCrushmapConverter(object):
             "type": bucket['type_name'],
         }
         items = bucket.get('items', [])
-        if items:
-            children = []
-            last_pos = -1
-            for item in items:
-                # the actual pos value does not change the mapping
-                # when there is an empty item (we do not store pos)
-                # but the order of the items is important and we
-                # need to assert that the list is ordered
-                assert last_pos < item['pos']
-                last_pos = item['pos']
-                children.append(self.convert_item(item, ceph))
-            b['children'] = children
+        children = []
+        last_pos = -1
+        for item in items:
+            # the actual pos value does not change the mapping
+            # when there is an empty item (we do not store pos)
+            # but the order of the items is important and we
+            # need to assert that the list is ordered
+            assert last_pos < item['pos']
+            last_pos = item['pos']
+            children.append(self.convert_item(item, ceph))
+        b['children'] = children
         return b
 
     def collect_items(self, children, ceph):
@@ -303,23 +351,6 @@ class CephCrushmapConverter(object):
             rule.append(step)
         return (name, rule)
 
-    def convert_tunables(self, tunables):
-        known = set([
-            'choose_local_tries',
-            'choose_local_fallback_tries',
-            'chooseleaf_vary_r',
-            'chooseleaf_stable',
-            'chooseleaf_descend_once',
-            'straw_calc_version',
-
-            'choose_total_tries',
-        ])
-        out = {}
-        for (k, v) in tunables.items():
-            if k in known:
-                out[k] = v
-        return out
-
     def convert_choose_args(self, ceph):
         choose_args_map = copy.deepcopy(ceph['choose_args'])
         for (name, choose_args) in choose_args_map.items():
@@ -331,7 +362,7 @@ class CephCrushmapConverter(object):
                     ]
         return choose_args_map
 
-    def parse_ceph(self, ceph, recover_choose_args):
+    def parse_ceph(self, ceph, version, recover_choose_args):
         ceph['id2name'] = {d['id']: d['name'] for d in ceph['devices']}
         ceph['type2id'] = {t['name']: t['type_id'] for t in ceph['types']}
 
@@ -349,7 +380,7 @@ class CephCrushmapConverter(object):
             j['rules'][name] = rule
         j['private']['rules'] = ceph['rules']
 
-        j['tunables'] = self.convert_tunables(ceph['tunables'])
+        j['tunables'] = CephTunablesConverter.read_tunables(ceph['tunables'], version)
 
         j['private']['tunables'] = ceph['tunables']
 
@@ -407,7 +438,9 @@ class CephCrush(Crush):
     def _convert_to_crushmap(self, something):
         (something, format) = CephCrush._convert_to_dict(something)
         if format == 'ceph-json':
+            version = something.get('private', {}).get('version', 'l')
             crushmap = CephCrushmapConverter().parse_ceph(something,
+                                                          version=version,
                                                           recover_choose_args=True)
         elif format == 'ceph-report':
             crushmap = CephReport().parse_report(something)
@@ -491,7 +524,10 @@ class CephCrush(Crush):
             super(CephCrush, self).to_file(path)
         else:
             self.transform_to_write(version)
-            self.c.ceph_write(path, format, self.crushmap.get('private'))
+            info = self.crushmap.get('private')
+            self.c.ceph_write(path, format, info)
+            if info and info.get('tunables') and format == 'txt':
+                CephTunablesConverter.rewrite_tunables_txt(info['tunables'], path, version)
 
 
 class Ceph(main.Main):
@@ -553,7 +589,10 @@ class Ceph(main.Main):
             choices=Ceph.formats,
             default='crush',
             help='format of the output file')
-        versions = ('h', 'hammer',
+        versions = ('f', 'firefly',
+                    'g', 'giant',
+                    'h', 'hammer',
+                    'i', 'infernalis',
                     'j', 'jewel',
                     'k', 'kraken',
                     'l', 'luminous',
@@ -590,7 +629,7 @@ class Ceph(main.Main):
 
     def get_ceph_version(self, crushmap):
         if 'version' in crushmap['private']:
-            return chr(crushmap['private']['version'] - 1 + ord('a'))
+            return crushmap['private']['version']
         return 'l'
 
     def has_compat_crushmap(self, crushmap):
@@ -602,18 +641,18 @@ class Ceph(main.Main):
         #
         if not self.has_compat_crushmap(crushmap):
             return None
-        else:
-            assert 'private' in crushmap
-            assert 'pools' in crushmap['private']
+        elif crushmap.get('private', {}).get('pools', []):
             assert 1 == len(crushmap['private']['pools'])
             pool = crushmap['private']['pools'][0]
             return str(pool['pool'])
+        else:
+            return "0"
 
     def set_analyze_args(self, crushmap):
         if 'private' not in crushmap:
-            return None
+            return self.args.choose_args
         if 'pools' not in crushmap['private']:
-            return None
+            return self.args.choose_args
 
         compat_pool = self.get_compat_choose_args(crushmap)
         if (compat_pool is not None and
