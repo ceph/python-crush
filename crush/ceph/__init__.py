@@ -178,18 +178,17 @@ class CephCrushmapConverter(object):
             "type": bucket['type_name'],
         }
         items = bucket.get('items', [])
-        if items:
-            children = []
-            last_pos = -1
-            for item in items:
-                # the actual pos value does not change the mapping
-                # when there is an empty item (we do not store pos)
-                # but the order of the items is important and we
-                # need to assert that the list is ordered
-                assert last_pos < item['pos']
-                last_pos = item['pos']
-                children.append(self.convert_item(item, ceph))
-            b['children'] = children
+        children = []
+        last_pos = -1
+        for item in items:
+            # the actual pos value does not change the mapping
+            # when there is an empty item (we do not store pos)
+            # but the order of the items is important and we
+            # need to assert that the list is ordered
+            assert last_pos < item['pos']
+            last_pos = item['pos']
+            children.append(self.convert_item(item, ceph))
+        b['children'] = children
         return b
 
     def collect_items(self, children, ceph):
