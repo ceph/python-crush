@@ -295,31 +295,31 @@ class Compare(object):
         out = ""
         o = pd.Series(self.origin_d)
         objects_count = o.sum()
-        out += "There are {} objects.\n".format(objects_count)
+        n = self.main.value_name()
+        out += "There are {} {}.\n".format(objects_count, n)
         m = pd.DataFrame.from_dict(self.from_to, dtype=int).fillna(0).T.astype(int)
         objects_moved = m.sum().sum()
         objects_moved_percent = objects_moved / objects_count * 100
         out += textwrap.dedent("""
         Replacing the crushmap specified with --origin with the crushmap
-        specified with --destination will move {} objects ({}% of the total)
+        specified with --destination will move {} {} ({}% of the total)
         from one item to another.
-        """.format(int(objects_moved), objects_moved_percent))
+        """.format(int(objects_moved), n, objects_moved_percent))
         from_to_percent = m.sum(axis=1) / objects_count
         to_from_percent = m.sum() / objects_count
-        n = self.main.value_name()
         m[n + '%'] = from_to_percent.apply(lambda v: "{:.2%}".format(v))
         mt = m.T
         mt[n + '%'] = to_from_percent.apply(lambda v: "{:.2%}".format(v))
         m = mt.T.fillna("{:.2f}%".format(objects_moved_percent))
         out += textwrap.dedent("""
-        The rows below show the number of objects moved from the given
-        item to each item named in the columns. The objects% at the
+        The rows below show the number of {name} moved from the given
+        item to each item named in the columns. The {name}% at the
         end of the rows shows the percentage of the total number
-        of objects that is moved away from this particular item. The
-        last row shows the percentage of the total number of objects
+        of {name} that is moved away from this particular item. The
+        last row shows the percentage of the total number of {name}
         that is moved to the item named in the column.
 
-        """)
+        """.format(name=n))
         pd.set_option('display.max_rows', None)
         pd.set_option('display.width', 160)
         out += str(m)
