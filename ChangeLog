@@ -1,6 +1,16 @@
 CHANGES
 =======
 
+1.0.34
+------
+
+* version 1.0.34
+* compare: replace objects with configurable name
+* ceph: --pool can disambiguate multiple pools in reports
+* compare: handle backward compatible choose\_args
+* analyze: error if the failure domain is bad
+* bump 1.0.34
+
 1.0.33
 ------
 
