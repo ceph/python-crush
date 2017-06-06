@@ -1,0 +1,235 @@
+{
+    "rules": {
+        "po_tst": [
+            [
+                "set_chooseleaf_tries",
+                5
+            ],
+            [
+                "set_choose_tries",
+                100
+            ],
+            [
+                "take",
+                "default"
+            ],
+            [
+                "choose",
+                "indep",
+                2,
+                "type",
+                "host"
+            ],
+            [
+                "chooseleaf",
+                "indep",
+                4,
+                "type",
+                0
+            ],
+            [
+                "emit"
+            ]
+        ],
+        "replicated_ruleset": [
+            [
+                "take",
+                "default"
+            ],
+            [
+                "chooseleaf",
+                "firstn",
+                0,
+                "type",
+                "host"
+            ],
+            [
+                "emit"
+            ]
+        ]
+    },
+    "trees": [
+        {
+            "algorithm": "straw2",
+            "children": [
+                {
+                    "algorithm": "straw2",
+                    "children": [
+                        {
+                            "id": 0,
+                            "name": "osd.0",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 1,
+                            "name": "osd.1",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 4,
+                            "name": "osd.4",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 6,
+                            "name": "osd.6",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 8,
+                            "name": "osd.8",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 10,
+                            "name": "osd.10",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 17,
+                            "name": "osd.17",
+                            "weight": 366149
+                        }
+                    ],
+                    "id": -2,
+                    "name": "kensi",
+                    "type": "host",
+                    "weight": 2196764
+                },
+                {
+                    "algorithm": "straw2",
+                    "children": [
+                        {
+                            "id": 2,
+                            "name": "osd.2",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 3,
+                            "name": "osd.3",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 5,
+                            "name": "osd.5",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 7,
+                            "name": "osd.7",
+                            "weight": 244056
+                        },
+                        {
+                            "id": 9,
+                            "name": "osd.9",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 11,
+                            "name": "osd.11",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 18,
+                            "name": "osd.18",
+                            "weight": 366149
+                        }
+                    ],
+                    "id": -3,
+                    "name": "alicia",
+                    "type": "host",
+                    "weight": 2196764
+                },
+                {
+                    "algorithm": "straw2",
+                    "children": [
+                        {
+                            "id": 12,
+                            "name": "osd.12",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 13,
+                            "name": "osd.13",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 14,
+                            "name": "osd.14",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 15,
+                            "name": "osd.15",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 16,
+                            "name": "osd.16",
+                            "weight": 366149
+                        },
+                        {
+                            "id": 19,
+                            "name": "osd.19",
+                            "weight": 366149
+                        }
+                    ],
+                    "id": -4,
+                    "name": "maze",
+                    "type": "host",
+                    "weight": 2196764
+                }
+            ],
+            "id": -1,
+            "name": "default",
+            "type": "root",
+            "weight": 6590422
+        }
+    ],
+    "types": [
+        {
+            "name": "osd",
+            "type_id": 0
+        },
+        {
+            "name": "host",
+            "type_id": 1
+        },
+        {
+            "name": "chassis",
+            "type_id": 2
+        },
+        {
+            "name": "rack",
+            "type_id": 3
+        },
+        {
+            "name": "row",
+            "type_id": 4
+        },
+        {
+            "name": "pdu",
+            "type_id": 5
+        },
+        {
+            "name": "pod",
+            "type_id": 6
+        },
+        {
+            "name": "room",
+            "type_id": 7
+        },
+        {
+            "name": "datacenter",
+            "type_id": 8
+        },
+        {
+            "name": "region",
+            "type_id": 9
+        },
+        {
+            "name": "root",
+            "type_id": 10
+        }
+    ]
+}
