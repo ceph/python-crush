@@ -47,6 +47,7 @@ class Compare(object):
         self.origin = c
 
     def set_origin_crushmap(self, origin):
+        self.args.choose_args = self.args.origin_choose_args
         o = Crush(backward_compatibility=self.args.backward_compatibility)
         o.parse(self.main.convert_to_crushmap(origin))
         self.set_origin(o)
@@ -55,6 +56,7 @@ class Compare(object):
         self.destination = c
 
     def set_destination_crushmap(self, destination):
+        self.args.choose_args = self.args.destination_choose_args
         d = Crush(backward_compatibility=self.args.backward_compatibility)
         d.parse(self.main.convert_to_crushmap(destination))
         self.set_destination(d)

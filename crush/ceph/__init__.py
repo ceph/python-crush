@@ -733,7 +733,7 @@ class Ceph(main.Main):
         elif self.args.func.__name__ == 'Convert':
             choose_args_name = self.get_compat_choose_args(crushmap)
         elif self.args.func.__name__ == 'Compare':
-            choose_args_name = None
+            choose_args_name = self.set_analyze_args(crushmap)
         else:
             raise Exception('Unexpected func=' + str(self.args.func.__name__))
         self.set_compat_choose_args(c, crushmap, choose_args_name)
