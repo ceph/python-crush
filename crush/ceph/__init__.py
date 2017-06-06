@@ -642,9 +642,18 @@ class Ceph(main.Main):
         if not self.has_compat_crushmap(crushmap):
             return None
         elif crushmap.get('private', {}).get('pools', []):
-            assert 1 == len(crushmap['private']['pools'])
-            pool = crushmap['private']['pools'][0]
-            return str(pool['pool'])
+            if not hasattr(self.args, 'pool') or self.args.pool is None:
+                if len(crushmap['private']['pools']) != 1:
+                    raise Exception('--pool is required')
+                pool = crushmap['private']['pools'][0]
+                return str(pool['pool'])
+            else:
+                pools = []
+                for pool in crushmap['private']['pools']:
+                    if self.args.pool == pool['pool']:
+                        return pool['pool']
+                    pools.append(pool['pool'])
+                raise Exception(str(self.args.pool) + " is not a known pool " + str(pools))
         else:
             return "0"
 
@@ -733,7 +742,7 @@ class Ceph(main.Main):
         elif self.args.func.__name__ == 'Convert':
             choose_args_name = self.get_compat_choose_args(crushmap)
         elif self.args.func.__name__ == 'Compare':
-            choose_args_name = None
+            choose_args_name = self.set_analyze_args(crushmap)
         else:
             raise Exception('Unexpected func=' + str(self.args.func.__name__))
         self.set_compat_choose_args(c, crushmap, choose_args_name)

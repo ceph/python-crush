@@ -320,7 +320,12 @@ class Analyze(object):
             return None
         root = c.find_bucket(take)
         worst = pd.DataFrame()
-        for may_fail in c.collect_buckets_by_type([root], failure_domain):
+        available_buckets = c.collect_buckets_by_type([root], failure_domain)
+        if len(available_buckets) <= self.args.replication_count:
+            log.error("there are not enough " + failure_domain +
+                      " to sustain failure")
+            return None
+        for may_fail in available_buckets:
             f = Crush(verbose=self.args.debug,
                       backward_compatibility=self.args.backward_compatibility)
             f.crushmap = copy.deepcopy(c.get_crushmap())

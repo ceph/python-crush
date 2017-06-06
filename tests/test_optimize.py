@@ -260,7 +260,7 @@ class TestOptimize(object):
         (count, crushmap) = a.optimize(crushmap)
         assert 240 == count
 
-    def test_optimize_report_compat(self):
+    def test_optimize_report_compat_one_pool(self):
         #
         # verify --choose-args is set to --pool when the crushmap contains
         # *-target-weights buckets.
@@ -281,6 +281,45 @@ class TestOptimize(object):
             ] + p)
             assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
             os.unlink(out_path)
+
+    def test_optimize_report_compat_two_pools(self):
+        expected_path = 'tests/ceph/ceph-report-compat-optimized.txt'
+        out_path = expected_path + ".err"
+        for p in (['--pool=3'],
+                  ['--choose-args=3', '--pool=3']):
+            Ceph().main([
+                '--verbose',
+                'optimize',
+                '--no-multithread',
+                '--crushmap', 'tests/ceph/ceph-report-compat.json',
+                '--out-path', out_path,
+                '--out-format', 'txt',
+            ] + p)
+            assert os.system("diff -Bbu " + expected_path + " " + out_path) == 0
+            os.unlink(out_path)
+
+        with pytest.raises(Exception) as e:
+            Ceph().main([
+                '--verbose',
+                'optimize',
+                '--no-multithread',
+                '--crushmap', 'tests/ceph/ceph-report-compat-two-pools.json',
+                '--out-path', out_path,
+                '--out-format', 'txt',
+            ])
+        assert '--pool is required' in str(e.value)
+
+        with pytest.raises(Exception) as e:
+            Ceph().main([
+                '--verbose',
+                'optimize',
+                '--no-multithread',
+                '--crushmap', 'tests/ceph/ceph-report-compat-two-pools.json',
+                '--out-path', out_path,
+                '--out-format', 'txt',
+                '--pool', '1324',
+            ])
+        assert '1324 is not a known pool' in str(e.value)
 
     @pytest.mark.skipif(os.environ.get('LONG') is None, reason="LONG")
     def test_optimize_small_cluster(self):

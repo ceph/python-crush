@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import logging
-import pytest # noqa needed for capsys
+import pytest # noqa needed for caplog
 
 from crush import Crush
 from crush.main import Main
@@ -221,6 +221,25 @@ host0     -2       5.0          294912.0         10.0
 host1     -3       5.0          294912.0         10.0\
 """ # noqa trailing whitespaces are expected
         assert expected == str(d)
+
+    def test_analyze_bad_failure_domain(self, caplog):
+        a = Main().constructor(
+            [
+                "analyze",
+                "--rule", "replicated_ruleset",
+                "--replication-count", "3",
+                "--crushmap", "tests/ineffective-failure-domain-crushmap.json"
+            ])
+        d = a.run()
+        expected = """\
+        ~id~  ~weight~  ~objects~  ~over/under filled %~
+~name~                                                  
+kensi     -2     33.52     100000                    0.0
+alicia    -3     33.52     100000                    0.0
+maze      -4     33.52     100000                    0.0\
+""" # noqa trailing whitespaces are expected
+        assert expected == str(d)
+        assert 'not enough host' in caplog.text()
 
     def test_analyze(self):
         trees = [
