@@ -42,6 +42,10 @@ class Convert(object):
         parser.add_argument(
             '--out-path',
             help='path of the output file')
+        parser.add_argument(
+            '--pool',
+            help='pool',
+            type=int)
         return parser
 
     @staticmethod
