@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.35
+------
+
+* version 1.0.35
+* add pre/post sanity checks for arguments
+* compare: use Analyze.get\_parser\_base
+* analyze: split get\_parser
+* optimize: fix typo in option description
+* ceph: convert needs --pool
+* bump 1.0.35
+
 1.0.34
 ------
 
