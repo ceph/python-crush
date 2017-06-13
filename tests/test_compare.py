@@ -31,6 +31,42 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 class TestCompare(object):
 
+    def test_sanity_check_args(self):
+        a = Main().constructor([
+            'compare',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --origin' in str(e.value)
+
+        a = Main().constructor([
+            'compare',
+            '--origin', 'ORIGIN',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --destination' in str(e.value)
+
+        a = Main().constructor([
+            'compare',
+            '--origin', 'ORIGIN',
+            '--destination', 'DESTINATION',
+        ])
+        a.pre_sanity_check_args()
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --rule' in str(e.value)
+
+        a = Main().constructor([
+            'compare',
+            '--origin', 'ORIGIN',
+            '--destination', 'DESTINATION',
+            '--rule', 'RULE',
+            '--choose-args', 'CHOOSE ARGS',
+        ])
+        a.pre_sanity_check_args()
+        a.post_sanity_check_args()
+
     def setup_class(self):
         pass
 

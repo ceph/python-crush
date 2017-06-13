@@ -17,10 +17,82 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import pytest
 from crush.ceph import Ceph
 
 
 class TestAnalyze(object):
+
+    def test_sanity_check_args(self):
+        a = Ceph().constructor([
+            'analyze',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --crushmap' in str(e.value)
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+        ])
+        a.pre_sanity_check_args()
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --rule' in str(e.value)
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+            '--rule', 'RULE',
+        ])
+        a.post_sanity_check_args()
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+            '--rule', 'RULE',
+            '--pool', '3',
+            '--values-count', '8',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert '--pool and --values-count are mutually exclusive' in str(e.value)
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+            '--rule', 'RULE',
+            '--pool', '3',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert '--pg-num is required' in str(e.value)
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+            '--rule', 'RULE',
+            '--pool', '3',
+            '--pg-num', '10',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert '--pgp-num is required' in str(e.value)
+
+        a = Ceph().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+            '--rule', 'RULE',
+            '--pool', '3',
+            '--pg-num', '10',
+            '--pgp-num', '10',
+        ])
+        a.post_sanity_check_args()
 
     def test_report_compat(self):
         #

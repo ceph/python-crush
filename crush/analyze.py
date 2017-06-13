@@ -38,43 +38,49 @@ class BadMapping(Exception):
 
 class Analyze(object):
 
+    DEFAULT_VALUES_COUNT = 100000
+    DEFAULT_REPLICATION_COUNT = 3
+
     def __init__(self, args, main):
         self.args = args
         self.main = main
 
     @staticmethod
-    def get_parser():
+    def get_parser_base():
         parser = argparse.ArgumentParser(
             add_help=False,
             conflict_handler='resolve',
         )
-        replication_count = 3
         parser.add_argument(
             '--replication-count',
-            help=('number of devices to map (default: %d)' % replication_count),
+            help=('number of devices to map (default: %d)' % Analyze.DEFAULT_REPLICATION_COUNT),
             type=int,
-            default=replication_count)
+            default=Analyze.DEFAULT_REPLICATION_COUNT)
         parser.add_argument(
             '--rule',
             help='the name of rule')
         parser.add_argument(
-            '--type',
-            help='override the type of bucket shown in the report')
-        parser.add_argument(
             '--choose-args',
             help='modify the weights')
+        parser.add_argument(
+            '--values-count',
+            help='repeat mapping (default: %d)' % Analyze.DEFAULT_VALUES_COUNT,
+            type=int,
+            default=Analyze.DEFAULT_VALUES_COUNT)
+        return parser
+
+    @staticmethod
+    def get_parser():
+        parser = Analyze.get_parser_base()
+        parser.add_argument(
+            '--type',
+            help='override the type of bucket shown in the report')
         parser.add_argument(
             '--crushmap',
             help='path to the crushmap file')
         parser.add_argument(
             '-w', '--weights',
             help='path to the weights file')
-        values_count = 100000
-        parser.add_argument(
-            '--values-count',
-            help='repeat mapping (default: %d)' % values_count,
-            type=int,
-            default=values_count)
         return parser
 
     @staticmethod
@@ -189,6 +195,12 @@ class Analyze(object):
         ).set_defaults(
             func=Analyze,
         )
+
+    def pre_sanity_check_args(self):
+        self.main.hook_analyze_pre_sanity_check_args(self.args)
+
+    def post_sanity_check_args(self):
+        self.main.hook_analyze_post_sanity_check_args(self.args)
 
     @staticmethod
     def collect_dataframe(crush, child):
@@ -355,8 +367,10 @@ class Analyze(object):
         return self.run_simulation(c, take, failure_domain)
 
     def analyze(self):
+        self.pre_sanity_check_args()
         c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(self.main.convert_to_crushmap(self.args.crushmap))
+        self.post_sanity_check_args()
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
         d = self.run_simulation(c, take, failure_domain)
         worst = self.analyze_failures(c, take, failure_domain)

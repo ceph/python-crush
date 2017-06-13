@@ -34,6 +34,63 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 class TestOptimize(object):
 
+    def test_sanity_check_args(self):
+        a = Main().constructor([
+            'optimize',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --crushmap' in str(e.value)
+
+        a = Main().constructor([
+            'optimize',
+            '--crushmap', 'CRUSHMAP',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --out-path' in str(e.value)
+
+        a = Main().constructor([
+            'optimize',
+            '--crushmap', 'CRUSHMAP',
+            '--out-path', 'OUT PATH',
+            '--no-forecast',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'only valid with --step' in str(e.value)
+
+        a = Main().constructor([
+            'optimize',
+            '--crushmap', 'CRUSHMAP',
+            '--out-path', 'OUT PATH',
+        ])
+        a.pre_sanity_check_args()
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --rule' in str(e.value)
+
+        a = Main().constructor([
+            'optimize',
+            '--crushmap', 'CRUSHMAP',
+            '--out-path', 'OUT PATH',
+            '--rule', 'RULE',
+        ])
+        a.pre_sanity_check_args()
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --choose-args' in str(e.value)
+
+        a = Main().constructor([
+            'optimize',
+            '--crushmap', 'CRUSHMAP',
+            '--out-path', 'OUT PATH',
+            '--rule', 'RULE',
+            '--choose-args', 'CHOOSE ARGS',
+        ])
+        a.pre_sanity_check_args()
+        a.post_sanity_check_args()
+
     def test_pickle(self):
         o = Ceph().constructor(['optimize'])
         p = pickle.dumps(o)

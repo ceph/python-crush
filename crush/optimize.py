@@ -68,7 +68,7 @@ class Optimize(object):
             '--no-positions',
             dest='with_positions',
             action='store_false', default=True,
-            help='optimize weiths for each position (default: true)')
+            help='optimize weigths for each position (default: true)')
         parser.add_argument(
             '--no-multithread',
             dest='multithread',
@@ -152,6 +152,12 @@ class Optimize(object):
         ).set_defaults(
             func=Optimize,
         )
+
+    def pre_sanity_check_args(self):
+        self.main.hook_optimize_pre_sanity_check_args(self.args)
+
+    def post_sanity_check_args(self):
+        self.main.hook_optimize_post_sanity_check_args(self.args)
 
     def get_choose_arg(self, crushmap, bucket):
         if 'choose_args' not in crushmap:
@@ -368,11 +374,9 @@ class Optimize(object):
         return (total_count, c.get_crushmap())
 
     def run(self):
-        if not self.args.crushmap:
-            raise Exception("missing --crushmap")
+        self.pre_sanity_check_args()
         crushmap = self.main.convert_to_crushmap(self.args.crushmap)
-        if not self.args.choose_args:
-            raise Exception("missing --choose-args")
+        self.post_sanity_check_args()
         (count, crushmap) = self.optimize(crushmap)
         self.main.crushmap_to_file(crushmap)
         if self.args.step and self.args.with_forecast:
