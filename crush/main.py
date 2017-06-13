@@ -138,11 +138,41 @@ class Main(object):
     def hook_analyze_args(self, parser):
         pass
 
+    def hook_analyze_pre_sanity_check_args(self, args):
+        if not args.crushmap:
+            raise Exception("missing --crushmap")
+
+    def hook_analyze_post_sanity_check_args(self, args):
+        if not args.rule:
+            raise Exception("missing --rule")
+
     def hook_compare_args(self, parser):
         pass
 
+    def hook_compare_pre_sanity_check_args(self, args):
+        if not args.origin:
+            raise Exception("missing --origin")
+        if not args.destination:
+            raise Exception("missing --destination")
+
+    def hook_compare_post_sanity_check_args(self, args):
+        if not args.rule:
+            raise Exception("missing --rule")
+
     def hook_optimize_args(self, parser):
         pass
+
+    def hook_optimize_pre_sanity_check_args(self, args):
+        self.hook_analyze_pre_sanity_check_args(args)
+        if self.args.with_forecast is False and not self.args.step:
+            raise Exception("--no-forecast is only valid with --step")
+        if not self.args.out_path:
+            raise Exception("missing --out-path")
+
+    def hook_optimize_post_sanity_check_args(self, args):
+        self.hook_analyze_post_sanity_check_args(args)
+        if not self.args.choose_args:
+            raise Exception("missing --choose-args")
 
     def hook_create_values(self):
         values = range(0, self.args.values_count)

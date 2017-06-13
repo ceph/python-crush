@@ -29,6 +29,7 @@ import struct
 import textwrap
 
 from crush import main
+from crush import analyze
 from crush.ceph import convert
 from crush import Crush, LibCrush
 
@@ -572,6 +573,15 @@ class Ceph(main.Main):
             help='pgp-num',
             type=int)
 
+    def hook_common_post_sanity_check_args(self, args):
+        if self.args.pool and self.args.values_count != analyze.Analyze.DEFAULT_VALUES_COUNT:
+            raise Exception("--pool and --values-count are mutually exclusive")
+        if self.args.pool:
+            if not self.args.pg_num:
+                raise Exception("--pg-num is required with --pool")
+            if not self.args.pgp_num:
+                raise Exception("--pgp-num is required with --pool")
+
     formats = ('txt', 'json', 'python-json', 'crush')
 
     def in_args(self, parser):
@@ -582,6 +592,10 @@ class Ceph(main.Main):
             '--in-format',
             choices=Ceph.formats,
             help='format of the input file')
+
+    def hook_in_args_pre_sanity_check(self, args):
+        if not args.in_path:
+            raise Exception("missing --in-path")
 
     def out_args(self, parser):
         parser.add_argument(
@@ -608,15 +622,42 @@ class Ceph(main.Main):
         self.in_args(parser)
         self.out_args(parser)
 
+    def hook_convert_pre_sanity_check_args(self, args):
+        self.hook_in_args_pre_sanity_check(args)
+
+    def hook_convert_post_sanity_check_args(self, args):
+        pass
+
     def hook_analyze_args(self, parser):
         self.hook_common_args(parser)
+
+    def hook_analyze_pre_sanity_check_args(self, args):
+        super(Ceph, self).hook_analyze_pre_sanity_check_args(args)
+
+    def hook_analyze_post_sanity_check_args(self, args):
+        super(Ceph, self).hook_analyze_post_sanity_check_args(args)
+        self.hook_common_post_sanity_check_args(args)
 
     def hook_compare_args(self, parser):
         self.hook_common_args(parser)
 
+    def hook_compare_pre_sanity_check_args(self, args):
+        super(Ceph, self).hook_compare_pre_sanity_check_args(args)
+
+    def hook_compare_post_sanity_check_args(self, args):
+        super(Ceph, self).hook_compare_post_sanity_check_args(args)
+        self.hook_common_post_sanity_check_args(args)
+
     def hook_optimize_args(self, parser):
         self.hook_common_args(parser)
         self.out_args(parser)
+
+    def hook_optimize_pre_sanity_check_args(self, args):
+        super(Ceph, self).hook_optimize_pre_sanity_check_args(args)
+
+    def hook_optimize_post_sanity_check_args(self, args):
+        super(Ceph, self).hook_optimize_post_sanity_check_args(args)
+        self.hook_common_post_sanity_check_args(args)
 
     def hook_create_values(self):
         if self.args.pool is not None:

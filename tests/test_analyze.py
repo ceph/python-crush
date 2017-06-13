@@ -30,6 +30,28 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 class TestAnalyze(object):
 
+    def test_sanity_check_args(self):
+        a = Main().constructor([
+            'analyze',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --crushmap' in str(e.value)
+
+        a = Main().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+        ])
+        a.pre_sanity_check_args()
+
+        a = Main().constructor([
+            'analyze',
+            '--crushmap', 'CRUSHMAP',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --rule' in str(e.value)
+
     def test_collect_dataframe(self):
         tree = {
             'name': 'rack0', 'type': 'rack', 'id': -1, 'children': [

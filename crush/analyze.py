@@ -196,6 +196,12 @@ class Analyze(object):
             func=Analyze,
         )
 
+    def pre_sanity_check_args(self):
+        self.main.hook_analyze_pre_sanity_check_args(self.args)
+
+    def post_sanity_check_args(self):
+        self.main.hook_analyze_post_sanity_check_args(self.args)
+
     @staticmethod
     def collect_dataframe(crush, child):
         paths = crush.collect_paths([child], collections.OrderedDict())
@@ -361,8 +367,10 @@ class Analyze(object):
         return self.run_simulation(c, take, failure_domain)
 
     def analyze(self):
+        self.pre_sanity_check_args()
         c = Crush(backward_compatibility=self.args.backward_compatibility)
         c.parse(self.main.convert_to_crushmap(self.args.crushmap))
+        self.post_sanity_check_args()
         (take, failure_domain) = c.rule_get_take_failure_domain(self.args.rule)
         d = self.run_simulation(c, take, failure_domain)
         worst = self.analyze_failures(c, take, failure_domain)

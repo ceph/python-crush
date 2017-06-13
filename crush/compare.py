@@ -184,6 +184,12 @@ class Compare(object):
             func=Compare,
         )
 
+    def pre_sanity_check_args(self):
+        self.main.hook_compare_pre_sanity_check_args(self.args)
+
+    def post_sanity_check_args(self):
+        self.main.hook_compare_post_sanity_check_args(self.args)
+
     def compare(self):
         a = self.origin
         self.origin_d = collections.defaultdict(lambda: 0)
@@ -310,8 +316,10 @@ class Compare(object):
         print(self.display())
 
     def run_compare(self):
+        self.pre_sanity_check_args()
         self.set_origin_crushmap(self.args.origin)
         self.set_destination_crushmap(self.args.destination)
+        self.post_sanity_check_args()
 
         if self.args.origin_weights:
             with open(self.args.origin_weights) as f_ow:

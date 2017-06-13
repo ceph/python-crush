@@ -95,6 +95,16 @@ class Convert(object):
             func=Convert,
         )
 
+    def pre_sanity_check_args(self):
+        self.main.hook_convert_pre_sanity_check_args(self.args)
+
+    def post_sanity_check_args(self):
+        self.main.hook_convert_post_sanity_check_args(self.args)
+        if not self.args.out_path:
+            raise Exception("missing --out-path")
+
     def run(self):
+        self.pre_sanity_check_args()
         crushmap = self.main.convert_to_crushmap(self.args.in_path)
+        self.post_sanity_check_args()
         self.main.crushmap_to_file(crushmap)

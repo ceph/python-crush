@@ -18,10 +18,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from crush.ceph import CephCrush
+from crush.ceph import CephCrush, Ceph
+import pytest
 
 
 class TestConvert(object):
+
+    def test_sanity_check_args(self):
+        a = Ceph().constructor([
+            'convert',
+        ])
+        with pytest.raises(Exception) as e:
+            a.pre_sanity_check_args()
+        assert 'missing --in-path' in str(e.value)
+
+        a = Ceph().constructor([
+            'convert',
+            '--in-path', 'IN',
+        ])
+        with pytest.raises(Exception) as e:
+            a.post_sanity_check_args()
+        assert 'missing --out-path' in str(e.value)
+
+        a = Ceph().constructor([
+            'convert',
+            '--in-path', 'IN',
+            '--out-path', 'OUT',
+        ])
+        a.pre_sanity_check_args()
+        a.post_sanity_check_args()
 
     def define_crushmap(self, host_count):
         crushmap = {
