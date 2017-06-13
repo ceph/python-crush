@@ -26,6 +26,7 @@ import logging
 import textwrap
 
 from crush import Crush
+from crush.analyze import Analyze
 
 log = logging.getLogger(__name__)
 
@@ -63,34 +64,13 @@ class Compare(object):
 
     @staticmethod
     def get_parser():
-        parser = argparse.ArgumentParser(
-            add_help=False,
-            conflict_handler='resolve',
-        )
-        replication_count = 3
-        parser.add_argument(
-            '--replication-count',
-            help=('number of devices to map (default: %d)' % replication_count),
-            type=int,
-            default=replication_count)
-        parser.add_argument(
-            '--rule',
-            help='the name of rule')
-        parser.add_argument(
-            '--choose-args',
-            help='modify the origin and destination weights')
+        parser = Analyze.get_parser_base()
         parser.add_argument(
             '--origin-choose-args',
-            help='modify the origin weights')
+            help='modify the origin weights (has precedence over --choose-args)')
         parser.add_argument(
             '--destination-choose-args',
-            help='modify the destination weights')
-        values_count = 100000
-        parser.add_argument(
-            '--values-count',
-            help='repeat mapping (default: %d)' % values_count,
-            type=int,
-            default=values_count)
+            help='modify the destination weights (has precedence over --choose-args)')
         parser.add_argument(
             '--origin',
             metavar='PATH',
