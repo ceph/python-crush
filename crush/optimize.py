@@ -68,7 +68,7 @@ class Optimize(object):
             '--no-positions',
             dest='with_positions',
             action='store_false', default=True,
-            help='optimize weiths for each position (default: true)')
+            help='optimize weigths for each position (default: true)')
         parser.add_argument(
             '--no-multithread',
             dest='multithread',
