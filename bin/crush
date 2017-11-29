@@ -19,7 +19,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import sys
-import sys
 from crush.ceph import Ceph
 
 sys.exit(Ceph().main(sys.argv[1:]))
