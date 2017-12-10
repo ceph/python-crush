@@ -27,7 +27,7 @@ module, as instructed in the **[extension-crush.libcrush]** section of
 the `setup.cfg` file:
 
 .. literalinclude:: ../../setup.cfg
-   :start-after: [extension-crush.libcrush]
+   :start-after: [extension=crush.libcrush]
    :end-before: [build_ext]
    :language: ini
 
@@ -88,4 +88,3 @@ Debugging readthedocs
 - in https://readthedocs.org/projects/crush/builds/\*/ check all lines from the bottom
   some may contain error messages that are do not fail the build but do nothing useful
   either
-
